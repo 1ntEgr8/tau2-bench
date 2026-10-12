@@ -51,12 +51,14 @@ def tool_call_messages() -> list[Message]:
     return messages
 
 
+@pytest.mark.live_api
 def test_generate_no_tool_call(model: str, messages: list[Message]):
     response = generate(model, messages)
     assert isinstance(response, AssistantMessage)
     assert response.content is not None
 
 
+@pytest.mark.live_api
 def test_generate_tool_call(model: str, tool_call_messages: list[Message], tool: Tool):
     response = generate(model, tool_call_messages, tools=[tool])
     assert isinstance(response, AssistantMessage)

@@ -554,6 +554,15 @@ wheels = [
 ]
 
 [[package]]
+name = "et-xmlfile"
+version = "2.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d3/38/af70d7ab1ae9d4da450eeec1fa3918940a5fafb9055e934af8d6eb0c2313/et_xmlfile-2.0.0.tar.gz", hash = "sha256:dab3f4764309081ce75662649be815c4c9081e88f0837825f90fd28317d4da54", size = 17234, upload-time = "2024-10-25T17:25:40.039Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c1/8b/5fe2cc11fee489817272089c4203e679c63b570a5aaeb18d852ae3cbba6a/et_xmlfile-2.0.0-py3-none-any.whl", hash = "sha256:7a91720bc756843502c3b7504c77b8fe44217c85c537d85037f0f536151b2caa", size = 18059, upload-time = "2024-10-25T17:25:39.051Z" },
+]
+
+[[package]]
 name = "eval-type-backport"
 version = "0.3.1"
 source = { registry = "https://pypi.org/simple" }
@@ -898,7 +907,7 @@ wheels = [
 
 [[package]]
 name = "google-genai"
-version = "2.15.0"
+version = "2.25.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -912,9 +921,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "websockets" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/69/53/b2c9b0a74b817a393d388a2303ec4da8bda27ea744b23914480d1b024d84/google_genai-2.15.0.tar.gz", hash = "sha256:ef71bdb79ce9931bca1cf0a393c8cfb606e1075b6100fcdde02b7b467db8235d", size = 640674, upload-time = "2026-07-29T17:43:21.853Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/62/0a/a3b7856ca840031d4393dbdd97b67fe811b20061315ed68b67b5c85ca80d/google_genai-2.25.0.tar.gz", hash = "sha256:ab603baa5eee0205926ad0f8d7f93e0400df6d67650e99c33e01ab228ea16ad6", size = 699564, upload-time = "2026-09-22T17:23:01.238646Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cf/86/2ef6d992955307bf525f305b44cb3e2066eb01636549607082a0407f7047/google_genai-2.15.0-py3-none-any.whl", hash = "sha256:f322a94c3c1ddb1b1cc536086708f5f8e13101347d062f63dcd7947b598c1d16", size = 1030459, upload-time = "2026-07-29T17:43:20.286Z" },
+    { url = "https://files.pythonhosted.org/packages/5d/a8/178dbb9d1d6cac721b01592e291146a024bae5ee3224e36569348921dd6c/google_genai-2.25.0-py3-none-any.whl", hash = "sha256:2e8f3a5f76ed00d5ffc3153f6089bc7d3511054eed53ad9cfc6095a7dc59b028", size = 1159631, upload-time = "2026-09-22T17:22:59.291289Z" },
 ]
 
 [[package]]
@@ -1489,6 +1498,18 @@ wheels = [
 ]
 
 [[package]]
+name = "livekit-plugins-elevenlabs"
+version = "1.5.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "livekit-agents", extra = ["codecs"] },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3f/2a/25730347159549b989fb5aa2db9be77510e3d0aa07cecd36ca9b15cd07e9/livekit_plugins_elevenlabs-1.5.1.tar.gz", hash = "sha256:d1ec773d4471230268de738de74ac89b9a5a007c29169c6ed59fb5021f0b5ff1", size = 17181, upload-time = "2026-03-23T22:51:39.102Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a2/78/a168c36a878f47e7b8f998a6a022953781344284080f835cdd9d18df001e/livekit_plugins_elevenlabs-1.5.1-py3-none-any.whl", hash = "sha256:4ed94a6a84b515000e6f6c5ff04eb949c3bee8fec9071c788a8300b3b7eacf1b", size = 19886, upload-time = "2026-03-23T22:51:38.198Z" },
+]
+
+[[package]]
 name = "livekit-plugins-openai"
 version = "1.5.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1782,6 +1803,18 @@ wheels = [
 [package.optional-dependencies]
 realtime = [
     { name = "websockets" },
+]
+
+[[package]]
+name = "openpyxl"
+version = "3.1.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "et-xmlfile" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/3d/f9/88d94a75de065ea32619465d2f77b29a0469500e99012523b91cc4141cd1/openpyxl-3.1.5.tar.gz", hash = "sha256:cf0e3cf56142039133628b5acffe8ef0c12bc902d2aadd3e0fe5878dc08d1050", size = 186464, upload-time = "2024-06-28T14:03:44.161Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c0/da/977ded879c29cbd04de313843e76868e6e13408a94ed6b987245dc7c8506/openpyxl-3.1.5-py2.py3-none-any.whl", hash = "sha256:5282c12b107bffeef825f4617dc029afaf41d0ea60823bbb665ef3079dc79de2", size = 250910, upload-time = "2024-06-28T14:03:41.161Z" },
 ]
 
 [[package]]
@@ -2903,7 +2936,7 @@ wheels = [
 
 [[package]]
 name = "tau2"
-version = "1.0.1"
+version = "2.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "addict" },
@@ -2918,6 +2951,7 @@ dependencies = [
     { name = "psutil" },
     { name = "python-dotenv" },
     { name = "pyyaml" },
+    { name = "regex" },
     { name = "requests" },
     { name = "rich" },
     { name = "tabulate" },
@@ -2943,9 +2977,11 @@ all = [
     { name = "jiwer" },
     { name = "livekit-agents" },
     { name = "livekit-plugins-deepgram" },
+    { name = "livekit-plugins-elevenlabs" },
     { name = "livekit-plugins-openai" },
     { name = "matplotlib" },
     { name = "openai" },
+    { name = "openpyxl" },
     { name = "plotly" },
     { name = "pre-commit" },
     { name = "pyaudio" },
@@ -2993,12 +3029,16 @@ live = [
     { name = "jiwer" },
     { name = "livekit-agents" },
     { name = "livekit-plugins-deepgram" },
+    { name = "livekit-plugins-elevenlabs" },
     { name = "livekit-plugins-openai" },
     { name = "pyaudio" },
     { name = "pydub" },
     { name = "scipy" },
     { name = "tqdm" },
     { name = "websockets" },
+]
+localization-review = [
+    { name = "openpyxl" },
 ]
 voice = [
     { name = "aiohttp" },
@@ -3012,6 +3052,7 @@ voice = [
     { name = "jiwer" },
     { name = "livekit-agents" },
     { name = "livekit-plugins-deepgram" },
+    { name = "livekit-plugins-elevenlabs" },
     { name = "livekit-plugins-openai" },
     { name = "pyaudio" },
     { name = "pydub" },
@@ -3034,7 +3075,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.115.11" },
     { name = "google-auth", marker = "extra == 'voice'", specifier = ">=2.23.0" },
     { name = "google-cloud-aiplatform", marker = "extra == 'voice'", specifier = ">=1.38.0" },
-    { name = "google-genai", marker = "extra == 'voice'", specifier = ">=2.15.0" },
+    { name = "google-genai", marker = "extra == 'voice'", specifier = ">=2.25.0,<3.0.0" },
     { name = "gymnasium", marker = "extra == 'gym'", specifier = ">=1.2.2" },
     { name = "httpx", specifier = ">=0.24.0" },
     { name = "httpx", extras = ["socks"], marker = "extra == 'live'", specifier = ">=0.24.0" },
@@ -3042,11 +3083,13 @@ requires-dist = [
     { name = "litellm", specifier = ">=1.80.15,<1.82.7" },
     { name = "livekit-agents", marker = "extra == 'voice'", specifier = ">=1.5.0" },
     { name = "livekit-plugins-deepgram", marker = "extra == 'voice'", specifier = ">=1.5.0" },
+    { name = "livekit-plugins-elevenlabs", marker = "extra == 'voice'", specifier = ">=1.5.0" },
     { name = "livekit-plugins-openai", marker = "extra == 'voice'", specifier = ">=1.5.0" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "matplotlib", marker = "extra == 'experiments'", specifier = ">=3.10.1" },
     { name = "numpy", specifier = ">=1.24.0" },
     { name = "openai", marker = "extra == 'knowledge'", specifier = ">=1.0.0" },
+    { name = "openpyxl", marker = "extra == 'localization-review'", specifier = ">=3.1.5,<4" },
     { name = "pandas", specifier = ">=2.2.3" },
     { name = "plotly", marker = "extra == 'experiments'", specifier = ">=6.0.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.0.0" },
@@ -3058,6 +3101,7 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "pyyaml", specifier = ">=6.0.2" },
     { name = "rank-bm25", marker = "extra == 'knowledge'", specifier = ">=0.2.2" },
+    { name = "regex", specifier = ">=2024.11.6" },
     { name = "requests", specifier = ">=2.31.0" },
     { name = "rich" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.9.1" },
@@ -3066,7 +3110,7 @@ requires-dist = [
     { name = "seaborn", marker = "extra == 'experiments'", specifier = ">=0.13.2" },
     { name = "tabulate", specifier = ">=0.9.0" },
     { name = "tau2", extras = ["voice"], marker = "extra == 'live'" },
-    { name = "tau2", extras = ["voice", "live", "knowledge", "gym", "dev", "experiments"], marker = "extra == 'all'" },
+    { name = "tau2", extras = ["voice", "live", "knowledge", "gym", "dev", "experiments", "localization-review"], marker = "extra == 'all'" },
     { name = "tenacity", specifier = ">=9.0.0" },
     { name = "toml", specifier = ">=0.10.2" },
     { name = "tqdm", marker = "extra == 'voice'", specifier = ">=4.0" },
@@ -3074,7 +3118,7 @@ requires-dist = [
     { name = "uvicorn", specifier = ">=0.34.0" },
     { name = "websockets", marker = "extra == 'voice'", specifier = ">=13.0" },
 ]
-provides-extras = ["live", "voice", "knowledge", "gym", "dev", "experiments", "all"]
+provides-extras = ["localization-review", "live", "voice", "knowledge", "gym", "dev", "experiments", "all"]
 
 [[package]]
 name = "tenacity"

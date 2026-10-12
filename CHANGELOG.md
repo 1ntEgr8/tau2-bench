@@ -17,6 +17,84 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+## [2.0.0] - Unreleased
+
+> **⚠️ Scoring change — scores are not comparable with 1.x.** Communication checks,
+> NL-assertion judging, tool-argument lookup and the English prompts all changed.
+> Re-run rather than compare 1.x results against 2.0 numbers.
+
+### Added
+- Multilingual text and voice runs: `--language` selects a language pack
+  (`en`, `es`, `pt`, `hi`, `zh`, `ko`) with a localized database and tasks for
+  airline, retail and telecom. See `docs/language-packs.md`.
+- Released benchmark manifests `voice` and `text` (18 cells each, frozen 50-task
+  subsets) and the `tau2 benchmarks list` / `tau2 benchmarks pin` verbs.
+- `tau2 factory` language-authoring verbs (`init-request`, `approve`,
+  `refresh-regional-bundle`, …); see `docs/language-authoring.md`.
+- `tau2 judges`: post-hoc judge suite (not part of the reward) and the public
+  judge-authoring path. Greeting and transfer turns are excluded from judging.
+- Draft regional localization maps for `banking_knowledge` and `intake` in every
+  non-English pack, authored through `tau2 factory` (not yet in a benchmark manifest).
+- Reviewed language-specific naturalness criteria candidates for the judge catalog
+  (drafts; not yet active judges).
+- `tau2.task_subsets`: frozen canonical task frames and immutable subset draws
+  (e.g. `retail_50`) used by the benchmark manifests.
+- `TAU2_VOICE_ID_<LANG>_<PERSONA>` environment overrides for persona voices.
+- Key-free pytest CI workflow and a `slow` marker for full-bundle tests.
+
+### Changed
+- **Every run resolves a language pack.** No `--language` is identical to
+  `--language en`; English prompts (personas, agent language clause, persona
+  gender line) now come from the English pack.
+- **Communication checks are LLM-judged for every run** (`CommunicateScoring`
+  is semantic by default; substring matching only when requested). The judge
+  model (`gpt-5.5`, `reasoning_effort: low`) and prompt version are saved with
+  the run and reused by `tau2 evaluate-trajs`.
+- User-simulator guidelines (`language-guidelines-v4`, text and voice) tell the
+  caller to keep multi-part entity values such as addresses in the task's order.
+- NL-assertion judge is `gpt-5.4-mini-2026-03-17` with `reasoning_effort: low`
+  (was `gpt-4.1` at temperature 0).
+- Retail user lookups fold case and diacritics and raise on ambiguous matches.
+- Under evaluation type `ALL`, communication is scored only when `COMMUNICATE`
+  is in the task's `reward_basis`; otherwise `communicate_checks` is `None`.
+- Voice user-simulator decision model is `gpt-5.4-mini-2026-03-17` with
+  `reasoning_effort: low` (was `gpt-4.1`).
+- The Gymnasium environments build simulations through the same text-run path:
+  they resolve a language pack (English by default) and accept `language` and
+  `communicate_scoring`.
+- Saved results record the simulator guideline scaffold version, and benchmark
+  pins include it; `tau2 benchmarks pin` refuses changed pins without a new
+  `--revision`.
+- Voice agent instructions use prompt `voice-instructions-v2`.
+- `--audio-native` defaults to `--benchmark voice`; text runs are custom unless
+  `--benchmark text` is given.
+- `gpt-5*` models are always routed through the OpenAI Responses API.
+- Language pack schema v3: mode-neutral packs with a `voice:` section; spoken-call-only
+  persona behavior lives in `voice.pragmatics_clauses` and never reaches text runs.
+- Judge catalog `validated-measures-v4`; judge `call_name`s renamed.
+- Persona voice seeds use stable SHA-256 hashing.
+- Default OpenAI live model is `gpt-live-1`.
+- A language pack may bind a registry domain with `task_metadata_file` alone; the
+  English airline binding now uses the registry tasks directly.
+- Regional caller emails use the language's reviewed mailbox domain.
+- The `es`/`hi`/`ko`/`pt`/`zh` retail and airline bundles are rebuilt from the
+  reconciled address and entity maps (benchmark manifests pinned as
+  `regional-release-data-v16`); the newly reconciled names still await native review.
+
+### Removed
+- `tau2.agent.base.streaming_utils` and its re-exports from `tau2.agent`; the
+  transcript helpers (`extract_message_uuid`, `merge_audio_script_gold`,
+  `extract_gold_text`, `format_transcript_comparison`, …) live in
+  `tau2.utils.transcript.audio_text`.
+- `tau2.voice_config.BACKCHANNEL_PHRASES`; backchannel phrases come from each
+  language pack's persona `voice:` section.
+- Cascaded and live config models moved to `tau2.data_model.cascaded` and
+  `tau2.data_model.live_config`.
+- `data/tau2/user_simulator/simulation_guidelines*.md`, replaced by
+  `tau2.user.guidelines`.
+- `data/tau2/multilingual/en/airline_tasks_en.json` (identical to the registry
+  airline tasks).
+
 ## [1.0.1] - 2026-07-15
 
 > **⚠️ Grading change — banking_knowledge scores are not comparable across this release.**

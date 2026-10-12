@@ -22,6 +22,7 @@ from tau2.config import (
     DEFAULT_GEMINI_TRANSCRIPTION_LANGUAGE_CODES,
     DEFAULT_GEMINI_VOICE,
 )
+from tau2.data_model.language import cross_lingual
 from tau2.environment.tool import Tool
 from tau2.utils.retry import websocket_retry
 from tau2.voice.audio_native.gemini.events import (
@@ -38,6 +39,7 @@ from tau2.voice.audio_native.gemini.events import (
     GeminiUnknownEvent,
     GeminiUsageEvent,
 )
+from tau2.voice.audio_native.languages import gemini_language_code
 
 load_dotenv()
 
@@ -46,6 +48,24 @@ GEMINI_INPUT_SAMPLE_RATE = DEFAULT_GEMINI_INPUT_SAMPLE_RATE
 GEMINI_OUTPUT_SAMPLE_RATE = DEFAULT_GEMINI_OUTPUT_SAMPLE_RATE
 GEMINI_INPUT_BYTES_PER_SECOND = GEMINI_INPUT_SAMPLE_RATE * 2  # 16-bit = 2 bytes
 GEMINI_OUTPUT_BYTES_PER_SECOND = GEMINI_OUTPUT_SAMPLE_RATE * 2
+
+
+def gemini_speech_language_code(model: str, language: Optional[str]) -> Optional[str]:
+    """Return a speech language only for the documented half-cascade model.
+
+    Native-audio models do not support an explicit speech language code:
+    https://ai.google.dev/gemini-api/docs/live-api/capabilities
+    The half-cascade model documents this setting here:
+    https://cloud.google.com/vertex-ai/generative-ai/docs/live-api/configure-language-voice?hl=pt-br
+    Unknown models omit it rather than assuming that they accept this field.
+    """
+    if model.rsplit("/", 1)[-1] != "gemini-live-2.5-flash":
+        return None
+    return (
+        gemini_language_code(language)
+        if language is not None and cross_lingual(language)
+        else None
+    )
 
 
 class GeminiVADMode(str, Enum):
@@ -123,9 +143,17 @@ class GeminiLiveProvider:
         return "gemini-3.1" in model.lower()
 
     @staticmethod
+    def _uses_extended_thinking(model: str) -> bool:
+        """Return whether Live uses asynchronous interaction boundaries."""
+        return "gemini-3.8-live-extended-thinking" in model.lower()
+
+    @staticmethod
     def _supports_proactive_audio(model: str) -> bool:
         """Return whether the given Gemini model supports proactive audio."""
-        return not GeminiLiveProvider._is_gemini_31(model)
+        return not (
+            GeminiLiveProvider._is_gemini_31(model)
+            or GeminiLiveProvider._uses_extended_thinking(model)
+        )
 
     @staticmethod
     def _uses_eap_input_path(model: str) -> bool:
@@ -281,6 +309,9 @@ class GeminiLiveProvider:
             )
 
         self.reasoning_effort = reasoning_effort
+        self._explicit_transcription_language_codes = (
+            transcription_language_codes is not None
+        )
         self.transcription_language_codes = (
             transcription_language_codes
             if transcription_language_codes is not None
@@ -363,6 +394,7 @@ class GeminiLiveProvider:
         vad_config: Optional[GeminiVADConfig] = None,
         modality: str = "audio",
         voice: Optional[str] = None,
+        language: Optional[str] = None,
         _resumption_handle: Optional[str] = None,
     ) -> None:
         """Connect to the Gemini Live API and configure the session.
@@ -375,6 +407,8 @@ class GeminiLiveProvider:
                 - "audio": Audio input and audio output.
                 - "text": Text-only output (audio input still supported).
             voice: Voice name for audio output. Defaults to DEFAULT_VOICE.
+            language: Resolved run language; speech-language codes are sent only
+                for the documented half-cascade model, never native audio.
             _resumption_handle: Internal parameter for session resumption.
                 Pass the handle from a previous session to resume it.
             proactive_audio: If True, allow model to ignore irrelevant audio input.
@@ -398,6 +432,7 @@ class GeminiLiveProvider:
             "vad_config": vad_config,
             "modality": modality,
             "voice": voice,
+            "language": language,
         }
 
         # Reset resumption count on fresh connect (not a resumption)
@@ -434,13 +469,17 @@ class GeminiLiveProvider:
 
             # Add speech config for audio modality
             if modality == "audio":
-                config_kwargs["speech_config"] = types.SpeechConfig(
+                speech_config = types.SpeechConfig(
                     voice_config=types.VoiceConfig(
                         prebuilt_voice_config=types.PrebuiltVoiceConfig(
                             voice_name=voice
                         )
                     )
                 )
+                language_code = gemini_speech_language_code(self.model, language)
+                if language_code is not None:
+                    speech_config.language_code = language_code
+                config_kwargs["speech_config"] = speech_config
 
             # Add tools if any
             if tool_declarations:
@@ -473,13 +512,14 @@ class GeminiLiveProvider:
                         f"({self._resumption_count}/{self._max_resumptions})"
                     )
 
-            # Enable input audio transcription with default language hint (en-US).
+            transcription_codes = self.transcription_language_codes
+            if language is not None and not self._explicit_transcription_language_codes:
+                transcription_codes = [gemini_language_code(language)]
+            # Speech generation and input transcription have separate hint support.
             if vad_config.enable_input_transcription:
                 config_kwargs["input_audio_transcription"] = (
-                    types.AudioTranscriptionConfig(
-                        language_codes=self.transcription_language_codes
-                    )
-                    if self.transcription_language_codes
+                    types.AudioTranscriptionConfig(language_codes=transcription_codes)
+                    if transcription_codes
                     else types.AudioTranscriptionConfig()
                 )
 
@@ -804,6 +844,11 @@ class GeminiLiveProvider:
         from google.genai import types
 
         formatted_tools = []
+        behavior = (
+            types.Behavior.NON_BLOCKING
+            if self._uses_extended_thinking(self.model)
+            else None
+        )
         for tool in tools:
             schema = tool.openai_schema
             parameters = schema["function"]["parameters"]
@@ -815,6 +860,7 @@ class GeminiLiveProvider:
                         name=schema["function"]["name"],
                         description=schema["function"]["description"],
                         parametersJsonSchema=parameters,
+                        behavior=behavior,
                     )
                 )
             else:
@@ -828,6 +874,7 @@ class GeminiLiveProvider:
                         name=schema["function"]["name"],
                         description=schema["function"]["description"],
                         parameters=parameters,
+                        behavior=behavior,
                     )
                 )
         return formatted_tools
@@ -1407,6 +1454,7 @@ class GeminiLiveProvider:
             if (
                 hasattr(server_content, "turn_complete")
                 and server_content.turn_complete
+                and not self._uses_extended_thinking(self.model)
             ):
                 events.append(GeminiTurnCompleteEvent(type="turn.complete"))
             # Check for output transcription (what Gemini said)
@@ -1443,6 +1491,16 @@ class GeminiLiveProvider:
 
         # If no events were extracted, return unknown event with debug info
         if not events:
+            server_content = getattr(response, "server_content", None)
+            if (
+                self._uses_extended_thinking(self.model)
+                and server_content
+                and (
+                    getattr(server_content, "turn_complete", False)
+                    or getattr(server_content, "interaction_status", None) is not None
+                )
+            ):
+                return events
             response_type = type(response).__name__
             logger.debug(f"Unknown Gemini response type: {response_type}")
             events.append(

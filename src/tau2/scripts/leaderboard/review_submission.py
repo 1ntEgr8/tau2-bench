@@ -407,6 +407,28 @@ def main():
     console.print(f"  Submission dir: {submission_dir}")
     console.print(f"  Trajectory source: {source}")
 
+    submission_path = submission_dir / SUBMISSION_FILE_NAME
+    if (
+        submission_path.is_file()
+        and json.loads(submission_path.read_text()).get("format") == "voice-v2"
+    ):
+        if args.upload or args.verify_only:
+            raise ValueError(
+                "Voice V2 needs a versioned S3 publisher; the flat-domain upload "
+                "and remote verification paths cannot be used"
+            )
+        from tau2.scripts.leaderboard.voice_v2_publication import (
+            validate_voice_v2_package,
+        )
+
+        if source.resolve() != submission_dir.resolve():
+            raise ValueError(
+                "Voice V2 review requires the self-contained package as trajectory source"
+            )
+        validate_voice_v2_package(source)
+        console.print("Voice V2 package validated offline")
+        return
+
     # Step 1: Load submission.json
     console.print("\n[bold]Step 1: Loading submission.json...[/bold]")
     submission = _load_submission(submission_dir, console)

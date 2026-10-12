@@ -1,3 +1,4 @@
+import json
 import math
 import shutil
 from datetime import date
@@ -138,6 +139,65 @@ def validate_submission_traj_set(
         tuple[bool, str]: True if the submission set is valid, False otherwise
     """
     domain_names = set()
+    voice_v1 = any(
+        result.info.benchmark is not None
+        and result.info.benchmark.benchmark_version == "voice-v1"
+        for result in all_results
+    )
+    if voice_v1:
+        from tau2.runner.presets import load_frame
+
+        first = next(
+            result.info.benchmark
+            for result in all_results
+            if result.info.benchmark is not None
+            and result.info.benchmark.benchmark_version == "voice-v1"
+        )
+        if not first.trials:
+            return False, "Voice V1 trajectory has no recorded trials"
+        frame = load_frame("voice-v1", num_trials=len(first.trials))
+        cells = {(cell.language, cell.domain): cell for cell in frame.cells}
+        for results in all_results:
+            recorded = results.info.benchmark
+            if recorded is None or recorded.benchmark_version != "voice-v1":
+                return False, "Voice V1 submissions cannot mix benchmark modes"
+            cell = cells.get((recorded.language, recorded.domain))
+            if (
+                cell is None
+                or recorded.frame_revision != frame.revision
+                or recorded.binding_revision != cell.binding_revision
+                or recorded.canonical_task_ids != cell.canonical_task_ids
+                or recorded.selected_task_ids != cell.canonical_task_ids
+                or recorded.trials != frame.trials
+                or results.info.environment_info.domain_name != recorded.domain
+                or results.info.language != "en"
+            ):
+                return (
+                    False,
+                    "Voice V1 trajectory differs from the released English frame",
+                )
+            task_ids = [task.id for task in results.tasks]
+            if (
+                len(task_ids) != len(set(task_ids))
+                or len(task_ids) != len(cell.canonical_task_ids)
+                or set(task_ids) != set(results.info.language_tasks)
+            ):
+                return False, "Voice V1 trajectory has an incomplete task population"
+            if {
+                context.canonical_task_id
+                for context in results.info.language_tasks.values()
+                if context.canonical_task_id in cell.canonical_task_ids
+            } != set(cell.canonical_task_ids):
+                return False, "Voice V1 trajectory lacks canonical task provenance"
+            observed = {(run.task_id, run.trial) for run in results.simulations}
+            expected = {
+                (task_id, trial) for task_id in task_ids for trial in frame.trials
+            }
+            if observed != expected or len(observed) != len(results.simulations):
+                return (
+                    False,
+                    "Voice V1 trajectory must contain exactly one result per task/trial",
+                )
     for results in all_results:
         domain = results.info.environment_info.domain_name
         if domain in domain_names:
@@ -169,6 +229,16 @@ def validate_submission(
     """
     Validate the submission.
     """
+    submission_path = Path(submission_dir) / SUBMISSION_FILE_NAME
+    if (
+        submission_path.is_file()
+        and json.loads(submission_path.read_text()).get("format") == "voice-v2"
+    ):
+        from tau2.scripts.leaderboard.voice_v2_publication import (
+            validate_voice_v2_package,
+        )
+
+        return validate_voice_v2_package(Path(submission_dir))
     console = Console()
     console.print("🔍 Validating submission...", style="bold blue")
     console.print(f"📂 Submission directory: {submission_dir}", style="bold")
@@ -937,3 +1007,39 @@ def prepare_submission(
         f"[bold]{manifest_array}[/bold] array in manifest.json"
     )
     console.print("  5. Submit a pull request")
+
+
+def prepare_benchmark_submission(
+    root: Path, output: Path, preset: str | None = None
+) -> None:
+    """Export a complete frozen matrix; retain originals for independent validation."""
+    from tau2.data_model.benchmark import BenchmarkFrame
+    from tau2.metrics.benchmark import export_submission
+    from tau2.runner.presets import infer_preset, verify_frame
+
+    frame = BenchmarkFrame.model_validate_json(
+        (root / "benchmark-frame.json").read_text()
+    )
+    preset = infer_preset(frame, preset)
+    verify_frame(frame, preset)
+    submission = export_submission(root, frame, require_complete=True)
+    output.mkdir(parents=True, exist_ok=True)
+    destination = output / "benchmark-submission.json"
+    destination.write_text(submission.model_dump_json(indent=2) + "\n")
+    print(f"Saved {destination}")
+
+
+def validate_benchmark_submission(
+    directory: Path, results: Path, preset: str | None = None
+):
+    """Recompute a submission from original saved results and installed release data."""
+    from tau2.metrics.benchmark import export_submission, load_submission
+    from tau2.runner.presets import infer_preset, verify_frame
+
+    submission = load_submission(directory / "benchmark-submission.json")
+    preset = infer_preset(submission.frame, preset)
+    verify_frame(submission.frame, preset)
+    expected = export_submission(results, submission.frame, require_complete=True)
+    if expected != submission:
+        raise ValueError("Submission differs from original saved result evidence")
+    return expected

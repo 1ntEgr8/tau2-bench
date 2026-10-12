@@ -23,7 +23,7 @@ tau2 run \
 
 | Option | Description |
 |--------|-------------|
-| `--domain`, `-d` | Domain to evaluate: `airline`, `retail`, `telecom`, `mock`, `banking_knowledge` |
+| `--domain`, `-d` | Domain to evaluate, including `airline`, `retail`, `telecom`, `mock`, `banking_knowledge`, and `intake`; see `tau2 run --help` for registered choices |
 | `--agent-llm` | LLM model for the agent |
 | `--user-llm` | LLM model for the user simulator |
 | `--agent-llm-args` | JSON dict of extra args for agent LLM (e.g. `'{"temperature": 0.5}'`) |
@@ -60,6 +60,48 @@ tau2 run \
 | `--audio-taps` | Save WAV files at each pipeline stage for debugging (requires `--audio-native`) |
 | `--retrieval-config` | Retrieval configuration for `banking_knowledge` domain (e.g., `alltools`, `bm25`, `terminal_use`) |
 | `--retrieval-config-kwargs` | JSON arguments for the retrieval config constructor (e.g., `'{"top_k": 10}'`) |
+| `--elicitation-strategy` | Intake only: `agent_directed` (default) or the `scaffolded` ablation |
+| `--complication-rate` | Intake only: stimulus-rate scaling from `0` to `1`; defaults to `1` for both strategies. Infeasible kinds can still yield clean calls at rate `1`; `0` disables complications |
+
+Use `--domain intake` for elicitation and add `--elicitation-strategy scaffolded`
+for its scaffolded ablation. Both use the `intake` task set. Agent-directed runs
+require voice. See the [elicitation guide](elicitation.md) for caller defaults,
+task selection, complication sampling, and recorded conditions.
+Complication kinds use fixed catalog weights, with at most one sampled per
+call. Both easy and hard task tiers are included by default; `--task-ids`
+selects explicit tasks.
+
+### Pass^3 runners
+
+`tau2 run-pass3` defaults to three ordinary trials per task and uses the normal
+`pass_hat_3` metric. It accepts the same domain and task selection as `tau2 run`,
+including text and voice domains:
+
+```bash
+tau2 run-pass3 --domain airline --num-tasks 5 --save-to airline_pass3
+```
+
+For a voice condition cross, opt in with `--pass3-mode crossed`. This is available
+to any voice domain, including intake; it runs one trial per task in each of
+three pinned conditions: R (regular channel and speech), C (heavy channel and
+light speech), and S (light channel and heavy speech). The result is the share
+of tasks passed in **all three** conditions. It is a different metric from
+the generic repeated-trial `pass_hat_3` and must not be pooled with it.
+
+```bash
+tau2 run-pass3 --pass3-mode crossed --audio-native --benchmark none \
+  --domain intake --task-ids intake_addresses_easy_01 --save-to intake_rcs \
+  --audio-native-model gpt-realtime-2 --reasoning-effort low --dry-run
+```
+
+Remove `--dry-run` to launch. Each condition has its own resumable results
+directory (`<save-to>_regular`, `<save-to>_channel_heavy`, and
+`<save-to>_speech_heavy`); a validated summary is written to
+`data/simulations/<save-to>_pass3.json` only when all three finish. The command
+requires `--save-to` for crossed runs. The R/C/S catalog, seeds, and effects
+are versioned in `tau2.runner.pass3`. The three calls share the same run seed,
+task framing, and caller assignment; only voice sampling uses each condition's
+catalog seed.
 
 ### Audio Native Options
 
@@ -69,7 +111,7 @@ tau2 run \
 | `--audio-native-provider` | `openai` | Provider: `openai`, `gemini`, `xai` |
 | `--audio-native-model` | *(per-provider)* | Model to use (defaults to provider-specific model if not set) |
 | `--tick-duration` | `0.2` | Tick duration in seconds (simulation timestep) |
-| `--max-steps-seconds` | `600` | Maximum conversation duration in seconds |
+| `--max-steps-seconds` | `600` (`240` for elicitation) | Maximum conversation duration in seconds |
 | `--speech-complexity` | `regular` | Speech complexity: `control`, `regular`, or ablation variants (`control_audio`, `control_accents`, `control_behavior`, `control_audio_accents`, `control_audio_behavior`, `control_accents_behavior`) |
 | `--pcm-sample-rate` | `16000` | User simulator PCM synthesis rate |
 | `--telephony-rate` | `8000` | API/agent telephony rate |
@@ -112,6 +154,15 @@ tau2 run --domain banking_knowledge --retrieval-config openai_embeddings_reranke
   --agent-llm gpt-4.1 --user-llm gpt-4.1 --num-tasks 5
 ```
 
+
+---
+
+## `tau2 intake-tasks` — Reproduce Elicitation Tasks
+
+Optional maintainer commands reproduce and verify the checked-in `intake`
+tasks. Run `tau2 intake-tasks --help` or see
+[task reproduction](elicitation.md#reproduce-and-verify-the-frozen-tasks) for
+usage and provenance. Ordinary evaluations use the shipped tasks directly.
 
 ---
 
@@ -256,6 +307,35 @@ tau2 leaderboard
 
 ---
 
+## Released voice benchmark defaults
+
+```bash
+tau2 run --audio-native --audio-native-model gpt-realtime-2 --reasoning-effort minimal --dry-run
+tau2 run --audio-native --audio-native-model gpt-realtime-2 --reasoning-effort minimal \
+  --domain retail --num-tasks 2 --save-to voice-sample
+tau2 run --audio-native --audio-native-model gpt-realtime-2 --reasoning-effort minimal \
+  --benchmark none --domain intake --num-tasks 2
+tau2 view --file data/simulations/voice-sample
+```
+
+Audio-native runs default to the released language/domain matrix. Installed packs
+outside its manifest do not change the default or overall score. Repeat `--language`
+and `--domain` to filter; task limits sample the frozen domain subsets consistently
+across languages. Custom/text runs remain single-domain. See [benchmark runs](benchmark-runs.md)
+for settings, workers, resume, scope-specific scores and submission.
+
+Language runs use the published regional database, tasks and policy by default.
+For a canonical-scenario comparison that keeps the selected spoken language, use:
+
+```bash
+tau2 run --audio-native --benchmark none --domain retail --language ko --no-localize-db
+tau2 languages render-prompts --language ko --domain retail --no-localize-db --output ./canonical-prompts
+```
+
+The released benchmark requires its pinned regional scenarios. Canonical mode is
+an explicit custom run, with its mode and complete scenario fingerprints recorded
+in results. Resume and re-evaluation reject changed scenario data or runtime rules.
+
 ## `tau2 submit` — Leaderboard Submission
 
 See the full [Leaderboard Submission Guide](leaderboard-submission.md).
@@ -263,6 +343,10 @@ See the full [Leaderboard Submission Guide](leaderboard-submission.md).
 ```bash
 # Prepare a submission
 tau2 submit prepare <paths...> --output ./my_submission
+
+# Export a complete frozen benchmark matrix; validates saved task rewards.
+tau2 submit prepare ./voice-run --benchmark voice --output ./voice-submission
+tau2 submit validate ./voice-submission --benchmark voice --results ./voice-run
 
 # Prepare a voice submission (auto-detected, or force with --voice)
 tau2 submit prepare <paths...> --output ./my_submission --voice

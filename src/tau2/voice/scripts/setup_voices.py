@@ -35,6 +35,9 @@ import time
 from dotenv import load_dotenv
 from loguru import logger
 
+from tau2.data_model.voice import VoiceCreateRequest, VoiceDesignRequest
+from tau2.voice.elevenlabs_operations import create_voice, design_voice
+
 load_dotenv()
 
 SAMPLE_TEXT = (
@@ -218,37 +221,42 @@ def setup_voices(
                 print("  Creating duplicate.")
 
         try:
-            result = client.text_to_voice.design(
-                voice_description=persona.prompt,
-                text=SAMPLE_TEXT,
-                model_id=model,
-                loudness=VOICE_DESIGN_LOUDNESS,
-                guidance_scale=VOICE_DESIGN_GUIDANCE_SCALE,
-                seed=seed,
-                auto_generate_text=False,
+            previews = design_voice(
+                client,
+                VoiceDesignRequest(
+                    description=persona.prompt,
+                    text=SAMPLE_TEXT,
+                    model=model,
+                    loudness=VOICE_DESIGN_LOUDNESS,
+                    guidance_scale=VOICE_DESIGN_GUIDANCE_SCALE,
+                    seed=seed,
+                ),
             )
 
-            if not result.previews:
+            if not previews:
                 print(f"  ERROR: No previews returned for {persona.display_name}")
                 continue
 
-            selected_preview = result.previews[0]
+            selected_preview = previews[0]
             print(
-                f"  Generated {len(result.previews)} preview(s), "
+                f"  Generated {len(previews)} preview(s), "
                 f"using first: {selected_preview.generated_voice_id}"
             )
 
             if preview:
                 _play_preview(selected_preview)
 
-            voice = client.text_to_voice.create(
-                voice_name=voice_name,
-                voice_description=persona.short_description,
-                generated_voice_id=selected_preview.generated_voice_id,
+            voice_id = create_voice(
+                client,
+                VoiceCreateRequest(
+                    name=voice_name,
+                    description=persona.short_description,
+                    generated_voice_id=selected_preview.generated_voice_id,
+                ),
             )
 
-            created_voices[persona.name] = voice.voice_id
-            print(f"  Saved as voice_id: {voice.voice_id}")
+            created_voices[persona.name] = voice_id
+            print(f"  Saved as voice_id: {voice_id}")
             print()
 
             if i < len(personas):

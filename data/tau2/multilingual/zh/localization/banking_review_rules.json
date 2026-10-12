@@ -1,0 +1,193 @@
+{
+  "schema_version": "banking-candidate-review-rules-v1",
+  "language": "zh",
+  "country_code": "CN",
+  "country_name": "China",
+  "language_name": "Mandarin Chinese",
+  "discovery_version": "banking-source-entities-v2",
+  "entity_version": "banking-regional-entities-v6",
+  "discovery_call_name": "banking_entity_discovery",
+  "entity_call_name": "banking_entity_revision",
+  "phone_pattern": "1[3-9][0-9]{9}",
+  "phone_role": "personal contact; source has no explicit landline or switchboard label",
+  "imported_street_pattern": "Elm|Cedar|Hickory|Willow|Highland|Hillcrest|Lakeview|Spruce|Broadway|.*",
+  "name_role_evidence": {
+    "kenji tanaka": "Explicit source says his account: male customer.",
+    "sofia papadopoulos": "Explicit source says single mother: adult woman.",
+    "catherine wells": "Explicit source says available to her: woman.",
+    "sofia martinez": "Explicit source says 16-year-old daughter: teenage girl. Use the supplied father-family token."
+  },
+  "family_sources": {
+    "sofia martinez": "David Martinez"
+  },
+  "organization_aliases": [
+    [
+      "Comcast",
+      "XFINITY"
+    ],
+    [
+      "Trader Joe's",
+      "Trader Joes"
+    ]
+  ],
+  "organization_review_sources": [
+    "Delta Airlines",
+    "SuperGaming Online",
+    "Chipotle",
+    "Nobu Restaurant",
+    "Target - Eco Collection",
+    "Salt & Straw",
+    "Sushi Kashiba"
+  ],
+  "source_aliases": {
+    "AT&T WIRELESS": "AT&T",
+    "COMCAST XFINITY": "Comcast",
+    "COMCAST CABLE": "Comcast",
+    "AMAZON.COM": "Amazon",
+    "AMAZON MARKETPLACE": "Amazon",
+    "AMAZON DIGITAL": "Amazon",
+    "SPOTIFY USA": "Spotify",
+    "SPOTIFY PREMIUM": "Spotify",
+    "Spotify Premium": "Spotify",
+    "Amazon Prime": "Amazon",
+    "AMAZON PRIME": "Amazon",
+    "CHEESECAKE FACTORY": "The Cheesecake Factory",
+    "COSTCO WHOLESALE": "Costco",
+    "TARGET STORE": "Target",
+    "TARGET STORES": "Target",
+    "WHOLE FOODS MKT": "Whole Foods Market",
+    "WHOLE FOODS": "Whole Foods Market",
+    "Whole Foods": "Whole Foods Market",
+    "TRADER JOES": "Trader Joe's",
+    "REI": "REI Co-op",
+    "PECO": "PECO Energy",
+    "Delta": "Delta Airlines",
+    "Apple": "Apple Store",
+    "Tesla": "Tesla Supercharger",
+    "Supercharger": "Tesla Supercharger",
+    "Adobe": "Adobe Creative Cloud",
+    "POWELL BOOKS": "Powell's Books",
+    "STAPLES OFFICE SUPPLY": "Staples",
+    "STARBUCKS COFFEE": "Starbucks",
+    "CHIPOTLE MEXICAN GRILL": "Chipotle",
+    "SHELL": "Shell Gas Station",
+    "Marriott hotel": "Marriott Hotels",
+    "CHEVRON GAS STATION": "CHEVRON",
+    "CHEVRON GAS": "CHEVRON",
+    "BELLAS BISTRO": "Bella's Bistro",
+    "TECHWORLD": "TechWorld Electronics",
+    "FITLIFE": "FitLife Premium",
+    "CRYPTOGEMS STORE ONLINE": "CryptoGems Store",
+    "SUPPLYPRO": "SupplyPro Wholesale",
+    "SABORES DEL SOL LLC": "Sabores del Sol",
+    "TECHFLOW": "TechFlow Labs",
+    "Ember's": "Ember Analytics",
+    "SAFEWAY GROCERY": "Safeway",
+    "CHASE ATM": "CHASE BANK",
+    "Chase ATM": "CHASE BANK",
+    "QUICKCASH": "QuickCash ATM",
+    "STATE FARM": "STATE FARM INSURANCE",
+    "3RD AVE": "3rd Avenue",
+    "FEDERAL BLVD": "Federal Boulevard",
+    "COLORADO BLVD": "Colorado Boulevard",
+    "Colorado Blvd": "Colorado Boulevard",
+    "7-ELEVEN": "7-Eleven",
+    "CHASE": "CHASE BANK",
+    "SHELL OIL": "Shell Gas Station",
+    "CryptoMiner Premium": "CRYPTOMINER PREMIUM"
+  },
+  "protected_sources": {
+    "EveryonePay": "KB-grounded named payment service with account-specific daily limits and transfer exceptions; preserve identity.",
+    "SOCIAL SECURITY": "KB-grounded Social Security direct deposit benefit program; retain US financial program.",
+    "VANGUARD": "401K provider identity; replacing with an Chinese bank would create an unsupported retirement-program equivalence.",
+    "DAD": "Kinship counterparty label, not an incidental named person.",
+    "MOM": "Kinship counterparty label, not an incidental named person.",
+    "JAKE_CRYPTO247": "Literal source payment handle; preserve protocol identifier.",
+    "FIDELITY": "401K provider identity; retain source retirement-program semantics.",
+    "COLORADO STATE TAX": "Source jurisdiction-specific tax payment, not an equivalent Chinese tax regime.",
+    "VENMO": "Named source P2P financial rail; preserve financial mechanics with English KB.",
+    "ZELLE": "Named source P2P financial rail; preserve financial mechanics with English KB.",
+    "Electronics Express Miami": "Foreign fraud merchant explicitly tied to Miami in the source alibi; preserve merchant and location together rather than inventing an Chinese chain overseas branch.",
+    "GamerZone LA": "Foreign fraud merchant explicitly tied to LA in the source alibi; preserve merchant and location together rather than moving the fraud location.",
+    "Electronics Express": "Explicit short alias of protected foreign fraud merchant Electronics Express Miami.",
+    "GamerZone": "Explicit short alias of protected foreign fraud merchant GamerZone LA."
+  },
+  "foreign_atm_country_codes": [
+    "DE",
+    "ES",
+    "FR",
+    "HK",
+    "JP",
+    "KR",
+    "MX",
+    "MY",
+    "SG",
+    "UK"
+  ],
+  "span_overrides": {
+    "prose:a2b3a60055d06b09655f9cbb4703664559e49b4207fee9be0fbcdce7e5feec57": [
+      {
+        "source": "Chicago",
+        "role": "explicit customer home alibi city",
+        "disposition": "address_city",
+        "reference_id": "address:2461b22a31450ccd7cb915495de53b552fd2d793d43942017ff1121a515eaae9",
+        "reason": "Same source customer residence also supplies the fraud alibi. Derive the same localized home city while retaining the distinct remote fraud location."
+      }
+    ],
+    "prose:0c71d005f0862623e0515ded56c9a2446b56e54dec92c0fbc9af282ef98f6eaf": [
+      {
+        "source": "Phoenix",
+        "role": "explicit customer home alibi city",
+        "disposition": "address_city",
+        "reference_id": "address:6051d56b6bb9aee457e7fccbdcf2bfd87412ec5ebc02d7eb810fe8b1d80cfc83",
+        "reason": "Same source customer residence also supplies the fraud alibi. Derive the same localized home city while retaining the distinct remote fraud location."
+      }
+    ],
+    "prose:6eff0f6f01b85b4846b7aab2da19014c01ed9715ee4eec34e5272679e72520f5": [
+      {
+        "source": "Seattle",
+        "role": "explicit customer home alibi city",
+        "disposition": "address_city",
+        "reference_id": "address:c5bdfcf7d5b19a9aa9519cf93fb46b3ca9219dafc2580aaa4d17d9288c98bbf6",
+        "reason": "Same source customer residence also supplies the fraud alibi. Derive the same localized home city while retaining the distinct remote fraud location."
+      }
+    ],
+    "prose:ec227a394f3986bfb1ddf1837fe0167077877f2249f588f922742b5a672e16f2": [
+      {
+        "source": "LA",
+        "role": "ordinary local taxi route origin at customer residence city",
+        "disposition": "address_city",
+        "reference_id": "address:6b228e200b648cc69ee94948a84bf6a1811be66ebb4b4744f249b9ee5592c7ae",
+        "reason": "The source transaction belongs to Somchai Prasert, whose address is Los Angeles. This is an ordinary local taxi trip, not a fee/eligibility/travel rule."
+      },
+      {
+        "source": "SANTA MONICA",
+        "role": "ordinary local taxi route destination locality distinct from origin",
+        "disposition": "generate",
+        "reference_id": null,
+        "reason": "Choose a distinct nearby Chinese destination locality for an ordinary ride within the same metro region as the required origin reference, preserving the two endpoints."
+      }
+    ]
+  },
+  "family_name_position": "first",
+  "compact_family_name_length": 1,
+  "organization_role_evidence": {
+    "chipotle": "Prior candidate romanization contained an impossible pinyin syllable typo; ensure exactly matching ordinary pinyin for the native identity. Preserve casual Mexican-style dining role.",
+    "nobu restaurant": "Prior candidate native Japanese-sushi character and romanization did not consistently identify the same Mandarin name. Use a plausible clearly fictional premium Japanese-cuisine restaurant locally, with exact corresponding Mandarin pinyin; do not assert unsupported established branch.",
+    "sushi kashiba": "Prior candidate uses uncommon Japanese sushi character with ambiguous pronunciation. Prefer natural locally plausible Chinese proper-name orthography for a clearly fictional upscale sushi restaurant and matching Mandarin pinyin.",
+    "target - eco collection": "A source invented eco collection must not be asserted as an established real Chinese department-store collection. Choose an explicitly fictional local green-shopping identity and preserve relationship to parent retailer only when supported.",
+    "salt & straw": "Do not rely on uncertain current operations of a distressed real ice-cream brand; use an explicitly fictional locally plausible distinct ice-cream shop preserving role.",
+    "whole foods market": "Previous generated candidate was City Shop, whose Shanghai stores stopped operating in April2024. Use a clearly fictional local premium fresh-food supermarket identity, distinct from every other generated grocer, not that defunct chain or an unsupported established-store claim.",
+    "techflow labs": "Prior candidate literally inverted the source flow/tech/labs words. Replace the actual proper name with a naturally plausible unrelated Chinese company name, preserving technology industry; do not retain the prior proper-name identity.",
+    "cryptogems store": "Prior candidate translated crypto-chain and gems/diamond components. Replace the proper name entirely with a locally plausible fictional ecommerce brand, preserving source merchant role, not semantic source-name wordplay.",
+    "sabores del sol": "Prior candidate translated the sun/flavor components. Replace the restaurant proper name entirely with a natural fictional Chinese restaurant name, preserving source employer/restaurant role.",
+    "photoworks llc": "Prior candidate is a literal photo/workshop name calque. Use a different locally plausible fictional Chinese proper-name component plus conventional photography industry descriptor.",
+    "cryptominer premium": "Prior candidate uses malformed Chinese blockchain terminology and calques mining/premium as the entire proper name. Use a distinct natural fictional local service proper name plus appropriate technical/subscription descriptor; preserve crypto-service role.",
+    "mcdonald's": "Prior candidate collapsed semantically with another unrelated burger merchant: adding only the generic shop suffix is not a distinct identity. Use a distinct naturally local fictional fast-food business proper name, preserving dining role.",
+    "chase bank": "Keep all source CHASE/CHASE BANK/CHASE ATM aliases as exactly one corresponding local bank identity, distinct from all other banking operators; the short alias must not become a separate issuer.",
+    "santa monica": "Geographic review of the newly model-generated synthetic address identifies the local origin as Fuzhou in Fujian province. Previous candidate Xujiahui is in Shanghai and is geographically wrong despite appending the opaque origin token. Choose a real nearby district/locality within Fuzhou, Fujian, distinct from the city-level origin; retain the exact required origin token. Do not invent a Shanghai district in Fuzhou.",
+    "restaurant depot": "Independent final review: prior Chinese proper-name stem is a restaurant/warehouse semantic mirror of the English source. Replace its actual proper-name component with a distinct natural fictional Chinese business name; keep restaurant-supply wholesale warehouse industry/role without deriving the name from restaurant/depot words. Preserve all unrelated bindings.",
+    "taco bell": "Independent final review: prior Chinese name is an invented pepper/bell semantic mirror of the source brand. Use the established conventional mainland Chinese identity only if genuine local presence is supported, otherwise use an entirely new natural fictional Chinese proper name. Preserve casual Mexican-style fast-food role; do not invent translated bell-name branding.",
+    "morrison marketing llc": "Independent final review: prior Chinese proper-name stem phonetically imitates the foreign Morrison surname. Replace the actual proper-name component with a distinct natural fictional local Chinese identity, preserving marketing agency and payroll-employer roles. Do not keep a shortened phonetic foreign surname."
+  }
+}

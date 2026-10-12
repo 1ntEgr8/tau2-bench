@@ -1,0 +1,1352 @@
+{
+  "$defs": {
+    "BenchmarkFrame": {
+      "additionalProperties": false,
+      "description": "Complete official matrix; selection never redefines its denominator.",
+      "properties": {
+        "benchmark_version": {
+          "description": "Benchmark generation from the published manifest.",
+          "minLength": 1,
+          "title": "Benchmark Version",
+          "type": "string"
+        },
+        "revision": {
+          "description": "Frozen matrix manifest revision.",
+          "minLength": 1,
+          "title": "Revision",
+          "type": "string"
+        },
+        "mode": {
+          "description": "Call mode every cell runs in (text or voice).",
+          "enum": [
+            "text",
+            "voice"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "trials": {
+          "description": "Explicit nonnegative trial indices owed for every task.",
+          "items": {
+            "type": "integer"
+          },
+          "minItems": 1,
+          "title": "Trials",
+          "type": "array"
+        },
+        "cells": {
+          "description": "Complete released language/domain matrix.",
+          "items": {
+            "$ref": "#/$defs/CellFrame"
+          },
+          "minItems": 1,
+          "title": "Cells",
+          "type": "array"
+        }
+      },
+      "required": [
+        "benchmark_version",
+        "revision",
+        "mode",
+        "trials",
+        "cells"
+      ],
+      "title": "BenchmarkFrame",
+      "type": "object"
+    },
+    "BenchmarkSelection": {
+      "additionalProperties": false,
+      "description": "Explicit execution scope, separate from the released score denominator.",
+      "properties": {
+        "cells": {
+          "description": "Requested cells and canonical tasks, in released order.",
+          "items": {
+            "$ref": "#/$defs/CellFrame"
+          },
+          "minItems": 1,
+          "title": "Cells",
+          "type": "array"
+        }
+      },
+      "required": [
+        "cells"
+      ],
+      "title": "BenchmarkSelection",
+      "type": "object"
+    },
+    "BenchmarkSubmission": {
+      "additionalProperties": false,
+      "description": "Portable task-score export; optional diagnostics remain separate artifacts.",
+      "properties": {
+        "schema_version": {
+          "const": "benchmark-submission-v1",
+          "default": "benchmark-submission-v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "frame": {
+          "$ref": "#/$defs/BenchmarkFrame",
+          "description": "Exact versioned scoring population."
+        },
+        "trials": {
+          "description": "Validated saved ordinary task rewards.",
+          "items": {
+            "$ref": "#/$defs/TaskTrial"
+          },
+          "title": "Trials",
+          "type": "array"
+        },
+        "summary": {
+          "$ref": "#/$defs/BenchmarkSummary",
+          "description": "Recomputable task-success coverage and score."
+        },
+        "selection": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BenchmarkSelection"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Recorded cumulative execution scope, if a plan accompanies the results."
+        },
+        "requested": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BenchmarkSummary"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Coverage and scoped score for requested tasks; never the official overall score."
+        },
+        "sources": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Run metadata digests by language/domain; no local paths.",
+          "title": "Sources",
+          "type": "object"
+        }
+      },
+      "required": [
+        "frame",
+        "trials",
+        "summary",
+        "sources"
+      ],
+      "title": "BenchmarkSubmission",
+      "type": "object"
+    },
+    "BenchmarkSummary": {
+      "additionalProperties": false,
+      "description": "Full benchmark score cannot be reported for partial or erroneous coverage.",
+      "properties": {
+        "benchmark_version": {
+          "description": "Benchmark generation from the published manifest.",
+          "minLength": 1,
+          "title": "Benchmark Version",
+          "type": "string"
+        },
+        "frame_revision": {
+          "description": "Frozen matrix revision summarized.",
+          "title": "Frame Revision",
+          "type": "string"
+        },
+        "condition_fingerprint": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Common effective condition identity; absent for empty input.",
+          "title": "Condition Fingerprint"
+        },
+        "expected_trials": {
+          "description": "Trials owed across all cells.",
+          "title": "Expected Trials",
+          "type": "integer"
+        },
+        "scored_trials": {
+          "description": "Trials with usable ordinary rewards.",
+          "title": "Scored Trials",
+          "type": "integer"
+        },
+        "error_trials": {
+          "description": "Explicit errors across cells.",
+          "title": "Error Trials",
+          "type": "integer"
+        },
+        "unscored_trials": {
+          "description": "Stored but unscored trials.",
+          "title": "Unscored Trials",
+          "type": "integer"
+        },
+        "missing_trials": {
+          "description": "Absent expected task/trial units.",
+          "title": "Missing Trials",
+          "type": "integer"
+        },
+        "complete": {
+          "description": "All cells have complete scores.",
+          "title": "Complete",
+          "type": "boolean"
+        },
+        "score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Official equal-cell score; null unless complete.",
+          "title": "Score"
+        },
+        "observed_score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Explicitly partial equal mean of cells with any scored observations.",
+          "title": "Observed Score"
+        },
+        "by_language": {
+          "additionalProperties": {
+            "$ref": "#/$defs/ScoreCoverage"
+          },
+          "description": "Language breakdowns using the declared scope.",
+          "title": "By Language",
+          "type": "object"
+        },
+        "by_domain": {
+          "additionalProperties": {
+            "$ref": "#/$defs/ScoreCoverage"
+          },
+          "description": "Domain breakdowns using the declared scope.",
+          "title": "By Domain",
+          "type": "object"
+        },
+        "cells": {
+          "description": "All cell breakdowns, including empty cells.",
+          "items": {
+            "$ref": "#/$defs/CellSummary"
+          },
+          "title": "Cells",
+          "type": "array"
+        }
+      },
+      "required": [
+        "benchmark_version",
+        "frame_revision",
+        "condition_fingerprint",
+        "expected_trials",
+        "scored_trials",
+        "error_trials",
+        "unscored_trials",
+        "missing_trials",
+        "complete",
+        "score",
+        "observed_score",
+        "by_language",
+        "by_domain",
+        "cells"
+      ],
+      "title": "BenchmarkSummary",
+      "type": "object"
+    },
+    "CellFrame": {
+      "additionalProperties": false,
+      "description": "The canonical task population and artifact revision for one cell.",
+      "properties": {
+        "language": {
+          "description": "Released language identifier.",
+          "minLength": 1,
+          "title": "Language",
+          "type": "string"
+        },
+        "domain": {
+          "description": "Shared benchmark domain.",
+          "minLength": 1,
+          "title": "Domain",
+          "type": "string"
+        },
+        "canonical_task_ids": {
+          "description": "Frozen canonical IDs, in frame order.",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Canonical Task Ids",
+          "type": "array"
+        },
+        "binding_revision": {
+          "description": "Immutable selected task/pack binding revision.",
+          "minLength": 1,
+          "title": "Binding Revision",
+          "type": "string"
+        }
+      },
+      "required": [
+        "language",
+        "domain",
+        "canonical_task_ids",
+        "binding_revision"
+      ],
+      "title": "CellFrame",
+      "type": "object"
+    },
+    "CellSummary": {
+      "additionalProperties": false,
+      "description": "Score and all denominator components for one matrix cell.",
+      "properties": {
+        "language": {
+          "description": "Language identifier.",
+          "minLength": 1,
+          "title": "Language",
+          "type": "string"
+        },
+        "domain": {
+          "description": "Domain identifier.",
+          "minLength": 1,
+          "title": "Domain",
+          "type": "string"
+        },
+        "expected_trials": {
+          "description": "Frozen tasks multiplied by selected trial count.",
+          "title": "Expected Trials",
+          "type": "integer"
+        },
+        "scored_trials": {
+          "description": "Observed trials with usable ordinary task reward.",
+          "title": "Scored Trials",
+          "type": "integer"
+        },
+        "error_trials": {
+          "description": "Explicit infrastructure/evaluator errors.",
+          "title": "Error Trials",
+          "type": "integer"
+        },
+        "unscored_trials": {
+          "description": "Stored trials without an evaluated reward.",
+          "title": "Unscored Trials",
+          "type": "integer"
+        },
+        "missing_trials": {
+          "description": "Expected trials absent from input.",
+          "title": "Missing Trials",
+          "type": "integer"
+        },
+        "complete": {
+          "description": "Every expected task/trial has a usable reward.",
+          "title": "Complete",
+          "type": "boolean"
+        },
+        "score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Equal-task mean only when this cell is complete.",
+          "title": "Score"
+        },
+        "observed_score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Partial mean: available trials within tasks, then available tasks equally.",
+          "title": "Observed Score"
+        }
+      },
+      "required": [
+        "language",
+        "domain",
+        "expected_trials",
+        "scored_trials",
+        "error_trials",
+        "unscored_trials",
+        "missing_trials",
+        "complete",
+        "score",
+        "observed_score"
+      ],
+      "title": "CellSummary",
+      "type": "object"
+    },
+    "MeasureCoverage": {
+      "description": "Coverage and outcome of one call-level measure.",
+      "properties": {
+        "version": {
+          "description": "Version of the derivation rule",
+          "title": "Version",
+          "type": "string"
+        },
+        "passed": {
+          "description": "Scored calls that passed",
+          "minimum": 0,
+          "title": "Passed",
+          "type": "integer"
+        },
+        "failed": {
+          "description": "Scored calls that failed",
+          "minimum": 0,
+          "title": "Failed",
+          "type": "integer"
+        },
+        "unscored": {
+          "description": "Scored calls with insufficient inputs",
+          "minimum": 0,
+          "title": "Unscored",
+          "type": "integer"
+        },
+        "excluded": {
+          "default": 0,
+          "description": "Scored calls excluded by a documented rule",
+          "minimum": 0,
+          "title": "Excluded",
+          "type": "integer"
+        },
+        "pass_rate": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "100 \u00d7 passed / (passed + failed)",
+          "title": "Pass Rate"
+        }
+      },
+      "required": [
+        "version",
+        "passed",
+        "failed",
+        "unscored",
+        "pass_rate"
+      ],
+      "title": "MeasureCoverage",
+      "type": "object"
+    },
+    "Methodology": {
+      "additionalProperties": false,
+      "description": "Information about how the evaluation was conducted.",
+      "properties": {
+        "evaluation_date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Date when evaluation was conducted",
+          "title": "Evaluation Date"
+        },
+        "tau2_bench_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Version of tau-bench used for evaluation",
+          "title": "Tau2 Bench Version"
+        },
+        "user_simulator": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "For text: model name (e.g. 'gpt-4.1-2025-04-14'). For voice: version identifier (e.g. 'v1.0') anchored to git tag voice-user-sim-<version>.",
+          "title": "User Simulator"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Additional notes about the evaluation methodology",
+          "title": "Notes"
+        },
+        "verification": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Verification"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Verification details for result authenticity"
+        }
+      },
+      "title": "Methodology",
+      "type": "object"
+    },
+    "ModelRelease": {
+      "additionalProperties": false,
+      "description": "Information about when and where the model was publicly released.\n\nThis metadata is about the model itself (independent of when it was\nevaluated on tau2-bench), and is used to track model progress over time\non the leaderboard.",
+      "properties": {
+        "release_date": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Public release date of the model (YYYY-MM-DD). Use the date the model was first made publicly available, not the evaluation date.",
+          "title": "Release Date"
+        },
+        "announcement_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "URL to the model's release announcement (blog post, paper, model card, release notes, etc.).",
+          "title": "Announcement Url"
+        },
+        "announcement_title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Title of the release announcement (used as link text in the UI).",
+          "title": "Announcement Title"
+        }
+      },
+      "title": "ModelRelease",
+      "type": "object"
+    },
+    "Reference": {
+      "additionalProperties": false,
+      "description": "A reference link (paper, blog post, github repo, etc.).",
+      "properties": {
+        "title": {
+          "description": "Title or description of the reference",
+          "title": "Title",
+          "type": "string"
+        },
+        "url": {
+          "description": "URL to the reference",
+          "title": "Url",
+          "type": "string"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Type of reference: paper, blog_post, documentation, model_card, github, huggingface, other",
+          "title": "Type"
+        }
+      },
+      "required": [
+        "title",
+        "url"
+      ],
+      "title": "Reference",
+      "type": "object"
+    },
+    "ScoreCoverage": {
+      "additionalProperties": false,
+      "description": "Score and coverage for a language or domain, using equal cell weights.",
+      "properties": {
+        "expected_trials": {
+          "description": "Task/trial units owed by this group.",
+          "title": "Expected Trials",
+          "type": "integer"
+        },
+        "scored_trials": {
+          "description": "Units with usable task rewards.",
+          "title": "Scored Trials",
+          "type": "integer"
+        },
+        "error_trials": {
+          "description": "Recorded infrastructure/evaluation errors.",
+          "title": "Error Trials",
+          "type": "integer"
+        },
+        "unscored_trials": {
+          "description": "Stored units without task rewards.",
+          "title": "Unscored Trials",
+          "type": "integer"
+        },
+        "missing_trials": {
+          "description": "Units absent from saved results.",
+          "title": "Missing Trials",
+          "type": "integer"
+        },
+        "complete": {
+          "description": "Every expected unit has a usable reward.",
+          "title": "Complete",
+          "type": "boolean"
+        },
+        "score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Equal-cell score only when the group is complete.",
+          "title": "Score"
+        },
+        "observed_score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Explicitly partial mean of cells with observed scores.",
+          "title": "Observed Score"
+        }
+      },
+      "required": [
+        "expected_trials",
+        "scored_trials",
+        "error_trials",
+        "unscored_trials",
+        "missing_trials",
+        "complete",
+        "score",
+        "observed_score"
+      ],
+      "title": "ScoreCoverage",
+      "type": "object"
+    },
+    "TaskTrial": {
+      "additionalProperties": false,
+      "description": "One ordinary run observation, with compatibility identity attached.",
+      "properties": {
+        "language": {
+          "description": "Recorded run language.",
+          "minLength": 1,
+          "title": "Language",
+          "type": "string"
+        },
+        "domain": {
+          "description": "Recorded domain.",
+          "minLength": 1,
+          "title": "Domain",
+          "type": "string"
+        },
+        "canonical_task_id": {
+          "description": "Explicit canonical task metadata, not suffix inference.",
+          "title": "Canonical Task Id",
+          "type": "string"
+        },
+        "trial": {
+          "description": "Recorded trial index.",
+          "minimum": 0,
+          "title": "Trial",
+          "type": "integer"
+        },
+        "condition_fingerprint": {
+          "description": "Fingerprint of all effective comparison conditions and task evaluator contract.",
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Condition Fingerprint",
+          "type": "string"
+        },
+        "binding_revision": {
+          "description": "Recorded immutable cell artifact revision.",
+          "title": "Binding Revision",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/TrialStatus",
+          "description": "Task score availability or explicit error state."
+        },
+        "reward": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Ordinary task reward; zero is a scored failure.",
+          "title": "Reward"
+        }
+      },
+      "required": [
+        "language",
+        "domain",
+        "canonical_task_id",
+        "trial",
+        "condition_fingerprint",
+        "binding_revision",
+        "status"
+      ],
+      "title": "TaskTrial",
+      "type": "object"
+    },
+    "TrialStatus": {
+      "description": "Infrastructure/evaluation gaps are separate from ordinary task failure.",
+      "enum": [
+        "scored",
+        "error",
+        "unscored"
+      ],
+      "title": "TrialStatus",
+      "type": "string"
+    },
+    "Verification": {
+      "additionalProperties": false,
+      "description": "Verification details for result authenticity.",
+      "properties": {
+        "modified_prompts": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Whether any modifications were made to user simulator or agent prompts",
+          "title": "Modified Prompts"
+        },
+        "omitted_questions": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Whether any questions/tasks were omitted from the evaluation",
+          "title": "Omitted Questions"
+        },
+        "details": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Additional verification details or explanations",
+          "title": "Details"
+        }
+      },
+      "title": "Verification",
+      "type": "object"
+    },
+    "VoiceConfig": {
+      "additionalProperties": false,
+      "description": "Voice-specific configuration for reproducing audio-native evaluations.",
+      "properties": {
+        "provider": {
+          "description": "Audio-native provider (e.g. 'openai', 'gemini', 'xai')",
+          "title": "Provider",
+          "type": "string"
+        },
+        "model": {
+          "description": "Audio-native model identifier (e.g. 'gpt-realtime-1.5')",
+          "title": "Model",
+          "type": "string"
+        },
+        "tick_duration_seconds": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Duration of each simulation tick in seconds",
+          "title": "Tick Duration Seconds"
+        },
+        "max_steps_seconds": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Maximum simulation duration in seconds",
+          "title": "Max Steps Seconds"
+        },
+        "user_tts_provider": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "User simulator TTS provider and model (e.g. 'elevenlabs/eleven_v3')",
+          "title": "User Tts Provider"
+        },
+        "pipeline": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/VoicePipeline"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Component models used by a cascaded voice pipeline"
+        }
+      },
+      "required": [
+        "provider",
+        "model"
+      ],
+      "title": "VoiceConfig",
+      "type": "object"
+    },
+    "VoicePipeline": {
+      "additionalProperties": false,
+      "description": "Component model identifiers for a cascaded voice submission.",
+      "properties": {
+        "asr": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "ASR / speech-to-text model identifier",
+          "title": "Asr"
+        },
+        "llm": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "LLM model identifier",
+          "title": "Llm"
+        },
+        "tts": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "TTS / speech synthesis model identifier",
+          "title": "Tts"
+        }
+      },
+      "title": "VoicePipeline",
+      "type": "object"
+    },
+    "VoiceV2Benchmark": {
+      "description": "Frozen frame that defines what a Voice V2 score measures.",
+      "properties": {
+        "version": {
+          "const": "voice-v2",
+          "description": "Benchmark version",
+          "title": "Version",
+          "type": "string"
+        },
+        "frame_revision": {
+          "description": "Frozen task-frame revision",
+          "title": "Frame Revision",
+          "type": "string"
+        },
+        "languages": {
+          "description": "Languages included in this submission",
+          "items": {
+            "enum": [
+              "en",
+              "es",
+              "hi",
+              "ko",
+              "pt",
+              "zh"
+            ],
+            "type": "string"
+          },
+          "title": "Languages",
+          "type": "array"
+        },
+        "domains": {
+          "description": "Domains included in this submission",
+          "items": {
+            "enum": [
+              "airline",
+              "retail",
+              "telecom"
+            ],
+            "type": "string"
+          },
+          "title": "Domains",
+          "type": "array"
+        },
+        "task_trials_per_cell": {
+          "description": "Frozen selected task/trial count per cell",
+          "minimum": 1,
+          "title": "Task Trials Per Cell",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "version",
+        "frame_revision",
+        "languages",
+        "domains",
+        "task_trials_per_cell"
+      ],
+      "title": "VoiceV2Benchmark",
+      "type": "object"
+    },
+    "VoiceV2Cell": {
+      "description": "One language and domain, with infrastructure separated from task failure.",
+      "properties": {
+        "selected": {
+          "description": "Selected task/trial keys",
+          "minimum": 1,
+          "title": "Selected",
+          "type": "integer"
+        },
+        "scored": {
+          "description": "Calls with a benchmark reward",
+          "minimum": 0,
+          "title": "Scored",
+          "type": "integer"
+        },
+        "pass": {
+          "description": "Reward-one calls",
+          "minimum": 0,
+          "title": "Pass",
+          "type": "integer"
+        },
+        "fail": {
+          "description": "Scored nonpasses",
+          "minimum": 0,
+          "title": "Fail",
+          "type": "integer"
+        },
+        "infrastructure": {
+          "description": "Calls without a benchmark reward",
+          "minimum": 0,
+          "title": "Infrastructure",
+          "type": "integer"
+        },
+        "pass_1": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "100 \u00d7 passed / scored; null if none scored",
+          "title": "Pass 1"
+        },
+        "interaction": {
+          "$ref": "#/$defs/MeasureCoverage",
+          "description": "Call-level Interaction coverage"
+        },
+        "experience": {
+          "$ref": "#/$defs/MeasureCoverage",
+          "description": "Call-level Experience coverage"
+        }
+      },
+      "required": [
+        "selected",
+        "scored",
+        "pass",
+        "fail",
+        "infrastructure",
+        "pass_1",
+        "interaction",
+        "experience"
+      ],
+      "title": "VoiceV2Cell",
+      "type": "object"
+    },
+    "VoiceV2ContactInfo": {
+      "additionalProperties": false,
+      "description": "Submission contact with the email required by the V2 contract.",
+      "properties": {
+        "email": {
+          "description": "Submitter contact email",
+          "minLength": 1,
+          "title": "Email",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Name of the submitter",
+          "title": "Name"
+        },
+        "github": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "GitHub username (optional)",
+          "title": "Github"
+        }
+      },
+      "required": [
+        "email"
+      ],
+      "title": "VoiceV2ContactInfo",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Versioned multilingual Voice V2 package with saved task and judge evidence.",
+  "examples": [
+    {
+      "contact_info": {
+        "email": "researcher@openai.com",
+        "github": "janedoe",
+        "name": "Jane Doe"
+      },
+      "is_new": true,
+      "methodology": {
+        "evaluation_date": "2024-01-10",
+        "notes": "Evaluated using default configuration with 4 trials per task",
+        "tau2_bench_version": "1.0.0",
+        "user_simulator": "gpt-4.1",
+        "verification": {
+          "details": "Standard evaluation with unmodified prompts",
+          "modified_prompts": false,
+          "omitted_questions": false
+        }
+      },
+      "model_name": "GPT-4.1",
+      "model_organization": "OpenAI",
+      "model_release": {
+        "announcement_title": "Introducing GPT-4.1",
+        "announcement_url": "https://openai.com/index/gpt-4-1/",
+        "release_date": "2024-01-10"
+      },
+      "results": {
+        "airline": {
+          "pass_1": 78.9,
+          "pass_2": 89.4,
+          "pass_3": 94.7,
+          "pass_4": 97.1
+        },
+        "retail": {
+          "pass_1": 85.5,
+          "pass_2": 92.3,
+          "pass_3": 96.1,
+          "pass_4": 98.2
+        },
+        "telecom": {
+          "cost": 10.0,
+          "pass_1": 82.1,
+          "pass_2": 90.8,
+          "pass_3": 95.3,
+          "pass_4": 98.5
+        }
+      },
+      "submission_date": "2024-01-15",
+      "submission_type": "standard",
+      "submitting_organization": "OpenAI",
+      "trajectories_available": true,
+      "trajectory_files": {
+        "airline": "gpt-4.1_airline_default_gpt-4o_4trials.json",
+        "retail": "gpt-4.1_retail_default_gpt-4o_4trials.json",
+        "telecom": "gpt-4.1_telecom_default_gpt-4o_4trials.json"
+      }
+    }
+  ],
+  "properties": {
+    "model_name": {
+      "description": "Name of the model being evaluated",
+      "title": "Model Name",
+      "type": "string"
+    },
+    "model_organization": {
+      "description": "Organization or company that developed the model",
+      "title": "Model Organization",
+      "type": "string"
+    },
+    "submitting_organization": {
+      "description": "Organization that actually ran the evaluation and submitted the results",
+      "title": "Submitting Organization",
+      "type": "string"
+    },
+    "submission_date": {
+      "description": "Date of submission",
+      "format": "date",
+      "title": "Submission Date",
+      "type": "string"
+    },
+    "submission_type": {
+      "default": "standard",
+      "description": "Type of submission: 'standard' uses the default benchmark-side tau2-bench or tau-voice evaluation setup; 'custom' modifies benchmark-side prompts, tools, orchestration, user simulation, tasks, or evaluation. Internal implementation behind one compatible agent interface does not alone make a submission custom.",
+      "enum": [
+        "standard",
+        "custom"
+      ],
+      "title": "Submission Type",
+      "type": "string"
+    },
+    "modality": {
+      "const": "voice",
+      "default": "voice",
+      "title": "Modality",
+      "type": "string"
+    },
+    "contact_info": {
+      "$ref": "#/$defs/VoiceV2ContactInfo"
+    },
+    "results": {
+      "additionalProperties": {
+        "additionalProperties": {
+          "$ref": "#/$defs/VoiceV2Cell"
+        },
+        "type": "object"
+      },
+      "description": "Results by language, then domain",
+      "title": "Results",
+      "type": "object"
+    },
+    "is_new": {
+      "default": false,
+      "description": "Whether this model should be highlighted as new on the leaderboard",
+      "title": "Is New",
+      "type": "boolean"
+    },
+    "trajectories_available": {
+      "const": true,
+      "default": true,
+      "title": "Trajectories Available",
+      "type": "boolean"
+    },
+    "trajectory_files": {
+      "additionalProperties": {
+        "additionalProperties": {
+          "type": "string"
+        },
+        "type": "object"
+      },
+      "description": "Relative trajectory directory by language and domain",
+      "title": "Trajectory Files",
+      "type": "object"
+    },
+    "references": {
+      "anyOf": [
+        {
+          "items": {
+            "$ref": "#/$defs/Reference"
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Links to papers, blog posts, documentation, or other resources",
+      "title": "References"
+    },
+    "methodology": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Methodology"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Information about how the evaluation was conducted"
+    },
+    "voice_config": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/VoiceConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Voice-specific configuration for audio-native evaluations (only for voice submissions)"
+    },
+    "interaction_metrics": {
+      "default": null,
+      "title": "Interaction Metrics",
+      "type": "null"
+    },
+    "model_release": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ModelRelease"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Public release metadata for the model itself (release date and announcement link). Distinct from `submission_date`, which is when the evaluation was submitted. Used to track model progress over time."
+    },
+    "reasoning_effort": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Reasoning/thinking effort level used during evaluation (e.g. 'high', 'low', 'none', 'enabled')",
+      "title": "Reasoning Effort"
+    },
+    "format": {
+      "const": "voice-v2",
+      "description": "Schema discriminator",
+      "title": "Format",
+      "type": "string"
+    },
+    "benchmark": {
+      "$ref": "#/$defs/VoiceV2Benchmark",
+      "description": "Frozen multilingual benchmark frame"
+    },
+    "benchmark_submission": {
+      "$ref": "#/$defs/BenchmarkSubmission",
+      "description": "Canonical task-trial observations and recomputable score"
+    },
+    "provenance_file": {
+      "description": "Relative path to the source-hash manifest",
+      "title": "Provenance File",
+      "type": "string"
+    },
+    "provenance_sha256": {
+      "description": "SHA-256 of provenance file",
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Provenance Sha256",
+      "type": "string"
+    }
+  },
+  "required": [
+    "model_name",
+    "model_organization",
+    "submitting_organization",
+    "submission_date",
+    "contact_info",
+    "results",
+    "trajectory_files",
+    "format",
+    "benchmark",
+    "benchmark_submission",
+    "provenance_file",
+    "provenance_sha256"
+  ],
+  "title": "Tau2-Bench Voice V2 Submission",
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}
