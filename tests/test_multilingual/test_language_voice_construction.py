@@ -69,7 +69,7 @@ def context():
 
 
 def test_language_user_receives_selected_identity_and_behavior_at_construction(
-    context, monkeypatch, tmp_path
+    context, monkeypatch, tmp_path, voice_extra
 ):
     from tau2 import user_simulation_voice_presets as presets
     from tau2.runner import build
@@ -137,7 +137,12 @@ def test_language_user_receives_selected_identity_and_behavior_at_construction(
     [("light", "waits", False), ("heavy", "interrupts", True)],
 )
 def test_crossed_mode_reaches_localized_caller_behavior(
-    context, monkeypatch, speech_mode, expected_tendency, expected_interruptions
+    context,
+    monkeypatch,
+    speech_mode,
+    expected_tendency,
+    expected_interruptions,
+    voice_extra,
 ):
     from tau2.runner import build
     from tau2.user import user_simulator_streaming

@@ -13,12 +13,6 @@ from tau2.user.guidelines import language_directive, render_simulation_guideline
 
 
 @pytest.fixture
-def voice_extra():
-    for module in ("elevenlabs", "scipy", "pydub"):
-        pytest.importorskip(module)
-
-
-@pytest.fixture
 def language_tree(tmp_path, monkeypatch, english_prompt_content):
     import tau2.utils
 
@@ -730,7 +724,12 @@ def test_custom_french_pack_uses_ordinary_voice_config(language_tree):
 
 
 @pytest.mark.parametrize("voice", [False, True])
-def test_build_then_run_keeps_language_evaluator(language_tree, monkeypatch, voice):
+def test_build_then_run_keeps_language_evaluator(
+    language_tree, monkeypatch, voice, request
+):
+    if voice:
+        request.getfixturevalue("voice_extra")
+
     from tau2.data_model.simulation import RewardInfo, SimulationRun, TerminationReason
     from tau2.runner import build, simulation
 

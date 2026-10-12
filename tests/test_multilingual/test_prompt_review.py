@@ -87,7 +87,9 @@ def review_pack(tmp_path, monkeypatch, english_prompt_content):
     return root
 
 
-def test_actual_runtime_render_and_safe_export(review_pack, tmp_path, monkeypatch):
+def test_actual_runtime_render_and_safe_export(
+    review_pack, tmp_path, monkeypatch, voice_extra
+):
     from tau2.agent.discrete_time_audio_native_agent import DiscreteTimeAudioNativeAgent
     from tau2.multilingual.runtime import load_language
     from tau2.runner.build import build_voice_orchestrator
@@ -259,7 +261,9 @@ def test_benchmark_review_uses_shared_settings_and_frozen_tasks():
         assert pair.config.benchmark.selected_task_ids == [pair.canonical_task_id]
 
 
-def test_review_never_constructs_execution_objects(review_pack, monkeypatch):
+def test_review_never_constructs_execution_objects(
+    review_pack, monkeypatch, voice_extra
+):
     import concurrent.futures
 
     import tau2.runner.build as build
@@ -368,7 +372,7 @@ def test_english_prompt_pairs_match_reviewed_baseline(case, monkeypatch):
 
 
 @pytest.mark.slow
-def test_all_released_pairs_equal_ordinary_construction():
+def test_all_released_pairs_equal_ordinary_construction(voice_extra):
     from tau2.multilingual.runtime import load_language
     from tau2.runner.build import build_voice_orchestrator
 

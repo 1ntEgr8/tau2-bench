@@ -56,7 +56,7 @@ def test_language_voice_framing_removes_coaching_and_preserves_policy(
             assert restored.audio_native_config == audio
 
 
-def test_registered_factory_uses_shared_voice_instructions():
+def test_registered_factory_uses_shared_voice_instructions(voice_extra):
     from tau2.agent.discrete_time_audio_native_agent import (
         create_discrete_time_audio_native_agent,
     )

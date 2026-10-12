@@ -24,7 +24,6 @@ from tau2.user.guidelines import (
     simulation_guidelines,
 )
 from tau2.user.user_simulator import UserSimulator
-from tau2.user.user_simulator_streaming import VoiceStreamingUserSimulator
 
 # Words that presuppose a spoken phone call; text-mode scaffolds never use them.
 # ("tool call", "call a tool" and "call for" are not the telephony sense.)
@@ -143,7 +142,7 @@ def test_every_example_has_a_template_slot(reviewed):
 
 
 @pytest.mark.parametrize("mode", ["text", "voice"])
-def test_simulators_render_the_shared_scaffold_or_an_override(reviewed, mode):
+def test_simulators_render_the_shared_scaffold_or_an_override(reviewed, mode, request):
     subject = persona(reviewed, mode)
     user = SimpleNamespace(
         persona_config=subject,
@@ -151,7 +150,13 @@ def test_simulators_render_the_shared_scaffold_or_an_override(reviewed, mode):
         global_guidelines_override=None,
         simulation_mode=mode,
     )
-    cls = UserSimulator if mode == "text" else VoiceStreamingUserSimulator
+    if mode == "voice":
+        request.getfixturevalue("voice_extra")
+        from tau2.user.user_simulator_streaming import VoiceStreamingUserSimulator
+
+        cls = VoiceStreamingUserSimulator
+    else:
+        cls = UserSimulator
     assert cls.global_simulation_guidelines.fget(user) == simulation_guidelines(
         subject, mode=mode, use_tools=False
     )
