@@ -1330,3 +1330,16 @@ body {
     font-size: 1.375rem;
   }
 }
+
+/* Two announcements share the existing green banner. */
+.notification-announcements { display: flex; align-items: center; justify-content: center; gap: 24px; flex-wrap: wrap; }
+.notification-announcements .notification-link { display: inline-flex; align-items: baseline; gap: 10px; }
+.notification-announcements strong { color: white; white-space: nowrap; }
+.notification-announcements sup { font-size: .7em; }
+.notification-divider { width: 1px; height: 20px; background: rgba(255, 255, 255, .3); }
+.notification-link:focus-visible { outline: 2px solid white; outline-offset: 4px; border-radius: 2px; }
+@media (max-width: 768px) {
+  .notification-announcements { flex-direction: column; gap: 8px; font-size: 13px; }
+  .notification-announcements .notification-link { flex-wrap: wrap; justify-content: center; gap: 4px 8px; }
+  .notification-divider { display: none; }
+}

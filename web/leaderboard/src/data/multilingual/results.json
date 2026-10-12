@@ -1,0 +1,1206 @@
+{
+  "source": {
+    "branch": "codex/tau-multilingual-public-release",
+    "commit": "4c7d1463bf3efe0fb85f9406fda4d0d00add1df8",
+    "files": [
+      {
+        "path": "papers/tau-multilingual/reproduction/audit.json",
+        "sha256": "27c9339fe95e96973adebf1ddad2a0fa871561b6c4c62fb5dd7ab6ad960586e9"
+      },
+      {
+        "path": "papers/tau-multilingual/reproduction/experience.json",
+        "sha256": "2087ea23bcb9c14cd73cb945e70f53ffd0685d2c36c5492d3c7a325b44f1369f"
+      }
+    ]
+  },
+  "languages": [
+    {
+      "id": "en",
+      "name": "English"
+    },
+    {
+      "id": "es",
+      "name": "Spanish"
+    },
+    {
+      "id": "pt",
+      "name": "Portuguese"
+    },
+    {
+      "id": "hi",
+      "name": "Hindi"
+    },
+    {
+      "id": "ko",
+      "name": "Korean"
+    },
+    {
+      "id": "zh",
+      "name": "Mandarin"
+    }
+  ],
+  "models": [
+    {
+      "id": "openai_minimal",
+      "name": "GPT Realtime 2",
+      "effort": "minimal",
+      "color": "#2ebc94"
+    },
+    {
+      "id": "openai_xhigh",
+      "name": "GPT Realtime 2",
+      "effort": "xhigh",
+      "color": "#087f63"
+    },
+    {
+      "id": "gemini_minimal",
+      "name": "Gemini 3.1 Flash Live",
+      "effort": "minimal",
+      "color": "#72a5ff"
+    },
+    {
+      "id": "gemini_high",
+      "name": "Gemini 3.1 Flash Live",
+      "effort": "high",
+      "color": "#426dce"
+    },
+    {
+      "id": "xai_provider_default",
+      "name": "Grok Voice",
+      "effort": "default",
+      "color": "#9c6cc4"
+    }
+  ],
+  "cells": [
+    {
+      "model": "openai_minimal",
+      "language": "en",
+      "task": 45.333333333333336,
+      "domains": {
+        "airline": 50.0,
+        "retail": 56.00000000000001,
+        "telecom": 30.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.0845869113337427,
+      "interaction_failure": 47.53084934043046,
+      "interaction_components": {
+        "nonresponse": 2.0,
+        "interruption": 72.0,
+        "selectivity": 98.62068965517241,
+        "monologue": 10.0,
+        "tool_use": 55.033557046979865
+      },
+      "experience": null,
+      "experience_failure": null,
+      "fluency_failure": null,
+      "speech_fidelity_failure": null,
+      "overlapping_failure": null,
+      "localization_diagnostics": {
+        "email_symbol_verbalization": null
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 0,
+        "fluency_failures": 0,
+        "speech_fidelity_failures": 0,
+        "overlapping_failures": 0,
+        "experience_failures": 0
+      }
+    },
+    {
+      "model": "openai_minimal",
+      "language": "es",
+      "task": 46.0,
+      "domains": {
+        "airline": 60.0,
+        "retail": 50.0,
+        "telecom": 28.000000000000004
+      },
+      "n_calls": 150,
+      "latency_seconds": 0.9961448254387244,
+      "interaction_failure": 54.08057553956834,
+      "interaction_components": {
+        "nonresponse": 2.666666666666667,
+        "interruption": 80.0,
+        "selectivity": 96.40287769784173,
+        "monologue": 28.000000000000004,
+        "tool_use": 63.33333333333333
+      },
+      "experience": 64.0810929925077,
+      "experience_failure": 35.91890700749229,
+      "fluency_failure": 33.71529308065227,
+      "speech_fidelity_failure": 5.597179374173645,
+      "overlapping_failure": 3.3935654473336268,
+      "localization_diagnostics": {
+        "counting_units": 2.631578947368421,
+        "email_symbol_verbalization": 0.0
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 2269,
+        "fluency_failures": 765,
+        "speech_fidelity_failures": 127,
+        "overlapping_failures": 77,
+        "experience_failures": 815
+      }
+    },
+    {
+      "model": "openai_minimal",
+      "language": "pt",
+      "task": 49.333333333333336,
+      "domains": {
+        "airline": 50.0,
+        "retail": 62.0,
+        "telecom": 36.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.0811808348976495,
+      "interaction_failure": 53.5924882629108,
+      "interaction_components": {
+        "nonresponse": 2.0,
+        "interruption": 80.66666666666666,
+        "selectivity": 99.29577464788733,
+        "monologue": 24.666666666666668,
+        "tool_use": 61.33333333333333
+      },
+      "experience": 69.3069306930693,
+      "experience_failure": 30.693069306930692,
+      "fluency_failure": 27.507533362031854,
+      "speech_fidelity_failure": 6.758501937150236,
+      "overlapping_failure": 3.572965992251399,
+      "localization_diagnostics": {
+        "counting_units": 8.411214953271028,
+        "email_symbol_verbalization": 0.0,
+        "gender_agreement": 45.33333333333333,
+        "regional_consistency": 0.6666666666666667,
+        "register_formality": 2.666666666666667
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 2323,
+        "fluency_failures": 639,
+        "speech_fidelity_failures": 157,
+        "overlapping_failures": 83,
+        "experience_failures": 713
+      }
+    },
+    {
+      "model": "openai_minimal",
+      "language": "hi",
+      "task": 43.333333333333336,
+      "domains": {
+        "airline": 56.00000000000001,
+        "retail": 42.0,
+        "telecom": 32.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.0962196669712663,
+      "interaction_failure": 52.25815602836879,
+      "interaction_components": {
+        "nonresponse": 0.6666666666666667,
+        "interruption": 78.66666666666666,
+        "selectivity": 99.29078014184397,
+        "monologue": 16.0,
+        "tool_use": 66.66666666666666
+      },
+      "experience": 57.83289817232375,
+      "experience_failure": 42.16710182767624,
+      "fluency_failure": 40.60052219321149,
+      "speech_fidelity_failure": 10.879025239338555,
+      "overlapping_failure": 9.312445604873803,
+      "localization_diagnostics": {
+        "gender_agreement": 49.333333333333336,
+        "name_address_conventions": 60.0
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 2298,
+        "fluency_failures": 933,
+        "speech_fidelity_failures": 250,
+        "overlapping_failures": 214,
+        "experience_failures": 969
+      }
+    },
+    {
+      "model": "openai_minimal",
+      "language": "ko",
+      "task": 26.0,
+      "domains": {
+        "airline": 48.0,
+        "retail": 18.0,
+        "telecom": 12.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.3714317056686438,
+      "interaction_failure": 62.4818791664038,
+      "interaction_components": {
+        "nonresponse": 41.333333333333336,
+        "interruption": 86.0,
+        "selectivity": 89.31297709923665,
+        "monologue": 7.333333333333333,
+        "tool_use": 88.42975206611571
+      },
+      "experience": 61.100066269052355,
+      "experience_failure": 38.89993373094765,
+      "fluency_failure": 36.249171636845595,
+      "speech_fidelity_failure": 7.5546719681908545,
+      "overlapping_failure": 4.903909874088801,
+      "localization_diagnostics": {
+        "email_symbol_verbalization": 0.0,
+        "name_address_conventions": 3.614457831325301
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 1509,
+        "fluency_failures": 547,
+        "speech_fidelity_failures": 114,
+        "overlapping_failures": 74,
+        "experience_failures": 587
+      }
+    },
+    {
+      "model": "openai_minimal",
+      "language": "zh",
+      "task": 30.0,
+      "domains": {
+        "airline": 52.0,
+        "retail": 20.0,
+        "telecom": 18.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.1118547255146602,
+      "interaction_failure": 57.97142857142856,
+      "interaction_components": {
+        "nonresponse": 2.666666666666667,
+        "interruption": 84.66666666666667,
+        "selectivity": 97.85714285714285,
+        "monologue": 20.666666666666668,
+        "tool_use": 84.0
+      },
+      "experience": 74.52402538531277,
+      "experience_failure": 25.475974614687217,
+      "fluency_failure": 21.441523118767,
+      "speech_fidelity_failure": 6.57298277425204,
+      "overlapping_failure": 2.5385312783318223,
+      "localization_diagnostics": {
+        "counting_units": 14.482758620689657,
+        "email_symbol_verbalization": 0.0,
+        "modal_particles": 40.0,
+        "name_address_conventions": 3.5294117647058822
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 2206,
+        "fluency_failures": 473,
+        "speech_fidelity_failures": 145,
+        "overlapping_failures": 56,
+        "experience_failures": 562
+      }
+    },
+    {
+      "model": "openai_xhigh",
+      "language": "en",
+      "task": 64.66666666666667,
+      "domains": {
+        "airline": 68.0,
+        "retail": 62.0,
+        "telecom": 64.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.366256076667332,
+      "interaction_failure": 52.98076062639821,
+      "interaction_components": {
+        "nonresponse": 28.187919463087248,
+        "interruption": 87.33333333333333,
+        "selectivity": 100.0,
+        "monologue": 7.38255033557047,
+        "tool_use": 42.0
+      },
+      "experience": null,
+      "experience_failure": null,
+      "fluency_failure": null,
+      "speech_fidelity_failure": null,
+      "overlapping_failure": null,
+      "localization_diagnostics": {
+        "email_symbol_verbalization": null
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 0,
+        "fluency_failures": 0,
+        "speech_fidelity_failures": 0,
+        "overlapping_failures": 0,
+        "experience_failures": 0
+      }
+    },
+    {
+      "model": "openai_xhigh",
+      "language": "es",
+      "task": 58.0,
+      "domains": {
+        "airline": 68.0,
+        "retail": 48.0,
+        "telecom": 57.99999999999999
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.296301819765586,
+      "interaction_failure": 59.5238139319602,
+      "interaction_components": {
+        "nonresponse": 18.120805369127517,
+        "interruption": 88.66666666666667,
+        "selectivity": 99.3103448275862,
+        "monologue": 28.187919463087248,
+        "tool_use": 63.33333333333333
+      },
+      "experience": 67.93673616103523,
+      "experience_failure": 32.06326383896477,
+      "fluency_failure": 29.690869877785765,
+      "speech_fidelity_failure": 5.823148813803019,
+      "overlapping_failure": 3.4507548526240113,
+      "localization_diagnostics": {
+        "counting_units": 15.789473684210526,
+        "email_symbol_verbalization": 0.0
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 2782,
+        "fluency_failures": 826,
+        "speech_fidelity_failures": 162,
+        "overlapping_failures": 96,
+        "experience_failures": 892
+      }
+    },
+    {
+      "model": "openai_xhigh",
+      "language": "pt",
+      "task": 69.33333333333333,
+      "domains": {
+        "airline": 76.0,
+        "retail": 64.0,
+        "telecom": 68.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.4017876921528032,
+      "interaction_failure": 57.455782312925166,
+      "interaction_components": {
+        "nonresponse": 28.000000000000004,
+        "interruption": 90.66666666666666,
+        "selectivity": 97.27891156462584,
+        "monologue": 24.666666666666668,
+        "tool_use": 46.666666666666664
+      },
+      "experience": 74.13099158433955,
+      "experience_failure": 25.869008415660446,
+      "fluency_failure": 22.466154409074278,
+      "speech_fidelity_failure": 5.817782656421515,
+      "overlapping_failure": 2.4149286498353457,
+      "localization_diagnostics": {
+        "counting_units": 12.871287128712872,
+        "email_symbol_verbalization": 0.0,
+        "gender_agreement": 22.14765100671141,
+        "regional_consistency": 0.0,
+        "register_formality": 4.026845637583892
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 2733,
+        "fluency_failures": 614,
+        "speech_fidelity_failures": 159,
+        "overlapping_failures": 66,
+        "experience_failures": 707
+      }
+    },
+    {
+      "model": "openai_xhigh",
+      "language": "hi",
+      "task": 61.333333333333336,
+      "domains": {
+        "airline": 60.0,
+        "retail": 57.99999999999999,
+        "telecom": 66.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.4146148929993696,
+      "interaction_failure": 55.00598908767923,
+      "interaction_components": {
+        "nonresponse": 22.972972972972975,
+        "interruption": 88.66666666666667,
+        "selectivity": 97.1830985915493,
+        "monologue": 15.54054054054054,
+        "tool_use": 50.66666666666667
+      },
+      "experience": 62.361155188828945,
+      "experience_failure": 37.638844811171055,
+      "fluency_failure": 35.06823230720406,
+      "speech_fidelity_failure": 8.219612821326564,
+      "overlapping_failure": 5.649000317359568,
+      "localization_diagnostics": {
+        "gender_agreement": 31.292517006802722,
+        "name_address_conventions": 36.36363636363637
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 3151,
+        "fluency_failures": 1105,
+        "speech_fidelity_failures": 259,
+        "overlapping_failures": 178,
+        "experience_failures": 1186
+      }
+    },
+    {
+      "model": "openai_xhigh",
+      "language": "ko",
+      "task": 29.33333333333334,
+      "domains": {
+        "airline": 56.00000000000001,
+        "retail": 14.000000000000002,
+        "telecom": 18.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.644621197547645,
+      "interaction_failure": 66.77976251935983,
+      "interaction_components": {
+        "nonresponse": 53.691275167785236,
+        "interruption": 96.0,
+        "selectivity": 86.15384615384616,
+        "monologue": 8.053691275167784,
+        "tool_use": 90.0
+      },
+      "experience": 61.852861035422336,
+      "experience_failure": 38.14713896457766,
+      "fluency_failure": 35.367847411444146,
+      "speech_fidelity_failure": 6.321525885558583,
+      "overlapping_failure": 3.5422343324250685,
+      "localization_diagnostics": {
+        "email_symbol_verbalization": 20.0,
+        "name_address_conventions": 2.7027027027027026
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 1835,
+        "fluency_failures": 649,
+        "speech_fidelity_failures": 116,
+        "overlapping_failures": 65,
+        "experience_failures": 700
+      }
+    },
+    {
+      "model": "openai_xhigh",
+      "language": "zh",
+      "task": 44.0,
+      "domains": {
+        "airline": 70.0,
+        "retail": 28.000000000000004,
+        "telecom": 34.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.3951206302454873,
+      "interaction_failure": 60.90617480953051,
+      "interaction_components": {
+        "nonresponse": 16.778523489932887,
+        "interruption": 91.33333333333333,
+        "selectivity": 94.4055944055944,
+        "monologue": 24.161073825503358,
+        "tool_use": 77.85234899328859
+      },
+      "experience": 70.80168776371308,
+      "experience_failure": 29.19831223628692,
+      "fluency_failure": 26.329113924050635,
+      "speech_fidelity_failure": 7.172995780590717,
+      "overlapping_failure": 4.30379746835443,
+      "localization_diagnostics": {
+        "counting_units": 16.43835616438356,
+        "email_symbol_verbalization": 0.0,
+        "modal_particles": 59.06040268456376,
+        "name_address_conventions": 1.3333333333333335
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 2370,
+        "fluency_failures": 624,
+        "speech_fidelity_failures": 170,
+        "overlapping_failures": 102,
+        "experience_failures": 692
+      }
+    },
+    {
+      "model": "gemini_minimal",
+      "language": "en",
+      "task": 40.666666666666664,
+      "domains": {
+        "airline": 50.0,
+        "retail": 42.0,
+        "telecom": 30.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.2915115864752074,
+      "interaction_failure": 51.362434494805555,
+      "interaction_components": {
+        "nonresponse": 32.666666666666664,
+        "interruption": 63.33333333333333,
+        "selectivity": 87.67123287671232,
+        "monologue": 2.0,
+        "tool_use": 71.14093959731544
+      },
+      "experience": null,
+      "experience_failure": null,
+      "fluency_failure": null,
+      "speech_fidelity_failure": null,
+      "overlapping_failure": null,
+      "localization_diagnostics": {
+        "email_symbol_verbalization": null
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 0,
+        "fluency_failures": 0,
+        "speech_fidelity_failures": 0,
+        "overlapping_failures": 0,
+        "experience_failures": 0
+      }
+    },
+    {
+      "model": "gemini_minimal",
+      "language": "es",
+      "task": 37.333333333333336,
+      "domains": {
+        "airline": 40.0,
+        "retail": 42.0,
+        "telecom": 30.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.4720986200440391,
+      "interaction_failure": 56.258580051739,
+      "interaction_components": {
+        "nonresponse": 48.66666666666667,
+        "interruption": 66.0,
+        "selectivity": 85.2112676056338,
+        "monologue": 10.666666666666668,
+        "tool_use": 70.74829931972789
+      },
+      "experience": 57.997762863534675,
+      "experience_failure": 42.002237136465325,
+      "fluency_failure": 38.3668903803132,
+      "speech_fidelity_failure": 6.599552572706935,
+      "overlapping_failure": 2.9642058165548097,
+      "localization_diagnostics": {
+        "counting_units": 9.375,
+        "email_symbol_verbalization": null
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 1788,
+        "fluency_failures": 686,
+        "speech_fidelity_failures": 118,
+        "overlapping_failures": 53,
+        "experience_failures": 751
+      }
+    },
+    {
+      "model": "gemini_minimal",
+      "language": "pt",
+      "task": 37.99999999999999,
+      "domains": {
+        "airline": 42.0,
+        "retail": 50.0,
+        "telecom": 22.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.2582581234416477,
+      "interaction_failure": 57.1290780141844,
+      "interaction_components": {
+        "nonresponse": 46.0,
+        "interruption": 72.0,
+        "selectivity": 82.97872340425532,
+        "monologue": 11.333333333333332,
+        "tool_use": 73.33333333333333
+      },
+      "experience": 67.1609006040637,
+      "experience_failure": 32.8390993959363,
+      "fluency_failure": 30.093355299286106,
+      "speech_fidelity_failure": 5.326743547501374,
+      "overlapping_failure": 2.5809994508511807,
+      "localization_diagnostics": {
+        "counting_units": 4.716981132075472,
+        "email_symbol_verbalization": null,
+        "gender_agreement": 28.666666666666668,
+        "regional_consistency": 2.666666666666667,
+        "register_formality": 13.333333333333334
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 1821,
+        "fluency_failures": 548,
+        "speech_fidelity_failures": 97,
+        "overlapping_failures": 47,
+        "experience_failures": 598
+      }
+    },
+    {
+      "model": "gemini_minimal",
+      "language": "hi",
+      "task": 38.666666666666664,
+      "domains": {
+        "airline": 50.0,
+        "retail": 36.0,
+        "telecom": 30.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.5412777675610805,
+      "interaction_failure": 51.874474474474475,
+      "interaction_components": {
+        "nonresponse": 43.333333333333336,
+        "interruption": 61.33333333333333,
+        "selectivity": 77.77777777777779,
+        "monologue": 7.333333333333333,
+        "tool_use": 69.5945945945946
+      },
+      "experience": 46.75803900896152,
+      "experience_failure": 53.24196099103848,
+      "fluency_failure": 51.76594623089088,
+      "speech_fidelity_failure": 5.535055350553505,
+      "overlapping_failure": 4.059040590405904,
+      "localization_diagnostics": {
+        "gender_agreement": 20.0,
+        "name_address_conventions": 22.22222222222222
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 1897,
+        "fluency_failures": 982,
+        "speech_fidelity_failures": 105,
+        "overlapping_failures": 77,
+        "experience_failures": 1010
+      }
+    },
+    {
+      "model": "gemini_minimal",
+      "language": "ko",
+      "task": 26.0,
+      "domains": {
+        "airline": 40.0,
+        "retail": 14.000000000000002,
+        "telecom": 24.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.2995283695098692,
+      "interaction_failure": 64.40385911068293,
+      "interaction_components": {
+        "nonresponse": 58.666666666666664,
+        "interruption": 84.66666666666667,
+        "selectivity": 83.80281690140845,
+        "monologue": 2.684563758389262,
+        "tool_use": 92.19858156028369
+      },
+      "experience": 66.13657623947616,
+      "experience_failure": 33.86342376052385,
+      "fluency_failure": 29.653882132834426,
+      "speech_fidelity_failure": 7.811038353601497,
+      "overlapping_failure": 3.601496725912067,
+      "localization_diagnostics": {
+        "email_symbol_verbalization": 20.0,
+        "name_address_conventions": 12.5
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 2138,
+        "fluency_failures": 634,
+        "speech_fidelity_failures": 167,
+        "overlapping_failures": 77,
+        "experience_failures": 724
+      }
+    },
+    {
+      "model": "gemini_minimal",
+      "language": "zh",
+      "task": 28.000000000000004,
+      "domains": {
+        "airline": 38.0,
+        "retail": 18.0,
+        "telecom": 28.000000000000004
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.2696733988024258,
+      "interaction_failure": 64.4837942749989,
+      "interaction_components": {
+        "nonresponse": 54.0,
+        "interruption": 96.0,
+        "selectivity": 84.9624060150376,
+        "monologue": 5.442176870748299,
+        "tool_use": 82.01438848920863
+      },
+      "experience": 60.0,
+      "experience_failure": 40.0,
+      "fluency_failure": 33.829787234042556,
+      "speech_fidelity_failure": 14.085106382978724,
+      "overlapping_failure": 7.914893617021276,
+      "localization_diagnostics": {
+        "counting_units": 9.090909090909092,
+        "email_symbol_verbalization": 0.0,
+        "modal_particles": 2.0408163265306123,
+        "name_address_conventions": 21.705426356589147
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 2350,
+        "fluency_failures": 795,
+        "speech_fidelity_failures": 331,
+        "overlapping_failures": 186,
+        "experience_failures": 940
+      }
+    },
+    {
+      "model": "gemini_high",
+      "language": "en",
+      "task": 51.333333333333336,
+      "domains": {
+        "airline": 66.0,
+        "retail": 56.00000000000001,
+        "telecom": 32.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.7981008151169346,
+      "interaction_failure": 55.47877871254372,
+      "interaction_components": {
+        "nonresponse": 72.0,
+        "interruption": 76.66666666666667,
+        "selectivity": 83.09859154929578,
+        "monologue": 1.3333333333333335,
+        "tool_use": 44.29530201342282
+      },
+      "experience": null,
+      "experience_failure": null,
+      "fluency_failure": null,
+      "speech_fidelity_failure": null,
+      "overlapping_failure": null,
+      "localization_diagnostics": {
+        "email_symbol_verbalization": null
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 0,
+        "fluency_failures": 0,
+        "speech_fidelity_failures": 0,
+        "overlapping_failures": 0,
+        "experience_failures": 0
+      }
+    },
+    {
+      "model": "gemini_high",
+      "language": "es",
+      "task": 59.99999999999999,
+      "domains": {
+        "airline": 70.0,
+        "retail": 70.0,
+        "telecom": 40.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.7513629148479293,
+      "interaction_failure": 57.54553990610328,
+      "interaction_components": {
+        "nonresponse": 72.0,
+        "interruption": 70.66666666666667,
+        "selectivity": 82.3943661971831,
+        "monologue": 15.333333333333332,
+        "tool_use": 47.333333333333336
+      },
+      "experience": 61.126920887877056,
+      "experience_failure": 38.87307911212294,
+      "fluency_failure": 35.45816733067729,
+      "speech_fidelity_failure": 7.285145133750712,
+      "overlapping_failure": 3.870233352305066,
+      "localization_diagnostics": {
+        "counting_units": 28.57142857142857,
+        "email_symbol_verbalization": 0.0
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 1757,
+        "fluency_failures": 623,
+        "speech_fidelity_failures": 128,
+        "overlapping_failures": 68,
+        "experience_failures": 683
+      }
+    },
+    {
+      "model": "gemini_high",
+      "language": "pt",
+      "task": 58.666666666666664,
+      "domains": {
+        "airline": 68.0,
+        "retail": 62.0,
+        "telecom": 46.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.6782907767329398,
+      "interaction_failure": 54.74127989412988,
+      "interaction_components": {
+        "nonresponse": 72.66666666666667,
+        "interruption": 75.33333333333333,
+        "selectivity": 77.46478873239437,
+        "monologue": 12.0,
+        "tool_use": 36.241610738255034
+      },
+      "experience": 70.86864406779661,
+      "experience_failure": 29.13135593220339,
+      "fluency_failure": 26.27118644067797,
+      "speech_fidelity_failure": 5.773305084745763,
+      "overlapping_failure": 2.9131355932203387,
+      "localization_diagnostics": {
+        "counting_units": 6.0606060606060606,
+        "email_symbol_verbalization": 0.0,
+        "gender_agreement": 22.666666666666664,
+        "regional_consistency": 2.0,
+        "register_formality": 16.666666666666664
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 1888,
+        "fluency_failures": 496,
+        "speech_fidelity_failures": 109,
+        "overlapping_failures": 55,
+        "experience_failures": 550
+      }
+    },
+    {
+      "model": "gemini_high",
+      "language": "hi",
+      "task": 60.0,
+      "domains": {
+        "airline": 74.0,
+        "retail": 62.0,
+        "telecom": 44.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 2.034219466213727,
+      "interaction_failure": 58.05106382978724,
+      "interaction_components": {
+        "nonresponse": 88.0,
+        "interruption": 82.0,
+        "selectivity": 70.92198581560284,
+        "monologue": 6.666666666666667,
+        "tool_use": 42.66666666666667
+      },
+      "experience": 48.562467328802924,
+      "experience_failure": 51.437532671197076,
+      "fluency_failure": 49.71249346576059,
+      "speech_fidelity_failure": 6.1683220073183485,
+      "overlapping_failure": 4.44328280188186,
+      "localization_diagnostics": {
+        "gender_agreement": 16.0,
+        "name_address_conventions": 28.31858407079646
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 1913,
+        "fluency_failures": 951,
+        "speech_fidelity_failures": 118,
+        "overlapping_failures": 85,
+        "experience_failures": 984
+      }
+    },
+    {
+      "model": "gemini_high",
+      "language": "ko",
+      "task": 37.333333333333336,
+      "domains": {
+        "airline": 57.99999999999999,
+        "retail": 26.0,
+        "telecom": 28.000000000000004
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.7744201545451985,
+      "interaction_failure": 63.94560684125901,
+      "interaction_components": {
+        "nonresponse": 72.0,
+        "interruption": 82.0,
+        "selectivity": 75.36231884057972,
+        "monologue": 15.54054054054054,
+        "tool_use": 74.82517482517483
+      },
+      "experience": 56.61605206073752,
+      "experience_failure": 43.38394793926248,
+      "fluency_failure": 38.937093275488074,
+      "speech_fidelity_failure": 11.062906724511931,
+      "overlapping_failure": 6.616052060737528,
+      "localization_diagnostics": {
+        "email_symbol_verbalization": 0.0,
+        "name_address_conventions": 12.030075187969924
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 1844,
+        "fluency_failures": 718,
+        "speech_fidelity_failures": 204,
+        "overlapping_failures": 122,
+        "experience_failures": 800
+      }
+    },
+    {
+      "model": "gemini_high",
+      "language": "zh",
+      "task": 50.0,
+      "domains": {
+        "airline": 66.0,
+        "retail": 48.0,
+        "telecom": 36.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.8809514685974829,
+      "interaction_failure": 66.25343228200371,
+      "interaction_components": {
+        "nonresponse": 82.66666666666667,
+        "interruption": 89.33333333333333,
+        "selectivity": 73.48484848484848,
+        "monologue": 12.925170068027212,
+        "tool_use": 72.85714285714285
+      },
+      "experience": 52.23880597014925,
+      "experience_failure": 47.76119402985074,
+      "fluency_failure": 41.09808102345416,
+      "speech_fidelity_failure": 16.098081023454156,
+      "overlapping_failure": 9.43496801705757,
+      "localization_diagnostics": {
+        "counting_units": 10.9375,
+        "email_symbol_verbalization": 0.0,
+        "modal_particles": 0.6802721088435374,
+        "name_address_conventions": 11.450381679389313
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 1876,
+        "fluency_failures": 771,
+        "speech_fidelity_failures": 302,
+        "overlapping_failures": 177,
+        "experience_failures": 896
+      }
+    },
+    {
+      "model": "xai_provider_default",
+      "language": "en",
+      "task": 76.00000000000001,
+      "domains": {
+        "airline": 80.0,
+        "retail": 78.0,
+        "telecom": 70.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.3107589006630844,
+      "interaction_failure": 49.96396396396396,
+      "interaction_components": {
+        "nonresponse": 4.0,
+        "interruption": 90.66666666666666,
+        "selectivity": 98.0,
+        "monologue": 20.666666666666668,
+        "tool_use": 36.486486486486484
+      },
+      "experience": null,
+      "experience_failure": null,
+      "fluency_failure": null,
+      "speech_fidelity_failure": null,
+      "overlapping_failure": null,
+      "localization_diagnostics": {
+        "email_symbol_verbalization": null
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 0,
+        "fluency_failures": 0,
+        "speech_fidelity_failures": 0,
+        "overlapping_failures": 0,
+        "experience_failures": 0
+      }
+    },
+    {
+      "model": "xai_provider_default",
+      "language": "es",
+      "task": 78.0,
+      "domains": {
+        "airline": 80.0,
+        "retail": 74.0,
+        "telecom": 80.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.183535165819869,
+      "interaction_failure": 52.925170068027214,
+      "interaction_components": {
+        "nonresponse": 3.3333333333333335,
+        "interruption": 86.0,
+        "selectivity": 99.31972789115646,
+        "monologue": 44.0,
+        "tool_use": 31.97278911564626
+      },
+      "experience": 49.546406140963015,
+      "experience_failure": 50.453593859036985,
+      "fluency_failure": 46.894626657362174,
+      "speech_fidelity_failure": 17.236566643405443,
+      "overlapping_failure": 13.677599441730633,
+      "localization_diagnostics": {
+        "counting_units": 25.190839694656486,
+        "email_symbol_verbalization": 0.0
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 2866,
+        "fluency_failures": 1344,
+        "speech_fidelity_failures": 494,
+        "overlapping_failures": 392,
+        "experience_failures": 1446
+      }
+    },
+    {
+      "model": "xai_provider_default",
+      "language": "pt",
+      "task": 78.66666666666667,
+      "domains": {
+        "airline": 76.0,
+        "retail": 78.0,
+        "telecom": 82.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.1580146493289554,
+      "interaction_failure": 52.95707762557078,
+      "interaction_components": {
+        "nonresponse": 8.666666666666668,
+        "interruption": 88.66666666666667,
+        "selectivity": 93.33333333333333,
+        "monologue": 44.666666666666664,
+        "tool_use": 29.45205479452055
+      },
+      "experience": 59.735283873214904,
+      "experience_failure": 40.264716126785096,
+      "fluency_failure": 33.646812957157785,
+      "speech_fidelity_failure": 16.440264716126784,
+      "overlapping_failure": 9.822361546499478,
+      "localization_diagnostics": {
+        "counting_units": 8.955223880597014,
+        "email_symbol_verbalization": 0.0,
+        "gender_agreement": 29.333333333333332,
+        "regional_consistency": 0.0,
+        "register_formality": 4.666666666666667
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 2871,
+        "fluency_failures": 966,
+        "speech_fidelity_failures": 472,
+        "overlapping_failures": 282,
+        "experience_failures": 1156
+      }
+    },
+    {
+      "model": "xai_provider_default",
+      "language": "hi",
+      "task": 76.00000000000001,
+      "domains": {
+        "airline": 78.0,
+        "retail": 68.0,
+        "telecom": 82.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.2841484599264699,
+      "interaction_failure": 55.664429530201346,
+      "interaction_components": {
+        "nonresponse": 10.666666666666668,
+        "interruption": 86.0,
+        "selectivity": 97.98657718120806,
+        "monologue": 33.33333333333333,
+        "tool_use": 50.33557046979866
+      },
+      "experience": 39.85480943738657,
+      "experience_failure": 60.14519056261343,
+      "fluency_failure": 55.53539019963702,
+      "speech_fidelity_failure": 26.932849364791288,
+      "overlapping_failure": 22.323049001814883,
+      "localization_diagnostics": {
+        "gender_agreement": 20.0,
+        "name_address_conventions": 13.043478260869565
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 2755,
+        "fluency_failures": 1530,
+        "speech_fidelity_failures": 742,
+        "overlapping_failures": 615,
+        "experience_failures": 1657
+      }
+    },
+    {
+      "model": "xai_provider_default",
+      "language": "ko",
+      "task": 75.33333333333333,
+      "domains": {
+        "airline": 80.0,
+        "retail": 60.0,
+        "telecom": 86.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.0009363831165645,
+      "interaction_failure": 61.28650302130647,
+      "interaction_components": {
+        "nonresponse": 4.666666666666667,
+        "interruption": 91.33333333333333,
+        "selectivity": 96.62162162162163,
+        "monologue": 34.899328859060404,
+        "tool_use": 78.91156462585033
+      },
+      "experience": 46.86085972850679,
+      "experience_failure": 53.13914027149321,
+      "fluency_failure": 49.6606334841629,
+      "speech_fidelity_failure": 28.167420814479637,
+      "overlapping_failure": 24.688914027149323,
+      "localization_diagnostics": {
+        "email_symbol_verbalization": 28.57142857142857,
+        "name_address_conventions": 13.970588235294118
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 3536,
+        "fluency_failures": 1756,
+        "speech_fidelity_failures": 996,
+        "overlapping_failures": 873,
+        "experience_failures": 1879
+      }
+    },
+    {
+      "model": "xai_provider_default",
+      "language": "zh",
+      "task": 69.33333333333333,
+      "domains": {
+        "airline": 82.0,
+        "retail": 56.00000000000001,
+        "telecom": 70.0
+      },
+      "n_calls": 150,
+      "latency_seconds": 1.2455868599423527,
+      "interaction_failure": 68.22535725699676,
+      "interaction_components": {
+        "nonresponse": 27.333333333333332,
+        "interruption": 97.33333333333334,
+        "selectivity": 97.27891156462584,
+        "monologue": 42.0,
+        "tool_use": 77.18120805369128
+      },
+      "experience": 63.212325875897,
+      "experience_failure": 36.787674124103,
+      "fluency_failure": 33.93837062051499,
+      "speech_fidelity_failure": 16.52596032081047,
+      "overlapping_failure": 13.676656817222458,
+      "localization_diagnostics": {
+        "counting_units": 20.945945945945947,
+        "email_symbol_verbalization": 0.0,
+        "modal_particles": 0.0,
+        "name_address_conventions": 12.5
+      },
+      "denominators": {
+        "interaction_calls": 150,
+        "experience_utterances": 4738,
+        "fluency_failures": 1608,
+        "speech_fidelity_failures": 783,
+        "overlapping_failures": 648,
+        "experience_failures": 1743
+      }
+    }
+  ]
+}
