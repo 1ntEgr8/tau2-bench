@@ -23,6 +23,18 @@ const authorPhotoUrl = (slug) => AUTHORS[slug].photo ?? `/authors/${slug}.jpg`
 
 const truncate = (s, n) => (s.length <= n ? s : `${s.slice(0, s.lastIndexOf(' ', n))}…`)
 
+// Optional rich biography segments keep markup separate from text metadata.
+const authorBiography = (author) =>
+  author.bioSegments
+    ? author.bioSegments.map((segment) => {
+        const text = esc(segment.text)
+        const content = segment.strong ? `<strong>${text}</strong>` : text
+        return segment.href
+          ? `<a href="${esc(segment.href)}" target="_blank" rel="noopener noreferrer">${content}</a>`
+          : content
+      }).join('')
+    : esc(author.bio)
+
 const authorLine = (slugs) => {
   const links = slugs.map(
     (slug) => `<a href="/authors/${slug}.html" class="post-author-name">${esc(AUTHORS[slug].name)}</a>`
@@ -210,7 +222,7 @@ const authorPage = (slug, author) => {
   <meta property="og:image" content="${SITE}${photo}">
   <meta property="og:url" content="${SITE}/authors/${slug}.html">
   <meta name="twitter:card" content="summary">
-  <style>${STYLE}</style>
+  <style>${STYLE}${author.bioSegments ? "    .author-bio a { color: #065f46; }\n" : ''}</style>
 </head>
 <body>
   ${NAV}
@@ -224,7 +236,7 @@ const authorPage = (slug, author) => {
         <p class="author-role">${esc(author.role)}</p>
       </div>
     </header>
-    <p class="author-bio">${esc(author.bio)}</p>
+    <p class="author-bio">${authorBiography(author)}</p>
 
     <section class="section">
       <h2 class="section-title">Papers</h2>
