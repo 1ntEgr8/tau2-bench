@@ -112,7 +112,7 @@ def add_benchmark_run_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--benchmark",
         default=None,
-        help="Released benchmark manifest: voice runs default to 'voice' (V2); "
+        help="Released benchmark manifest: voice runs default to 'voice' (τ-i18n, V2); "
         "use 'voice-v1' for the English current-leaderboard frame. Text runs "
         "are custom single-domain runs unless you select 'text'. Use 'none' for a "
         "custom single-domain run.",

@@ -231,7 +231,7 @@ guidance exactly once. Voice scaffolds preserve their reviewed content.
 
 All ordinary voice runs share the agent instructions: authenticate according to
 domain policy, respond naturally, and follow policy. Cascaded agents retain their
-transcription and spoken-format guidance. Elicitation keeps its explicit prompt
+transcription and spoken-format guidance. τ-entity keeps its explicit prompt
 overrides and domain defaults. `Info.voice_instruction_prompt_version` records
 the shared agent prompt revision; it is not a selectable compatibility mode.
 

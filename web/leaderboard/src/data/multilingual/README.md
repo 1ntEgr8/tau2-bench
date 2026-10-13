@@ -1,4 +1,9 @@
-# Multilingual Voice paper cohort
+# τ-i18n Voice paper cohort
+
+τ-i18n is the current name for τ-Multilingual (the legacy “multilingual”
+benchmark). The related entity-capture benchmark is τ-entity, formerly
+“elicitation”; it is not included in this cohort. Internal identifiers and
+historical provenance keep their original names.
 
 The Voice leaderboard defaults to this fixed paper cohort. The English-only
 leaderboard and progress view retain the existing submission-backed behavior.

@@ -191,7 +191,7 @@ test('multilingual explorer, breakdowns, filters and navigation', async ({ page 
   assert.ok((await page.locator('.mv-scores .model-row').first().innerText()).includes('xhigh'))
   await page.getByRole('button', { name: 'English only', exact: true }).click()
   await page.getByRole('heading', { name: 'τ³-Voice Leaderboard' }).waitFor()
-  await page.getByRole('button', { name: 'Multilingual', exact: true }).click()
+  await page.getByRole('button', { name: 'τ-i18n (Multilingual)', exact: true }).click()
   await page.setViewportSize({ width: 390, height: 844 })
   await page.getByRole('button', { name: 'GPT RT 2 · xhigh: Experience breakdown', exact: true }).click()
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
@@ -211,6 +211,7 @@ test('multilingual explorer, breakdowns, filters and navigation', async ({ page 
 
 test('multilingual submission filters and English progress remain available', async ({ page }) => {
   await page.goto('/leaderboard?benchmark=voice')
+  await expect(page.getByText(/τ-i18n \(formerly τ-Multilingual\)/)).toBeVisible()
   const filters = page.locator('.mv-leaderboard-heading')
   await expect(filters.getByRole('heading', { name: 'Leaderboard', exact: true })).toBeVisible()
   await expect(page.locator('.mv-scores .model-row')).toHaveCount(5)

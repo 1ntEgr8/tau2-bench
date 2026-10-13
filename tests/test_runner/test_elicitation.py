@@ -15,6 +15,18 @@ def voice_config(domain, **kwargs):
     )
 
 
+def test_entity_branding_preserves_legacy_cli_identifiers():
+    import argparse
+
+    from tau2.domains.intake.cli import add_intake_run_args
+
+    parser = argparse.ArgumentParser()
+    add_intake_run_args(parser)
+    assert "τ-entity (formerly elicitation; intake only)" in parser.format_help()
+    args = parser.parse_args(["--elicitation-strategy", "scaffolded"])
+    assert args.elicitation_strategy == "scaffolded"
+
+
 @pytest.mark.parametrize(
     "domain", ["airline", "retail", "telecom", "banking_knowledge", "mock"]
 )

@@ -15,7 +15,7 @@ Both modalities share the same [validation](#step-3-validate-your-submission), [
 
 Your submission should meet these constraints:
 
-1. **Domain coverage** — we recommend including results for all supported leaderboard text domains (`banking_knowledge`, `retail`, `airline`, `telecom`). You may submit results for a single domain; the leaderboard ranks submissions per domain. Elicitation modes are not supported by the leaderboard submission format.
+1. **Domain coverage** — we recommend including results for all supported leaderboard text domains (`banking_knowledge`, `retail`, `airline`, `telecom`). You may submit results for a single domain; the leaderboard ranks submissions per domain. τ-entity (formerly elicitation) modes are not supported by the leaderboard submission format.
 2. **Consistent model configuration** — all trajectory files must use the same agent model and user simulator with identical arguments across all domains
 3. **One result per domain** — each domain should appear exactly once
 4. **All tasks completed** — run evaluation on all tasks within each domain (don't use `--task-ids` or `--num-tasks` filters)
@@ -223,7 +223,7 @@ The script creates voices via the ElevenLabs Voice Design API, saves them to you
 
 ### Run Evaluations
 
-Run the current English Voice V1 leaderboard frame across the three core domains. Each invocation records its benchmark version and frozen task membership in the trajectories; the ordinary voice default selects multilingual Voice V2 instead. The V1 frame contains 50 airline, 114 retail, and 114 telecom base tasks. Run one or more complete domains; task slices or other language packs require a custom run.
+Run the current English Voice V1 leaderboard frame across the three core domains. Each invocation records its benchmark version and frozen task membership in the trajectories; the ordinary voice default selects τ-i18n (multilingual Voice V2) instead. The V1 frame contains 50 airline, 114 retail, and 114 telecom base tasks. Run one or more complete domains; task slices or other language packs require a custom run.
 
 ```bash
 tau2 run --benchmark voice-v1 --domain retail --audio-native \

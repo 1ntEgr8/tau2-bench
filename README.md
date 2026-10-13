@@ -48,12 +48,21 @@ Each domain specifies:
 
 **Available domains**: `mock` · `airline` · `retail` · `telecom` · `banking_knowledge` · `intake`
 
-[English elicitation](docs/elicitation.md) uses `--domain intake` to evaluate exact entity capture in outbound calls over 200 tasks. Agent-directed elicitation is the default; `--elicitation-strategy scaffolded` selects the scaffolded ablation.
+[τ-entity](docs/elicitation.md) uses `--domain intake` to evaluate exact entity capture in outbound calls over 200 tasks. Agent-directed elicitation is the default; `--elicitation-strategy scaffolded` selects the scaffolded ablation.
 
 | Mode | Description |
 |------|-------------|
 | **Text (half-duplex)** | Turn-based chat with tool use |
 | **Voice (full-duplex)** | End-to-end audio via realtime providers (OpenAI, Gemini, xAI) |
+
+## Benchmark naming
+
+**τ-i18n** was previously called **τ-Multilingual** (or “multilingual”);
+**τ-entity** was previously called **elicitation** (or “τ-elicitation”).
+These are branding changes, not new benchmark implementations. Legacy names
+remain in technical identifiers, historical provenance, and published paper
+titles. The τ-entity domain is still `intake`; CLI flags and result fields are
+unchanged.
 
 ## Quick Start
 
@@ -150,9 +159,9 @@ Results are saved to `data/simulations/`. Use `tau2 view` to browse them.
 
 We welcome contributions! Whether you're fixing bugs, adding features, creating domains, or contributing research code, see our [Contributing Guide](CONTRIBUTING.md) for guidelines.
 
-## Voice benchmark
+## τ-i18n voice benchmark
 
-`tau2 run --audio-native` runs the released multilingual benchmark: six languages,
+`tau2 run --audio-native` runs τ-i18n, the released multilingual voice benchmark: six languages,
 three domains and 50 frozen tasks per domain (900 calls). Preview with `--dry-run`;
 select a slice with `--language` / `--domain`, or a small frozen sample with
 `--num-tasks`. Use `--benchmark none` for custom domains or unreleased languages.

@@ -212,7 +212,7 @@ export default function MultilingualVoice({ submissionTypeFilters, showStandard 
   const active = rows.find(row => row.id === selected)
   const languageLabel = language === 'all' ? 'All languages' : data.languages.find(item => item.id === language).name
   return <section className="mv" aria-label="τ-i18n voice benchmark">
-    <p className="mv-footnote">Published paper cohort. Task completion and Interaction cover six languages; Experience covers five (English not evaluated). Scores average evaluated languages equally. New submissions are not yet included in this view.</p>
+    <p className="mv-footnote">τ-i18n (formerly τ-Multilingual), the multilingual benchmark within τ³-Voice. Published paper cohort. Task completion and Interaction cover six languages; Experience covers five (English not evaluated). Scores average evaluated languages equally. New submissions are not yet included in this view.</p>
     <div className="mv-toolbar"><div className="mv-view-tabs" aria-label="Chart views">{[['space', '01', '3D explorer'], ['languages', '02', 'Language map']].map(([id, number, label]) => <button key={id} aria-pressed={view === id} className={view === id ? 'active' : ''} onClick={() => setView(id)}><span>{number}</span>{label}</button>)}</div><label className="mv-scope">Language <select value={language} onChange={event => setLanguage(event.target.value)}><option value="all">All languages</option>{data.languages.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label></div>
     <div className="mv-main-panel">
       {view === 'space' && <div className="mv-panel-heading"><h2>Three dimensions of a good conversation.</h2></div>}

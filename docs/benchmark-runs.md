@@ -13,7 +13,11 @@ Both cover the same 18 cells and the same frozen task subsets. Their binding
 revisions differ because the call mode is part of each binding: text and voice
 calls resolve different persona and scaffold content from the same pack.
 
-`tau2 run --audio-native` runs the current released voice benchmark. Its manifest,
+**τ-i18n** (legacy name: **τ-Multilingual**, also called “multilingual”) is
+the released multilingual voice benchmark within τ³-Voice. The manifest name
+`voice`, version identifiers, and stored result fields are unchanged.
+
+`tau2 run --audio-native` runs τ-i18n. Its manifest,
 `data/tau2/benchmarks/voice.json`, pins six languages (English, Spanish, Portuguese,
 Hindi, Chinese and Korean), three domains and the frozen `airline_50`, `retail_50`
 and `telecom_50` task subsets. That is **900 calls at one trial**. English uses

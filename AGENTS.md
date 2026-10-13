@@ -6,6 +6,15 @@
 
 τ-bench is a simulation framework for evaluating conversational customer service agents. It supports text and voice interactions in half-duplex (turn-based) and full-duplex (simultaneous/streaming) communication modes. Domains include `mock`, `airline`, `retail`, `telecom`, `banking_knowledge`, and `intake`.
 
+## Benchmark naming
+
+Use **τ-i18n** (legacy name: **τ-Multilingual / multilingual**) and
+**τ-entity** (legacy name: **elicitation / τ-elicitation**) for user-facing
+benchmark names. Retain descriptive terms such as multilingual support and
+agent-directed elicitation, existing API/CLI identifiers (`multilingual`,
+`intake`, `--elicitation-strategy`), published paper titles, and historical
+provenance. Branding changes must not rewrite pinned data or serialized fields.
+
 ## Setup
 
 ```bash

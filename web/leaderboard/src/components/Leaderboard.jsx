@@ -758,7 +758,7 @@ const Leaderboard = () => {
       <p className="leaderboard-subtitle">{benchConfig.description}</p>
 
       {isVoice && <div className="voice-edition" aria-label="Voice edition">
-        <button className={voiceEdition === 'multilingual' ? 'active' : ''} aria-pressed={voiceEdition === 'multilingual'} onClick={() => setVoiceEdition('multilingual')}>Multilingual</button>
+        <button className={voiceEdition === 'multilingual' ? 'active' : ''} aria-pressed={voiceEdition === 'multilingual'} onClick={() => setVoiceEdition('multilingual')}>τ-i18n (Multilingual)</button>
         <button className={voiceEdition === 'english' ? 'active' : ''} aria-pressed={voiceEdition === 'english'} onClick={() => setVoiceEdition('english')}>English only</button>
       </div>}
       {isVoice && voiceEdition === 'multilingual' ? <MultilingualVoice submissionTypeFilters={submissionTypeFilters} showStandard={showStandard} showCustom={showCustom} /> : <>

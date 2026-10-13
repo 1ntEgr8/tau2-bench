@@ -63,9 +63,9 @@ tau2 run \
 | `--elicitation-strategy` | Intake only: `agent_directed` (default) or the `scaffolded` ablation |
 | `--complication-rate` | Intake only: stimulus-rate scaling from `0` to `1`; defaults to `1` for both strategies. Infeasible kinds can still yield clean calls at rate `1`; `0` disables complications |
 
-Use `--domain intake` for elicitation and add `--elicitation-strategy scaffolded`
+Use `--domain intake` for τ-entity and add `--elicitation-strategy scaffolded`
 for its scaffolded ablation. Both use the `intake` task set. Agent-directed runs
-require voice. See the [elicitation guide](elicitation.md) for caller defaults,
+require voice. See the [τ-entity guide](elicitation.md) for caller defaults,
 task selection, complication sampling, and recorded conditions.
 Complication kinds use fixed catalog weights, with at most one sampled per
 call. Both easy and hard task tiers are included by default; `--task-ids`
@@ -111,7 +111,7 @@ catalog seed.
 | `--audio-native-provider` | `openai` | Provider: `openai`, `gemini`, `xai` |
 | `--audio-native-model` | *(per-provider)* | Model to use (defaults to provider-specific model if not set) |
 | `--tick-duration` | `0.2` | Tick duration in seconds (simulation timestep) |
-| `--max-steps-seconds` | `600` (`240` for elicitation) | Maximum conversation duration in seconds |
+| `--max-steps-seconds` | `600` (`240` for τ-entity) | Maximum conversation duration in seconds |
 | `--speech-complexity` | `regular` | Speech complexity: `control`, `regular`, or ablation variants (`control_audio`, `control_accents`, `control_behavior`, `control_audio_accents`, `control_audio_behavior`, `control_accents_behavior`) |
 | `--pcm-sample-rate` | `16000` | User simulator PCM synthesis rate |
 | `--telephony-rate` | `8000` | API/agent telephony rate |
@@ -157,7 +157,7 @@ tau2 run --domain banking_knowledge --retrieval-config openai_embeddings_reranke
 
 ---
 
-## `tau2 intake-tasks` — Reproduce Elicitation Tasks
+## `tau2 intake-tasks` — Reproduce τ-entity Tasks
 
 Optional maintainer commands reproduce and verify the checked-in `intake`
 tasks. Run `tau2 intake-tasks --help` or see
