@@ -351,13 +351,14 @@ def validate_intake_forms(
                         "phones": FoldKind.PHONE,
                         "emails": FoldKind.EMAIL,
                         "codes": FoldKind.CODE,
-                        "person_names": FoldKind.NATIVE_NAME,
+                        "person_names": FoldKind.NATIVE_NAME_DIGITS,
                         "coined": FoldKind.NATIVE_NAME,
                         "properties": FoldKind.NATIVE_NAME,
+                        "medications": FoldKind.NATIVE_NAME_DIGITS,
                         "addresses": (
-                            FoldKind.NATIVE_NAME
+                            FoldKind.NATIVE_ADDRESS
                             if language not in {None, "en"}
-                            else FoldKind.NAME
+                            else FoldKind.NAME_DIGITS
                         ),
                     }
                     family = (

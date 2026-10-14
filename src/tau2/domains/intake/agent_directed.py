@@ -331,8 +331,12 @@ def get_tasks(task_split_name: Optional[str] = "base") -> list[Task]:
 
     Same set, same ids, same splits and English time surfaces as scaffolded
     mode, plus the in-memory strategy rewrites."""
+    from tau2.domains.intake.scoring import project_scoring_folds
+
     return [
-        _agent_directed_task_variant(english_time_display_task(task))
+        _agent_directed_task_variant(
+            english_time_display_task(project_scoring_folds(task))
+        )
         for task in load_frozen_tasks(task_split_name)
     ]
 

@@ -7,6 +7,7 @@ import pytest
 
 from tau2.data_model.elicitation import ComplicationKind
 from tau2.domains.intake import complications, environment
+from tau2.domains.intake.scoring import project_scoring_folds
 from tau2.domains.intake.time_display import (
     TIME_CALLER_GUIDANCE,
     display_time_payload,
@@ -56,7 +57,10 @@ def test_both_english_loaders_project_callers_but_preserve_frozen_gold(strategy)
     for task in loaded:
         original = frozen[task.id]
         original_calls, calls = _calls(original), _calls(task)
-        assert calls["seed_record"] == original_calls["seed_record"]
+        assert (
+            calls["seed_record"]
+            == _calls(project_scoring_folds(original))["seed_record"]
+        )
         assert (
             task.evaluation_criteria.actions[0].arguments["fields"]
             == original.evaluation_criteria.actions[0].arguments["fields"]

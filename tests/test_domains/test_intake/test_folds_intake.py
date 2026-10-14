@@ -6,18 +6,20 @@ exhaustively over every entity bank:
 1. **Orthography invariance** — for every bank value, plausible alternate
    surface forms permitted by that field's rule canonicalize to the SAME
    stored form. Dates and times permit outer whitespace only.
-2. **No fold collisions** — every decoy canonicalizes to a DIFFERENT stored
-   form than its truth (asserted in the strong form: no decoy folds onto ANY
-   real entry of its bank), and all entries of a bank stay distinct under
-   the fold.
+2. **No decoy collisions** — every decoy canonicalizes to a DIFFERENT stored
+   form than every real entry of its bank. Phone entries differing only by
+   extension deliberately share a scoring key.
 """
 
+import re
 import unicodedata
 from functools import partial
 
 import pytest
 
 from tau2.domains.intake.folds import (
+    _MEDICATION_STRENGTH_WORDS,
+    _STRENGTH_WORDS_BY_LANGUAGE,
     FoldKind,
     fold_amount,
     fold_code,
@@ -45,13 +47,13 @@ def test_fold_phone_orthography_variants_agree():
 
 
 def test_fold_phone_normalizes_dialing_prefixes():
-    # '+', the international '00' prefix, and the bare country code are three
-    # writings of the same number; none of them may decide the reward.
+    # Country prefixes and international dialing markers do not decide reward.
     assert (
         fold_phone("+44 20 7946 0958")
         == fold_phone("0044 20 7946 0958")
         == fold_phone("44 20 7946 0958")
-        == "442079460958"
+        == fold_phone("20 7946 0958")
+        == "2079460958"
     )
     # NANP country code: '+1 (206) 555-0111' == '1-206-555-0111' == the
     # 10-digit domestic form.
@@ -66,10 +68,36 @@ def test_fold_phone_normalizes_dialing_prefixes():
     # A remaining leading zero (e.g. a UK trunk '0') still carries identity.
     assert fold_phone("020 7946 0958") == "02079460958"
     assert fold_phone("555-010-2211 ext. 34") == fold_phone("555-010-2211 x34")
+    assert fold_phone("555-010-2211 ext. 34") == fold_phone("555-010-2211")
+    assert fold_phone("+34 91 794 6023") == fold_phone("91 794 6023")
+    assert fold_phone("+34 91 482 63 17 ext. 7") == fold_phone("91 482 63 17")
+    assert fold_phone("+34 91 482 63 17 ext. 7") != fold_phone("91 482 63 18")
+    assert fold_phone("010-8264-0117-7") == fold_phone("010-8264-0117")
+    assert fold_phone("139 1056 0179") == "13910560179"
+    assert fold_phone("139 1056 0179") != fold_phone("138 1056 0179")
 
 
 def test_fold_phone_digit_swap_stays_distinct():
     assert fold_phone("555-123-2002") != fold_phone("555-123-2020")
+
+
+def test_korean_mobile_trunk_zero_matches_international_format_only():
+    korean = partial(fold_value, FoldKind.KOREAN_PHONE)
+    assert korean("010-3998-0651") == korean("+82 10 3998 0651")
+    assert korean("010-3998-0651") != korean("010-3998-0652")
+    assert korean("010-3998-0651") != korean("011-3998-0651")
+    assert fold_phone("010-3998-0651") != fold_phone("+82 10 3998 0651")
+
+
+def test_chinese_landline_trunk_zero_matches_international_format_only():
+    chinese = partial(fold_value, FoldKind.CHINESE_PHONE)
+    assert chinese("010 6839 0235") == chinese("+86 10 6839 0235")
+    assert chinese("021 6127 3244") == chinese("+86 21 6127 3244")
+    assert chinese("010 6839 0235") != chinese("010 6839 0236")
+    assert chinese("010 6839 0235") != chinese("021 6839 0235")
+    assert chinese("139 6208 0651") == fold_phone("139 6208 0651")
+    assert chinese("0139 6208 0651") != chinese("139 6208 0651")
+    assert fold_phone("010 6839 0235") != fold_phone("+86 10 6839 0235")
 
 
 def test_fold_phone_without_digits_returns_input():
@@ -221,6 +249,268 @@ def test_fold_field_explicit_none_sentinel():
     assert fold_field(FoldKind.NAME, "none", allows_none=False) == "none"
 
 
+@pytest.mark.parametrize(
+    "kind,gold,alternate,wrong",
+    [
+        (FoldKind.NAME_DIGITS, "Aarav 7", "Aarav ७", "Aarav ८"),
+        (FoldKind.NATIVE_NAME_DIGITS, "आरव 7", "आरव ७", "आरव ८"),
+        (FoldKind.CODE, "MBR-702", "MBR-७०२", "MBR-७०३"),
+        (
+            FoldKind.PHONE,
+            "+91 11 4555 0197 ext. 6",
+            "+९१ ११ ४५५५ ०१९७ ext. ६",
+            "+९१ ११ ४५५५ ०१९८ ext. ७",
+        ),
+        (FoldKind.DATE, "2025-07-16", "२०२५-०७-१६", "२०२५-०७-१७"),
+        (FoldKind.TIME, "7:05 AM", "७:०५ AM", "७:०६ AM"),
+        (
+            FoldKind.NATIVE_ADDRESS,
+            "1518 अशोक ड्राइव, रांची",
+            "१५१८ अशोक ड्राइव रांची",
+            "१५१९ अशोक ड्राइव रांची",
+        ),
+        (FoldKind.NATIVE_MEDICATION, "दवा 0.5 mg", "दवा ०.५ mg", "दवा ०५ mg"),
+    ],
+)
+def test_included_folds_normalize_decimal_digit_scripts(kind, gold, alternate, wrong):
+    assert fold_value(kind, gold) == fold_value(kind, alternate)
+    assert fold_value(kind, gold) != fold_value(kind, wrong)
+
+
+def test_digit_script_exclusions_and_non_decimal_numerals():
+    for kind in (FoldKind.NAME, FoldKind.NATIVE_NAME, FoldKind.EMAIL):
+        assert fold_value(kind, "x7") != fold_value(kind, "x७")
+    assert fold_value(FoldKind.NAME_DIGITS, "X7") != fold_value(
+        FoldKind.NAME_DIGITS, "X⁷"
+    )
+
+
+def test_native_address_only_ignores_commas():
+    assert fold_value(FoldKind.NATIVE_ADDRESS, "A-B, C") == fold_value(
+        FoldKind.NATIVE_ADDRESS, "A-B C"
+    )
+    for address in ("18,28001", "18，28001"):
+        assert fold_value(FoldKind.NATIVE_ADDRESS, address) == fold_value(
+            FoldKind.NATIVE_ADDRESS, "18 28001"
+        )
+    assert fold_value(FoldKind.NATIVE_ADDRESS, "北京市，朝阳区、三里屯") == fold_value(
+        FoldKind.NATIVE_ADDRESS, "北京市 朝阳区 三里屯"
+    )
+    assert fold_value(FoldKind.NATIVE_ADDRESS, "A-B C") != fold_value(
+        FoldKind.NATIVE_ADDRESS, "A B C"
+    )
+    assert fold_value(FoldKind.NATIVE_ADDRESS, "A. B") != fold_value(
+        FoldKind.NATIVE_ADDRESS, "A B"
+    )
+    # A property name can contain a comma too; its written form stays exact.
+    assert fold_value(FoldKind.NATIVE_NAME, "Casa Verde, Madrid") != fold_value(
+        FoldKind.NATIVE_NAME, "Casa Verde Madrid"
+    )
+
+
+def test_korean_name_spacing_is_limited_to_hangul_and_name_fields():
+    korean = partial(fold_value, FoldKind.KOREAN_NAME)
+    assert korean("김 지수") == korean("김지수")
+    assert korean("호텔 한빛정원") == korean("호텔한빛정원")
+    assert korean("김지수") != korean("김지훈")
+    assert fold_value(FoldKind.NATIVE_NAME, "호텔 한빛정원") != fold_value(
+        FoldKind.NATIVE_NAME, "호텔한빛정원"
+    )
+    assert korean("Hotel A") != korean("HotelA")
+
+
+def test_korean_postcode_parentheses_fold_without_label_or_digit_repair():
+    korean = partial(fold_value, FoldKind.KOREAN_ADDRESS)
+    gold = "경기도 성남시 분당구 미금로 45 (13618)"
+    assert korean(gold) == korean("경기도 성남시 분당구 미금로 45 13618")
+    assert korean(gold) != korean("경기도 성남시 분당구 미금로 45 13619")
+    assert korean(gold) != korean("경기도 성남시 분당구 미금로 45 우편번호 13618")
+    assert korean("(13618) 미금로 45") != korean("13618 미금로 45")
+    assert fold_value(FoldKind.NATIVE_ADDRESS, gold) != fold_value(
+        FoldKind.NATIVE_ADDRESS, "경기도 성남시 분당구 미금로 45 13618"
+    )
+
+
+@pytest.mark.parametrize(
+    ("code", "name"),
+    [
+        ("SP", "São Paulo"),
+        ("PR", "Paraná"),
+        ("MG", "Minas Gerais"),
+        ("RJ", "Rio de Janeiro"),
+        ("RS", "Rio Grande do Sul"),
+        ("PE", "Pernambuco"),
+        ("PA", "Pará"),
+        ("SC", "Santa Catarina"),
+    ],
+)
+def test_portuguese_address_state_slot_equivalence(code: str, name: str):
+    portuguese = partial(fold_value, FoldKind.PORTUGUESE_ADDRESS)
+    assert portuguese(f"Rua das Flores 7, Campinas - {code}, 13025-090") == (
+        portuguese(f"Rua das Flores 7, Campinas - {name}, 13025-090")
+    )
+    assert portuguese(f"Rua das Flores 7, Campinas, {code}") == portuguese(
+        f"Rua das Flores 7, Campinas, {name}"
+    )
+    assert portuguese(f"Rua Ipê-Roxo 7, Campinas - {code}, 13025-090") == (
+        portuguese(f"Rua Ipê-Roxo 7, Campinas, {name}, 13025-090")
+    )
+    assert portuguese(f"Rua Ipê-Roxo 7, Campinas - {code}, 13025-090") != (
+        portuguese(f"Rua Ipê Roxo 7, Campinas, {name}, 13025-090")
+    )
+    assert portuguese(f"Rua {name} 7, Campinas, {code}") != portuguese(
+        f"Rua {code} 7, Campinas, {code}"
+    )
+    assert fold_value(FoldKind.NATIVE_ADDRESS, f"Campinas - {code}") != (
+        fold_value(FoldKind.NATIVE_ADDRESS, f"Campinas - {name}")
+    )
+
+
+@pytest.mark.parametrize(
+    ("kind", "written", "digits"),
+    [
+        (FoldKind.MEDICATION, "one hundred milligrams", "100 mg"),
+        (FoldKind.HINDI_MEDICATION, "दस मिलीग्राम", "10 mg"),
+        (FoldKind.KOREAN_MEDICATION, "십밀리그램", "10 mg"),
+        (FoldKind.CHINESE_MEDICATION, "一百毫克", "100 mg"),
+        (FoldKind.PORTUGUESE_MEDICATION, "dez miligramas", "10 mg"),
+        (FoldKind.SPANISH_MEDICATION, "diez miligramos", "10 mg"),
+    ],
+)
+def test_medication_strength_number_words_only(
+    kind: FoldKind, written: str, digits: str
+):
+    medication = partial(fold_value, kind)
+    assert medication(f"Drug {written} tablet") == medication(f"Drug {digits} tablet")
+    assert medication(f"Drug {written} tablet") != medication("Drug 11 mg tablet")
+    assert fold_value(FoldKind.NATIVE_NAME, written) != fold_value(
+        FoldKind.NATIVE_NAME, digits
+    )
+
+
+def test_medication_number_words_do_not_cross_language_or_field():
+    assert fold_value(FoldKind.PORTUGUESE_MEDICATION, "Drug dez mg") != fold_value(
+        FoldKind.PORTUGUESE_MEDICATION, "Drug diez mg"
+    )
+    assert fold_value(FoldKind.NATIVE_MEDICATION, "Drug dez mg") != fold_value(
+        FoldKind.NATIVE_MEDICATION, "Drug 10 mg"
+    )
+    assert fold_value(FoldKind.NATIVE_ADDRESS, "Rua dez") != fold_value(
+        FoldKind.NATIVE_ADDRESS, "Rua 10"
+    )
+
+
+def test_every_published_medication_strength_word_has_numeric_equivalence():
+    kinds = {
+        "en": FoldKind.MEDICATION,
+        "hi": FoldKind.HINDI_MEDICATION,
+        "ko": FoldKind.KOREAN_MEDICATION,
+        "zh": FoldKind.CHINESE_MEDICATION,
+        "pt": FoldKind.PORTUGUESE_MEDICATION,
+        "es": FoldKind.SPANISH_MEDICATION,
+    }
+    for language, alternatives in _STRENGTH_WORDS_BY_LANGUAGE.items():
+        kind = kinds[language]
+        for word in alternatives.split("|"):
+            digits = _MEDICATION_STRENGTH_WORDS[word.casefold()]
+            assert fold_value(kind, f"Medicine {word} mg tablet") == fold_value(
+                kind, f"Medicine {digits} mg tablet"
+            )
+
+
+def test_attested_mandarin_two_hundred_fifty_milligrams_full_medication():
+    assert fold_value(
+        FoldKind.CHINESE_MEDICATION, "特比萘芬片，两百五十 milligram"
+    ) == fold_value(FoldKind.CHINESE_MEDICATION, "特比萘芬片 250 mg")
+
+
+def test_fullwidth_decimal_comma_in_milligram_strength():
+    for kind in (FoldKind.MEDICATION, FoldKind.CHINESE_MEDICATION):
+        assert fold_value(kind, "Medicine 0，1 mg") == fold_value(
+            kind, "Medicine 0.1 mg"
+        )
+        assert fold_value(kind, "Medicine 0，1 mg") != fold_value(
+            kind, "Medicine 01 mg"
+        )
+
+
+def test_native_medication_ignores_separator_commas_and_spanish_unit_spelling():
+    gold = "Clonidina 0,1 mg comprimido"
+    for alternate in (
+        "Clonidina, 0,1 miligramo, comprimido",
+        "Clonidina 0.1 miligramos comprimido",
+    ):
+        assert fold_value(FoldKind.NATIVE_MEDICATION, gold) == fold_value(
+            FoldKind.NATIVE_MEDICATION, alternate
+        )
+    assert fold_value(FoldKind.NATIVE_MEDICATION, gold) != fold_value(
+        FoldKind.NATIVE_MEDICATION, "Clonidina 0,2 mg comprimido"
+    )
+    assert fold_value(FoldKind.NATIVE_MEDICATION, gold) != fold_value(
+        FoldKind.NATIVE_MEDICATION, "Clonidina 01 mg comprimido"
+    )
+    assert fold_value(FoldKind.NATIVE_NAME, "Clonidina, 1 mg") != fold_value(
+        FoldKind.NATIVE_NAME, "Clonidina 1 mg"
+    )
+    assert fold_value(
+        FoldKind.NATIVE_MEDICATION, "Clonidina 0,1 mg comprimido"
+    ) == fold_value(FoldKind.NATIVE_MEDICATION, "Clonidina, 0,1 miligrama, comprimido")
+
+
+@pytest.mark.parametrize(
+    ("kind", "gold", "alternate", "wrong_dose"),
+    [
+        (
+            FoldKind.MEDICATION,
+            "Clonidine 0.1 mg tablet",
+            "Clonidine 0.1 milligrams tablet",
+            "Clonidine 0.2 milligrams tablet",
+        ),
+        (
+            FoldKind.NATIVE_MEDICATION,
+            "बिसोप्रोलोल 5 mg टैबलेट",
+            "बिसोप्रोलोल ५ मिलीग्राम टैबलेट",
+            "बिसोप्रोलोल ६ मिलीग्राम टैबलेट",
+        ),
+        (
+            FoldKind.NATIVE_MEDICATION,
+            "बिसोप्रोलोल 5 mg टैबलेट",
+            "बिसोप्रोलोल 5 एमजी टैबलेट",
+            "बिसोप्रोलोल 6 एमजी टैबलेट",
+        ),
+        (
+            FoldKind.NATIVE_MEDICATION,
+            "아지트로마이신 250 mg 정",
+            "아지트로마이신 250밀리그램정",
+            "아지트로마이신 500밀리그램정",
+        ),
+        (
+            FoldKind.NATIVE_MEDICATION,
+            "昂丹司琼片 4 mg",
+            "昂丹司琼片4毫克",
+            "昂丹司琼片8毫克",
+        ),
+        (
+            FoldKind.NATIVE_MEDICATION,
+            "Clonidina 0.1 mg comprimido",
+            "Clonidina 0,1 miligramos comprimido",
+            "Clonidina 0,2 miligramos comprimido",
+        ),
+        (
+            FoldKind.NATIVE_MEDICATION,
+            "Clonidina 0.1 mg comprimido",
+            "Clonidina 0,1 miligrama comprimido",
+            "Clonidina 0,2 miligrama comprimido",
+        ),
+    ],
+)
+def test_medication_milligram_units_across_languages(
+    kind: FoldKind, gold: str, alternate: str, wrong_dose: str
+):
+    assert fold_value(kind, gold) == fold_value(kind, alternate)
+    assert fold_value(kind, gold) != fold_value(kind, wrong_dose)
+
+
 # ---------------------------------------------------------------------------
 # Exhaustive bank sweep
 # ---------------------------------------------------------------------------
@@ -247,20 +537,22 @@ def _name_alternates(value: str) -> list[str]:
 
 
 def _phone_alternates(value: str) -> list[str]:
-    plus = value.strip().startswith("+")
-    digits = "".join(ch for ch in value if ch.isdigit())
+    base = re.sub(r"(?i)\s*(?:ext\.?|x)\s*\d+\s*$", "", value)
+    plus = base.strip().startswith("+")
+    digits = "".join(ch for ch in base if ch.isdigit())
     grouped = f"{digits[:3]} {digits[3:6]} {digits[6:]}"
     alternates = [
+        base,
         ("+" if plus else "") + digits,
         ("+" if plus else "") + grouped,
-        value.replace("-", " ").replace("(", "").replace(")", ""),
+        base.replace("-", " ").replace("(", "").replace(")", ""),
     ]
     if plus:
         # '+44…' == '0044…' == '44…' — three writings of the same dialing.
         alternates.extend(["00" + digits, digits])
-    elif len(digits) == 10 and "ext" not in value.lower():
+    elif len(digits) == 10:
         # A NANP number with the country code written out.
-        alternates.extend([f"+1 {value}", f"1-{digits}"])
+        alternates.extend([f"+1 {base}", f"1-{digits}"])
     return alternates
 
 
@@ -324,12 +616,15 @@ def test_person_alt_names_stay_distinct_from_current_names(banks: Banks):
 
 
 def test_phone_bank_fold_invariant_and_collision_free(banks: Banks):
-    _assert_space(
-        "phones",
-        [(e.value, e.decoys) for e in banks.phones],
-        fold_phone,
-        _phone_alternates,
-    )
+    # The bank contains five intentionally different extensions on the same
+    # domestic number. They now share a scoring key, but no decoy may match
+    # any bank truth after the requested extension fold.
+    truth_keys = {fold_phone(entry.value) for entry in banks.phones}
+    for entry in banks.phones:
+        for alternate in _phone_alternates(entry.value):
+            assert fold_phone(alternate) == fold_phone(entry.value)
+        for decoy in entry.decoys:
+            assert fold_phone(decoy) not in truth_keys
 
 
 def test_code_bank_fold_invariant_and_collision_free(banks: Banks):

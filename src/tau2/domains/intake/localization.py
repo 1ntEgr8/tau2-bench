@@ -363,6 +363,8 @@ def inventory_intake(data_root: Path) -> LocalizationSource:
 
 def apply_native_folds(tasks: list[Task]) -> list[Task]:
     """Use Unicode-preserving writes on compiled native records; source is untouched."""
+    from tau2.domains.intake.scoring import project_scoring_folds
+
     compiled = [task.model_copy(deep=True) for task in tasks]
     for task in compiled:
         for action in task.initial_state.initialization_actions:
@@ -371,9 +373,11 @@ def apply_native_folds(tasks: list[Task]) -> list[Task]:
             for field in action.arguments["record"]["fields"]:
                 if field["fold"] == FoldKind.NAME.value:
                     field["fold"] = FoldKind.NATIVE_NAME.value
+                elif field["fold"] == FoldKind.NAME_DIGITS.value:
+                    field["fold"] = FoldKind.NATIVE_NAME_DIGITS.value
                 elif field["fold"] == FoldKind.NAME_LIST.value:
                     field["fold"] = FoldKind.NATIVE_NAME_LIST.value
-    return compiled
+    return [project_scoring_folds(task) for task in compiled]
 
 
 def selected_source_data(directory: Path) -> IntakeLocalizationData:

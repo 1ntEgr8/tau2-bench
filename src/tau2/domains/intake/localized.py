@@ -19,7 +19,7 @@ from tau2.domains.intake.time_display import TimeDisplayFormat, display_time
 from tau2.utils.pydantic_utils import BaseModelNoExtra
 
 LOCALIZED_STIMULUS_VERSION = "intake-selected-stimuli-v1"
-NATIVE_SCORING_VERSION = "intake-native-nfc-v1"
+NATIVE_SCORING_VERSION = "intake-native-decimal-digits-v2"
 
 
 class SelectedPronunciation(BaseModelNoExtra):

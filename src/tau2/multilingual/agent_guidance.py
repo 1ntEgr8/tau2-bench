@@ -9,13 +9,14 @@ BANKING_AGENT_GUIDANCE = (
 )
 
 
-INTAKE_AGENT_GUIDANCE_VERSION = "intake-written-form-v1"
+INTAKE_AGENT_GUIDANCE_VERSION = "intake-written-form-v2"
 INTAKE_AGENT_GUIDANCE = (
     "When a spoken value could have more than one written form, and the field "
     "description does not specify the required script or numeral system, ask "
     "which written form the person intends. Follow any format explicitly "
     "required by the field description; otherwise preserve the person's "
-    "clarified written form. Do not infer the script from pronunciation alone."
+    "clarified written form. Do not infer the script from pronunciation alone. "
+    "Use the target language’s script for medication names; preserve the stated strength and units."
 )
 
 _ENGLISH_TRANSFER_LINE = "YOU ARE BEING TRANSFERRED TO A HUMAN AGENT. PLEASE HOLD ON."

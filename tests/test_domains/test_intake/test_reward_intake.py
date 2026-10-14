@@ -149,14 +149,15 @@ def _fold_kinds(task: Task) -> dict[str, FoldKind]:
 
 def _surface_variant(kind: FoldKind, value: str) -> str:
     """A plausible live-agent surface form of the same captured value."""
-    if kind is FoldKind.NAME:
+    if kind in (FoldKind.NAME, FoldKind.NAME_DIGITS, FoldKind.MEDICATION):
         return value.swapcase()
     if kind is FoldKind.CODE:
         return f"{value[:4].lower()}-{value[4:].lower()}"
     if kind is FoldKind.PHONE:
-        # Regrouped digits; the NANP +1 only where it folds away (a bare
-        # 10-digit number — extensions make the digit string longer).
-        digits = "".join(ch for ch in value if ch.isdigit())
+        # Regroup the domestic number; country prefix and extension may be
+        # omitted without changing its scoring key.
+        base = re.sub(r"(?i)\s*(?:ext\.?|x)\s*\d+\s*$", "", value)
+        digits = "".join(ch for ch in base if ch.isdigit())
         grouped = f"{digits[:3]}.{digits[3:6]}.{digits[6:]}"
         return f"+1 {grouped}" if len(digits) == 10 else grouped
     if kind is FoldKind.EMAIL:
@@ -205,7 +206,7 @@ def test_surface_form_variants_still_score_full_reward(tasks):
 
 @pytest.mark.parametrize("strategy", list(ElicitationStrategy))
 @pytest.mark.parametrize(
-    ("unit", "reward"), [("mg", 1), ("milligram", 0), ("milligrams", 0)]
+    ("unit", "reward"), [("mg", 1), ("milligram", 1), ("milligrams", 1)]
 )
 @pytest.mark.parametrize(
     "task_id",
@@ -215,10 +216,10 @@ def test_surface_form_variants_still_score_full_reward(tasks):
         "intake_medications_hard_06",
     ],
 )
-def test_medication_submission_must_preserve_the_recorded_unit(
+def test_medication_submission_accepts_written_milligram_units(
     task_id, unit, reward, strategy
 ):
-    """Both strategies score the recorded unit instead of accepting expansions."""
+    """Both strategies accept equivalent spellings of a numeric mg dose."""
     task = next(task for task in get_tasks(strategy=strategy) if task.id == task_id)
     actions = golden_action_tuples(task)
     submission = next(
@@ -310,7 +311,7 @@ def _corrupt(kind: FoldKind, value: str) -> str:
     if kind is FoldKind.CODE:
         # Decoy-style digit change.
         return value[:-1] + ("0" if value[-1] != "0" else "1")
-    if kind is FoldKind.NAME:
+    if kind in (FoldKind.NAME, FoldKind.NAME_DIGITS, FoldKind.MEDICATION):
         return value + "s"
     if kind is FoldKind.EMAIL:
         # Separator or local-part corruption — identity-bearing per policy.

@@ -30,9 +30,33 @@ tau2 run --audio-native --benchmark none --domain banking_knowledge \
   --audio-native-model gpt-realtime-2 --reasoning-effort low --num-tasks 5
 ```
 
-Use `hi`, `ko`, `zh`, `pt` or `es`. The extension records its identity and the exact regional
-bundle digests in the run results. Banking knowledge-base prose remains English, while mapped entity references
-follow the regional bundle. The agent guidance instructs the agent to answer
+Use `hi`, `ko`, `zh`, `pt` or `es`. New banking runs select the versioned
+`banking-dates-v1` extension. It adds voice-only guidance that interprets scenario
+dates as MM/DD/YYYY and speaks the same calendar date in local order: day–month–year
+for Hindi, Spanish and Portuguese; year–month–day for Korean and Mandarin. The
+same versioned extension gives the debit-card ordering document a domestic
+shipping rule for India, South Korea, China, Spain or Brazil, respectively. It
+preserves the ban on international shipping. The shared English document remains
+US-only, and the previously scored `banking` bundles remain unchanged. The
+original `banking` extension remains loadable from a recorded
+`RunConfig.pack_extension` when reproducing earlier runs. Neither extension
+changes canonical dates, database values or tool formats. In Spanish, the
+versioned extension also corrects four caller descriptions: the stated residence
+in tasks 077, 091 and 097 now matches the Spanish address, and task 082 uses the
+localized merchant name consistently. Gold actions and earlier scored bundles
+remain unchanged. In Portuguese, task 082 consistently names Academia Corpo
+Pleno Premium and task 097's stated residence now matches its São Paulo address.
+These two caller-text edits also have their own versioned bundle revision. The
+Korean and Mandarin bundles also correct name spacing and distinct-person name
+collisions. Five replacement Korean names and two replacement Mandarin names
+still await native review; these corrections are not new native-review approvals.
+Source-bound correction records are retained as regression fixtures under
+`tests/test_multilingual/fixtures/banking_name_review/` and tested against the
+versioned name maps. Earlier scored bundles and their review status are unchanged.
+The extension records its identity and the exact regional
+bundle digests in the run results. Banking knowledge-base prose remains English,
+while mapped entity references and this shipping rule follow the regional bundle.
+The agent guidance instructs the agent to answer
 in the selected language. Released packs and benchmark cells keep their digests.
 
 To publish additional approved bundles without editing a released pack, first use

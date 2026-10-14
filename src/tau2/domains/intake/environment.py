@@ -151,6 +151,8 @@ def get_tasks(
     strategy: ElicitationStrategy = ElicitationStrategy(DEFAULT_ELICITATION_STRATEGY),
 ) -> list[Task]:
     """Load the shared task set with the selected strategy's caller/tool contract."""
+    from tau2.domains.intake.scoring import project_scoring_folds
+
     strategy = ElicitationStrategy(strategy)
     if strategy is ElicitationStrategy.AGENT_DIRECTED:
         from tau2.domains.intake.agent_directed import (
@@ -159,7 +161,8 @@ def get_tasks(
 
         return get_agent_directed_tasks(task_split_name)
     return [
-        english_time_display_task(task) for task in load_frozen_tasks(task_split_name)
+        english_time_display_task(project_scoring_folds(task))
+        for task in load_frozen_tasks(task_split_name)
     ]
 
 

@@ -67,10 +67,10 @@ def test_separate_voice_run_resolves_and_records_extension(monkeypatch):
         audio_native_config=AudioNativeConfig(),
     )
     tasks = _load_run_tasks(config)
-    assert config.pack_extension == "banking"
+    assert config.pack_extension == "banking-dates-v1"
     info = get_info(config, tasks=tasks)
     assert len(tasks) == len(info.language_tasks) == 1
-    assert info.pack_extension == "banking"
+    assert info.pack_extension == "banking-dates-v1"
     assert (
         info.language_artifacts
         == next(iter(info.language_tasks.values())).artifact_pins
@@ -109,9 +109,9 @@ def test_hindi_banking_pilot_resolves_reviewed_names_and_contacts():
     )
     tasks = _load_run_tasks(config)
     assert len(tasks) == 1
-    assert config.pack_extension == "banking"
+    assert config.pack_extension == "banking-dates-v1"
     loaded = load_language(
-        "hi", "banking_knowledge", mode="voice", pack_extension="banking"
+        "hi", "banking_knowledge", mode="voice", pack_extension="banking-dates-v1"
     )
     assert len(loaded.tasks) == 97
     for task_id, gender in (

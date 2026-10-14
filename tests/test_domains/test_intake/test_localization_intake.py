@@ -8,6 +8,7 @@ import pytest
 from tau2.domains.intake.environment import load_frozen_tasks
 from tau2.domains.intake.folds import FoldKind, fold_value
 from tau2.domains.intake.localization import inventory_intake, validate_intake_tasks
+from tau2.domains.intake.scoring import project_scoring_folds
 from tau2.multilingual.factory.generation_config import FactoryModelConfig
 from tau2.multilingual.factory.localization_artifact import automatic_localization
 from tau2.multilingual.factory.localization_compile import compile_localization
@@ -114,6 +115,130 @@ def test_native_fold_does_not_invent_english_symbol_words():
     assert fold_value(FoldKind.NATIVE_NAME, "0.5 mg") != fold_value(
         FoldKind.NATIVE_NAME, "05 mg"
     )
+
+
+def test_scoring_projection_is_family_specific_and_keeps_frozen_source_intact():
+    tasks = load_frozen_tasks()
+    expected = {
+        "person_names": FoldKind.NAME_DIGITS,
+        "addresses": FoldKind.NAME_DIGITS,
+        "medications": FoldKind.MEDICATION,
+        "coined": FoldKind.NAME,
+        "properties": FoldKind.NAME,
+        "emails": FoldKind.EMAIL,
+    }
+    for task in tasks:
+        family = task.id.removeprefix("intake_").rsplit("_", 2)[0]
+        if family not in expected:
+            continue
+        original = next(
+            action.arguments["record"]
+            for action in task.initial_state.initialization_actions
+            if action.func_name == "seed_record"
+        )
+        projected_task = project_scoring_folds(task)
+        projected = next(
+            action.arguments["record"]
+            for action in projected_task.initial_state.initialization_actions
+            if action.func_name == "seed_record"
+        )
+        measured = next(
+            field
+            for field in projected["fields"]
+            if field["name"] in task.evaluation_criteria.actions[0].arguments["fields"]
+        )
+        assert FoldKind(measured["fold"]) is expected[family]
+        assert project_scoring_folds(projected_task) == projected_task
+        assert original is not projected
+
+
+@pytest.mark.parametrize("language", ["hi", "ko", "zh", "pt", "es"])
+def test_published_intake_packs_keep_decoys_distinct_under_new_scoring(language):
+    from tau2.multilingual.runtime import load_language
+
+    loaded = load_language(language, "intake", mode="voice", pack_extension="intake")
+    tasks = {loaded.metadata[task.id].canonical_task_id: task for task in loaded.tasks}
+    stimuli = loaded.scenario.intake_localization.stimuli
+    assert len(tasks) == len(stimuli) == 200
+    scoped_kinds = {
+        "ko": {
+            "second_guest_full_name": FoldKind.KOREAN_NAME_DIGITS,
+            "destination_property": FoldKind.KOREAN_NAME,
+            "home_address": FoldKind.KOREAN_ADDRESS,
+            "contact_phone": FoldKind.KOREAN_PHONE,
+            "current_medication": FoldKind.KOREAN_MEDICATION,
+        },
+        "pt": {
+            "home_address": FoldKind.PORTUGUESE_ADDRESS,
+            "current_medication": FoldKind.PORTUGUESE_MEDICATION,
+        },
+        "zh": {
+            "contact_phone": FoldKind.CHINESE_PHONE,
+            "current_medication": FoldKind.CHINESE_MEDICATION,
+        },
+        "hi": {"current_medication": FoldKind.HINDI_MEDICATION},
+        "es": {"current_medication": FoldKind.SPANISH_MEDICATION},
+    }
+    gold_by_field: dict[str, set[str]] = {}
+    old_gold_by_field: dict[str, set[str]] = {}
+    previous = {
+        FoldKind.KOREAN_NAME_DIGITS: FoldKind.NATIVE_NAME_DIGITS,
+        FoldKind.KOREAN_NAME: FoldKind.NATIVE_NAME,
+        FoldKind.KOREAN_ADDRESS: FoldKind.NATIVE_ADDRESS,
+        FoldKind.KOREAN_PHONE: FoldKind.PHONE,
+        FoldKind.CHINESE_PHONE: FoldKind.PHONE,
+        FoldKind.PORTUGUESE_ADDRESS: FoldKind.NATIVE_ADDRESS,
+        FoldKind.HINDI_MEDICATION: FoldKind.NATIVE_MEDICATION,
+        FoldKind.KOREAN_MEDICATION: FoldKind.NATIVE_MEDICATION,
+        FoldKind.CHINESE_MEDICATION: FoldKind.NATIVE_MEDICATION,
+        FoldKind.PORTUGUESE_MEDICATION: FoldKind.NATIVE_MEDICATION,
+        FoldKind.SPANISH_MEDICATION: FoldKind.NATIVE_MEDICATION,
+    }
+    for stimulus in stimuli:
+        task = tasks[stimulus.canonical_task_id]
+        record = next(
+            action.arguments["record"]
+            for action in task.initial_state.initialization_actions
+            if action.func_name == "seed_record"
+        )
+        field = next(
+            field for field in record["fields"] if field["name"] == stimulus.field_name
+        )
+        kind = FoldKind(field["fold"])
+        if stimulus.field_name in scoped_kinds.get(language, {}):
+            assert kind is scoped_kinds[language][stimulus.field_name]
+        gold = fold_value(kind, stimulus.written)
+        gold_by_field.setdefault(stimulus.field_name, set()).add(gold)
+        old_gold_by_field.setdefault(stimulus.field_name, set()).add(
+            fold_value(previous.get(kind, kind), stimulus.written)
+        )
+        assert gold == fold_value(kind, field["value"])
+        assert all(fold_value(kind, decoy) != gold for decoy in stimulus.decoys)
+    for stimulus in stimuli:
+        if stimulus.field_name not in scoped_kinds.get(language, {}):
+            continue
+        task = tasks[stimulus.canonical_task_id]
+        record = next(
+            action.arguments["record"]
+            for action in task.initial_state.initialization_actions
+            if action.func_name == "seed_record"
+        )
+        kind = FoldKind(
+            next(
+                field["fold"]
+                for field in record["fields"]
+                if field["name"] == stimulus.field_name
+            )
+        )
+        for decoy in stimulus.decoys:
+            # Some authored decoys deliberately equal a *different task's*
+            # gold. The new rules must not introduce any additional collision.
+            if fold_value(kind, decoy) in gold_by_field[stimulus.field_name]:
+                old_kind = previous[kind]
+                assert (
+                    fold_value(old_kind, decoy)
+                    in old_gold_by_field[stimulus.field_name]
+                )
 
 
 def test_native_compilation_maps_all_references_and_preserves_wrong_value_failure():

@@ -180,6 +180,11 @@ def extension_for_domain(language: str, domain: str) -> str | None:
         if extension.base_pack_sha256 != hashlib.sha256(pack_bytes).hexdigest():
             raise ValueError("pack extension targets a different released pack")
         candidates.append(extension.name)
+    # Keep the original banking binding addressable for recorded runs while new
+    # custom runs select the versioned voice-date guidance by default.
+    preferred = "banking-dates-v1" if domain == "banking_knowledge" else None
+    if preferred in candidates and set(candidates) <= {"banking", preferred}:
+        return preferred
     if len(candidates) > 1:
         raise ValueError(f"multiple pack extensions declare {language}/{domain}")
     return candidates[0] if candidates else None
@@ -431,6 +436,13 @@ def load_language(
 
         # Pin the same canonical DB and policies that the domain tools use.
         scenario = canonical_scenario(domain, tasks, tau2.utils.DATA_DIR)
+    if domain == "intake":
+        from tau2.domains.intake.scoring import project_scoring_folds
+
+        tasks = [project_scoring_folds(task) for task in tasks]
+        # The task bytes pinned by a new run must describe the projected fold
+        # contract actually used for scoring, not the historical source file.
+        raw = None
     if (
         domain == "intake"
         and binding.source == TaskSource.FILE
