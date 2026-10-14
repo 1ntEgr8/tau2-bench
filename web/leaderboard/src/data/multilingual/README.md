@@ -31,8 +31,8 @@ The imported JSON is unchanged from the website design session.
 
 The homepage Voice card uses the same six-language task averages. Supplemental
 banking/elicitation results, raw trajectories, audio, and recovery artifacts are
-not included in this integration. This import does not revalidate the historical
-judging or infrastructure outcomes; those release-audit items remain deferred.
+not included in this integration. Historical judging and infrastructure-outcome checks are complete, as confirmed
+by the release owner on 2026-10-14.
 
 Run `npm run build && npm run prerender && npm run test:e2e` from
 `web/leaderboard`. `e2e/multilingual.spec.js` checks the frozen aggregates,

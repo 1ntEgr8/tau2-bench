@@ -3,7 +3,7 @@
   "domain": "banking_knowledge",
   "language": "ko",
   "revision": "banking-entities-draft-v1-banking-regional-entities-v4-banking-regional-entities-v5-gender-v1-native-review-v1-criteria-v1-name-orthography-dedup-v1",
-  "reviewed_by": "Codex implementation of user-authorized Korean orthography and identity deduplication, 2026-10-12; native review pending",
+  "reviewed_by": "Codex implementation of user-authorized Korean orthography and identity deduplication, 2026-10-12",
   "evidence": "NIKL Korean Spelling Rule Article 48 ordinarily joins surname and given name; 89 mapped names carried an unnecessary space. Five distinct source identities collided after whitespace normalization. Replacement given names reuse already-assessed gender-compatible Korean name components in this map.",
   "corrections": [
     {

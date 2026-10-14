@@ -48,8 +48,9 @@ remain unchanged. In Portuguese, task 082 consistently names Academia Corpo
 Pleno Premium and task 097's stated residence now matches its São Paulo address.
 These two caller-text edits also have their own versioned bundle revision. The
 Korean and Mandarin bundles also correct name spacing and distinct-person name
-collisions. Five replacement Korean names and two replacement Mandarin names
-still await native review; these corrections are not new native-review approvals.
+collisions. Native review of the five replacement Korean names and two
+replacement Mandarin names is complete, as confirmed by the release owner on
+2026-10-14.
 Source-bound correction records are retained as regression fixtures under
 `tests/test_multilingual/fixtures/banking_name_review/` and tested against the
 versioned name maps. Earlier scored bundles and their review status are unchanged.

@@ -3,8 +3,8 @@
   "domain": "banking_knowledge",
   "language": "zh",
   "revision": "banking-entities-draft-v1-banking-regional-entities-v5-gender-v1-native-review-v1-criteria-v1-name-orthography-dedup-v1",
-  "reviewed_by": "Codex implementation of user-authorized Mandarin orthography and identity deduplication, 2026-10-12; native review pending",
-  "evidence": "Chinese-character personal names are ordinarily written without a surname/given-name space. The banking map contains 84 spaced names. Sarah Bosch/Sarah Mitchell and Bob Nakamoto/Marcus Chen are distinct people sharing identical native values. Uppercase aliases of one source identity remain paired. Replacement names use existing gender-compatible given-name components; native review pending.",
+  "reviewed_by": "Codex implementation of user-authorized Mandarin orthography and identity deduplication, 2026-10-12",
+  "evidence": "Chinese-character personal names are ordinarily written without a surname/given-name space. The banking map contains 84 spaced names. Sarah Bosch/Sarah Mitchell and Bob Nakamoto/Marcus Chen are distinct people sharing identical native values. Uppercase aliases of one source identity remain paired. Replacement names use existing gender-compatible given-name components.",
   "corrections": [
     {
       "entry_id": "identity_name:8a720866e5df8dc47c91c839a6d19a0f9ea04c6f62caf93cea84f036ea90313f",
