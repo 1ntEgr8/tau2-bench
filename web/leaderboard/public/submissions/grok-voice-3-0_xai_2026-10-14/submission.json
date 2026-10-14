@@ -26,7 +26,7 @@
     }
   },
   "is_new": true,
-  "trajectories_available": false,
+  "trajectories_available": true,
   "trajectory_files": {
     "airline": "airline",
     "retail": "retail",
@@ -36,11 +36,11 @@
     "evaluation_date": "2026-10-08",
     "tau2_bench_version": "4ce7c0397c1eb65c9bbe59aeacfe1ca44a1cd699",
     "user_simulator": "gpt-5.5 (xhigh)",
-    "notes": "Sierra evaluation of an early-access Grok Voice 3.0 model before its public release. The public API model name is grok-voice-3.0. Standard full-duplex xAI adapter, base airline/retail/telecom task sets, regular speech complexity, seed 300, 0.2-second ticks, 1200-second simulated limit, and one scored trial per task. The voice user simulator v1.0 pipeline used gpt-5.5 with xhigh reasoning effort as its customer LLM; the remaining simulator components, benchmark prompts, policies, tools, and evaluator were unchanged. This non-default customer LLM makes the result a custom submission.",
+    "notes": "Sierra evaluation of an early-access Grok Voice 3.0 model before its public release. The public API model name is grok-voice-3.0. Standard full-duplex xAI adapter, base airline/retail/telecom task sets, regular speech complexity, seed 300, 0.2-second ticks, 1200-second simulated limit, and one scored trial per task. The voice user simulator v1.0 pipeline used gpt-5.5 with xhigh reasoning effort as its customer LLM; the remaining simulator components, benchmark prompts, policies, tools, and evaluator were unchanged. This non-default customer LLM makes the result a custom submission. Published trajectory metadata replaces an internal early-access model identifier with the public API model name; scored task content, rewards, timestamps, and audio are unchanged.",
     "verification": {
       "modified_prompts": false,
       "omitted_questions": false,
-      "details": "All 278 base tasks have one scored canonical trajectory. The initial retail run encountered ungraded connection timeouts at 80 concurrency and was resumed at 40 concurrency; all 114 retail tasks have a final scored result. Airline ran at up to 80 concurrency and telecom at 40. The submitted scores were computed from the saved trajectories. Trajectories and audio remain local pending review and hosting."
+      "details": "All 278 base tasks have one scored canonical trajectory. The initial retail run encountered ungraded connection timeouts at 80 concurrency and was resumed at 40 concurrency; all 114 retail tasks have a final scored result. Airline ran at up to 80 concurrency and telecom at 40. The submitted scores were computed from the saved trajectories. Reviewed trajectories and canonical audio are hosted by the leaderboard."
     }
   },
   "voice_config": {
