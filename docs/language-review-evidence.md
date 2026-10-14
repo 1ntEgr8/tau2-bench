@@ -1,7 +1,8 @@
 # Retained language review evidence
 
 The following content digests and approval scope are transcribed from retained
-banking/intake approval receipts. These excerpts omit reviewer identities and
+banking/intake approval receipts and the dated release-owner confirmation below.
+These excerpts omit reviewer identities and
 private discussion; pinned maps retain their existing attribution. This is a
 record of existing approval, not a new attestation or
 proof of benchmark difficulty parity. Banking and intake are optional extensions,
@@ -14,14 +15,15 @@ outside the released three-domain Voice V2 frame.
 | pt | banking | `18322b113fb5e56dd95649b9d58944feaefbcbec39a1dcafcf742e8476a0f98b` | Maintainer-directed agent approval following annotation corrections |
 | pt | intake | `a69ad4a3c1add83c081bec7ffa6494cba82052ccfd9fa0d509b58a51515835f6` | Maintainer-directed agent approval following annotation corrections |
 | hi | banking | `64b580e2c2461b4747ec346a0cf3f5ba426037fab3ccadcff4982f05cada1cfa` | Historical predecessor only: maintainer entity review and pilot approval |
+| hi | banking | `c3caa368d7b72e207e532ba78f964f537e66f2110a5423f95d003eb3c48648eb` | Current map approved: release-owner confirmation on 2026-10-14 |
 | hi | intake | `75ce5e96231e725d787e6f3bb28b3e3c9f296e15662a32ae6b655aa594a68ff3` | Maintainer entity review and pilot approval |
 
 The five non-historical receipt digests match the current typed
 `RegionalMapArtifact` content. The current Hindi banking map has digest
 `c3caa368d7b72e207e532ba78f964f537e66f2110a5423f95d003eb3c48648eb`;
-no matching approval receipt was found in the retained source archives. The
-historical receipt must not be used to approve that newer map. Exact-map approval
-remains a review follow-up before public release of the banking extension.
+the release owner confirmed approval of this exact current map on 2026-10-14.
+This confirmation is distinct from the historical receipt; no matching archived
+receipt is asserted or fabricated, and the pinned map remains unchanged.
 
 Maps retain their source descriptors, binding evidence, and generation provenance.
 Historical audit fixtures under `tests/test_multilingual/fixtures/intake_review`

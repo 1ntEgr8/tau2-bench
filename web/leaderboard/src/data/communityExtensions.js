@@ -1,6 +1,43 @@
+import { AUTHORS } from './blogData.js'
+
 // Community projects that build on τ-bench. New entries should include a
 // concise, factual summary and point to a first-party project page.
 export const COMMUNITY_EXTENSIONS = [
+  {
+    slug: 'seataubench',
+    title: 'SEATauBench',
+    category: 'Research',
+    date: 'October 2026',
+    description: 'Extends τ²-bench to five target languages across Airline, Retail, and Telecom. Four localization settings separate dialogue, tool understanding, and domain reasoning. Published at EMNLP 2026.',
+    displayAffiliations: [
+      'SEACrowd',
+      'AI Singapore',
+      'SCB DataX, SCBX Group',
+      'Chulalongkorn University',
+      'VISTEC',
+      'University of Indonesia',
+      'Cohere',
+    ],
+    href: 'community/seataubench.html',
+    githubUrl: 'https://github.com/SEACrowd/SEATauBench',
+    paperUrl: 'https://arxiv.org/abs/2606.28715v2',
+    leaderboardUrl: 'community/seataubench.html#leaderboard',
+    authors: [
+      'my-chiffon-nguyen',
+      'aulia-adila',
+      'saksorn-ruangtanusak',
+      'kittiphat-leesombatwathana',
+      'vissuta-gunawan-lim',
+      'patomporn-payoungkhamdee',
+      'samuel-cahyawijaya',
+    ].map(slug => ({
+      slug,
+      name: AUTHORS[slug].name,
+      affiliation: AUTHORS[slug].paperAffiliation ?? AUTHORS[slug].role,
+      profileUrl: `authors/${slug}.html`,
+      photo: AUTHORS[slug].photo.slice(1),
+    })),
+  },
   {
     slug: 'tau-rec',
     title: 'τ-Rec',

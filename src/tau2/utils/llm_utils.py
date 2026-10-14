@@ -519,6 +519,22 @@ def generate(
     if kwargs.get("num_retries") is None:
         kwargs["num_retries"] = DEFAULT_MAX_RETRIES
 
+    # The pinned LiteLLM release rejects (or silently drops) xhigh for GPT-5.5.
+    # Pass it through the Responses API body so the requested effort reaches
+    # OpenAI, including user-simulator turns that use function tools.
+    if (
+        model.split("/")[-1].startswith("gpt-5.5")
+        and kwargs.get("reasoning_effort") == "xhigh"
+    ):
+        if "/" not in model or model.startswith("openai/"):
+            kwargs = dict(kwargs)
+            kwargs.pop("reasoning_effort")
+            extra_body = dict(kwargs.pop("extra_body", {}) or {})
+            if "reasoning" in extra_body:
+                raise ValueError("Conflicting GPT-5.5 reasoning settings")
+            extra_body["reasoning"] = {"effort": "xhigh"}
+            kwargs["extra_body"] = extra_body
+
     # Vertex AI Gemini 3 models require VERTEXAI_LOCATION="global"
     if model.startswith("vertex_ai/gemini-3") and not os.environ.get(
         "VERTEXAI_LOCATION"

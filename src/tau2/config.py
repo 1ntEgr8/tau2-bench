@@ -232,7 +232,11 @@ DEFAULT_CASCADED_TTS_SAMPLE_RATE = 24000
 # =============================================================================
 # PROVIDER REGISTRY (derived from above)
 # =============================================================================
+DEFAULT_LAUNA_MODEL = "launa-v1"
+LAUNA_SAMPLE_RATE = 24000  # fixed, both directions of the Launa voice API
+
 DEFAULT_AUDIO_NATIVE_MODELS = {
+    "launa": DEFAULT_LAUNA_MODEL,
     "openai": DEFAULT_OPENAI_REALTIME_MODEL,
     "openai_live": DEFAULT_OPENAI_LIVE_MODEL,
     "gemini": DEFAULT_GEMINI_MODEL,
@@ -243,6 +247,7 @@ DEFAULT_AUDIO_NATIVE_MODELS = {
 }
 
 DEFAULT_AUDIO_NATIVE_REASONING_EFFORT: dict[str, str | None] = {
+    "launa": None,
     "openai": None,
     "openai_live": None,
     "gemini": "high",
@@ -253,6 +258,7 @@ DEFAULT_AUDIO_NATIVE_REASONING_EFFORT: dict[str, str | None] = {
 }
 
 AUDIO_NATIVE_PROVIDER_TYPES = {
+    "launa": "audio_native",
     "openai": "audio_native",
     "openai_live": "audio_native",
     "gemini": "audio_native",

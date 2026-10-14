@@ -6,7 +6,9 @@ import { COMMUNITY_EXTENSIONS } from '../data/communityExtensions'
 const resolveHref = (href) =>
   href.startsWith('http') ? href : `${import.meta.env.BASE_URL}${href}`
 
-function CommunityAuthorLine({ authors }) {
+function CommunityAuthorLine({ authors, displayAffiliations }) {
+  const affiliations = displayAffiliations ?? authors.map((author) => author.affiliation)
+
   return (
     <div className="post-authors community-authors">
       <div className="post-author-photos">
@@ -44,11 +46,7 @@ function CommunityAuthorLine({ authors }) {
           })}
         </span>
         <span className="community-author-affiliations">
-          {authors.map((author, index) => (
-            <span key={author.name}>
-              {index > 0 && ' · '}{author.affiliation}
-            </span>
-          ))}
+          {affiliations.join(' · ')}
         </span>
       </div>
     </div>
@@ -69,7 +67,7 @@ function CommunityCard({ extension }) {
         <h2 className="blog-card-title">{extension.title}</h2>
         <p className="blog-card-description">{extension.description}</p>
       </a>
-      <CommunityAuthorLine authors={extension.authors} />
+      <CommunityAuthorLine authors={extension.authors} displayAffiliations={extension.displayAffiliations} />
     </article>
   )
 }
