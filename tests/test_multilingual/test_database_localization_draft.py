@@ -240,3 +240,58 @@ def test_generated_batch_must_cover_exact_source_ids(rows):
     )
     with pytest.raises(ValueError, match="exactly"):
         drafting._validate_batch(batch, drafting.GeneratedBatch(entries=rows))
+
+
+def test_generation_rejects_foreign_street_order_including_templates():
+    entry = source_entry("street", "123 Source Street", "address", "street")
+    content = {entry.id: entry.source}
+    source = LocalizationSource(
+        domain="retail",
+        documents=[
+            SourceDocument(
+                id="database",
+                kind="database",
+                source_path="fixture.json",
+                sha256=json_content_digest(content),
+                content=content,
+            )
+        ],
+        entries=[entry],
+    )
+    settings = region().model_copy(update={"language": "zh", "country_code": "CN"})
+    request = drafting.RegionalDraftRequest(
+        source=source,
+        settings=settings,
+        revision="test",
+        generation=FactoryModelConfig(model="test", reasoning_effort="low"),
+    )
+    batch = drafting.BatchInput(request_sha256="a" * 64, entries=[entry], completed=[])
+    for value in ("123号锦江路", "{number_0}号锦江路"):
+        generated = drafting.GeneratedBatch.model_validate(
+            {
+                "entries": [
+                    {
+                        "id": entry.id,
+                        "forms": {
+                            "native": value,
+                            "romanized": "Jinjiang Lu 123 Hao",
+                            "english": "Fixture",
+                        },
+                        "operation": "adapt",
+                        "notes": "Fixture",
+                    }
+                ]
+            }
+        )
+        with pytest.raises(ValueError, match="premise/road order"):
+            drafting._validate_batch(batch, generated, request=request)
+
+
+def test_product_attribute_contexts_are_not_merged():
+    from tests.test_multilingual.test_banking_prose import entry
+
+    a = entry("armrest", "none", "none", category="product_option")
+    b = entry("backlight", "none", "none", category="product_option")
+    a.context = "Product option armrest"
+    b.context = "Product option backlight"
+    assert len(drafting._draft_groups([a, b])) == 2

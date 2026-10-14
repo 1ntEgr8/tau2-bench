@@ -498,90 +498,40 @@ def test_banking_compiler_rejects_changed_financial_literals_in_english_prose(
         compile_localization(banking_proposal)
 
 
-def test_reviewed_corrections_are_guarded_idempotent_and_source_bound(banking_proposal):
-    from tau2.multilingual.factory.localization_corrections import (
-        EntityCorrection,
-        ReviewedCorrections,
-        apply_corrections,
-    )
-    from tau2.multilingual.localization import LocalizedForms
-
-    entry = next(e for e in banking_proposal.entries if e.category == "identity_name")
-    edit = EntityCorrection(
-        entry_id=entry.id,
-        source=entry.source,
-        before=entry.forms,
-        after=LocalizedForms(
-            native="Reviewed Name",
-            romanized="Reviewed Name",
-            english="Reviewed fixture",
-        ),
-        reason="Explicit fixture review",
-    )
-    review = ReviewedCorrections(
-        domain="banking_knowledge",
-        language="es",
-        revision="review-v1",
-        reviewed_by="test reviewer",
-        evidence="Test fixture only",
-        corrections=[edit],
-    )
-    revised = apply_corrections(banking_proposal, review)
-    assert entry.forms == edit.before
-    assert apply_corrections(revised, review) == revised
-    stale = banking_proposal.model_copy(deep=True)
-    next(e for e in stale.entries if e.id == entry.id).forms.native = "Other edit"
-    with pytest.raises(ValueError, match="Stale reviewed value"):
-        apply_corrections(stale, review)
-    review.corrections.append(edit)
-    with pytest.raises(ValueError, match="Duplicate"):
-        apply_corrections(banking_proposal, review)
-
-
 def test_reviewed_binding_rejects_changed_forms_and_absent_source(banking_proposal):
     from tau2.domains.banking_knowledge.localization_bindings import (
         validate_prose_bindings,
     )
-    from tau2.multilingual.factory.localization_corrections import (
-        EntityCorrection,
-        ReviewedCorrections,
-        apply_corrections,
-    )
-    from tau2.multilingual.localization import LocalizedForms
+    from tau2.multilingual.localization import LocalizedForms, ProseEntityBinding
+    from tau2.utils.artifacts import ReviewApproval, content_digest
 
     entry = next(
         e
         for e in banking_proposal.entries
         if e.category == "prose" and isinstance(e.source, str)
     )
-    review = ReviewedCorrections(
-        domain="banking_knowledge",
-        language="es",
-        revision="review-v1",
-        reviewed_by="test reviewer",
-        evidence="Test fixture only",
-        corrections=[
-            EntityCorrection(
-                entry_id=entry.id,
-                source=entry.source,
-                binding=True,
-                before=None,
-                after=LocalizedForms(
-                    native="Reviewed", romanized="Reviewed", english="Fixture"
-                ),
-                reason="Approved fixture",
-            )
-        ],
-    )
-    revised = apply_corrections(banking_proposal, review)
+    forms = LocalizedForms(native="Reviewed", romanized="Reviewed", english="Fixture")
+    revised = banking_proposal.model_copy(deep=True)
+    revised.prose_bindings = [
+        ProseEntityBinding(
+            entry_id=entry.id,
+            source=entry.source,
+            forms=forms,
+            kind="reviewed",
+            reason="Approved fixture",
+            review=ReviewApproval(
+                content_sha256=content_digest(forms), reviewed_by="test reviewer"
+            ),
+        )
+    ]
     validate_prose_bindings(revised)
-    assert apply_corrections(revised, review) == revised
-    revised.prose_bindings[0].forms.native = "Unreviewed edit"
+    unreviewed = revised.model_copy(deep=True)
+    unreviewed.prose_bindings[0].forms.native = "Unreviewed edit"
     with pytest.raises(ValueError, match="review does not match"):
+        validate_prose_bindings(unreviewed)
+    revised.prose_bindings[0].source = "Source span that never existed"
+    with pytest.raises(ValueError, match="exact source entry"):
         validate_prose_bindings(revised)
-    review.corrections[0].source = "Source span that never existed"
-    with pytest.raises(ValueError, match="exact source span"):
-        apply_corrections(banking_proposal, review)
 
 
 def test_banking_build_preserves_gender_evidence_gate(monkeypatch, tmp_path):

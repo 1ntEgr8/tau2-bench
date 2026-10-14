@@ -111,7 +111,7 @@ def address_component(entry, part):
     address = entry.forms.address
     if address is None:
         raise ValueError(
-            "Explicit address components required; run repair-banking-addresses"
+            "Explicit address components required on the referenced address entry"
         )
     values = {}
     for representation in ("native", "romanized"):

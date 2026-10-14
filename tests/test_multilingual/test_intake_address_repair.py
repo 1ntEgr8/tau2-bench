@@ -55,48 +55,6 @@ def test_authoring_rejects_reintroduced_order_defect():
     validate_intake_address_forms(entry, forms, "pt")
 
 
-def test_dependency_repair_is_task_bound_and_does_not_replace_longer_values():
-    from tau2.multilingual.factory.intake_address_repair import repair_intake_addresses
-    from tests.test_domains.test_intake.test_localization_intake import identity_map
-
-    proposal = identity_map()
-    proposal.settings.language = "es"
-    before = "2.º 1.ª, Calle del Trinquete, 96, 31200 Estella-Lizarra, Navarra"
-    primary = next(
-        e
-        for e in proposal.entries
-        if e.context.startswith("intake field:home_address;")
-        and "intake_addresses_hard_01" in e.context
-    )
-    primary.forms.native = primary.forms.romanized = before
-    owned = next(
-        e
-        for e in proposal.entries
-        if e.context.startswith(
-            "intake stimulus:intake_addresses_hard_01:spelling_styles;"
-        )
-    )
-    unrelated = next(
-        e
-        for e in proposal.entries
-        if e.context.startswith(
-            "intake stimulus:intake_addresses_hard_02:spelling_styles;"
-        )
-    )
-    guidance = [f"Say {before}.", f"Say {before}x."]
-    for entry in (owned, unrelated):
-        entry.forms.native = entry.forms.romanized = guidance
-    repaired, report = repair_intake_addresses(proposal)
-    entries = {e.id: e for e in repaired.entries}
-    after = reorder_intake_address(before, "es", "intake_addresses_hard_01")
-    assert entries[owned.id].forms.native == [f"Say {after}.", guidance[1]]
-    assert entries[unrelated.id] == unrelated
-    assert {c.entry_id for c in report.changes} == {primary.id, owned.id}
-    repeated, second = repair_intake_addresses(repaired)
-    assert repeated == repaired
-    assert not second.changes
-
-
 def test_address_decoy_validation_uses_actual_locale_fold():
     import pytest
 

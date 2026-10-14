@@ -187,68 +187,31 @@ def test_csv_uses_initial_phrase_but_preserves_anchor_and_generation(candidate):
     )
 
 
-def test_reviewed_caller_edits_are_guarded_idempotent_and_preserve_lineage(candidate):
-    from tau2.multilingual.factory.localization_corrections import (
-        CallerSurfaceCorrection,
-        ReviewedCorrections,
-        apply_corrections,
-    )
+def test_reviewed_caller_surface_binds_exact_wording_and_preserves_lineage(candidate):
+    from tau2.utils.artifacts import ReviewApproval, content_digest
 
-    candidate = with_override(candidate)
-    before = candidate.intake_caller_surfaces[0]
+    before = override(candidate)
     after = before.model_copy(
         update={"rationale": before.rationale + " Reviewed wording."}
     )
-    edit = CallerSurfaceCorrection(
-        before=before, after=after, reason="Native wording review."
+    corrected = after.model_copy(
+        update={
+            "review": ReviewApproval(
+                content_sha256=content_digest(after), reviewed_by="test reviewer"
+            )
+        }
     )
-    review = ReviewedCorrections(
-        domain="intake",
-        language="ko",
-        revision="review-test-v1",
-        reviewed_by="test reviewer",
-        evidence="Recorded source-bound review.",
-        caller_surfaces=[edit],
-    )
-    result = apply_corrections(candidate, review)
-    assert apply_corrections(result, review) == result
+    data = candidate.model_dump()
+    data["intake_caller_surfaces"] = [corrected.model_dump()]
+    result = LocalizationMap.model_validate(data)
     assert result.source == candidate.source
     assert result.entries == candidate.entries
-    corrected = result.intake_caller_surfaces[0]
-    assert corrected.provenance == before.provenance
-    assert corrected.canonical_value == before.canonical_value
-    assert corrected.review is not None
-    assert candidate.intake_caller_surfaces[0].review is None
+    surface = result.intake_caller_surfaces[0]
+    assert surface.provenance == before.provenance
+    assert surface.canonical_value == before.canonical_value
+    assert surface.review is not None
     for field, value in [("native_spoken", "아홉 시"), ("canonical_value", "9:40 AM")]:
-        tampered = corrected.model_dump()
+        tampered = surface.model_dump()
         tampered[field] = value
         with pytest.raises(ValueError, match="review does not match"):
             IntakeCallerSurface.model_validate(tampered)
-    stale = candidate.model_copy(deep=True)
-    stale.intake_caller_surfaces[0].rationale += " Unreviewed drift."
-    with pytest.raises(ValueError, match="Stale reviewed caller"):
-        apply_corrections(stale, review)
-    with pytest.raises(ValueError, match="Duplicate reviewed caller"):
-        apply_corrections(
-            candidate, review.model_copy(update={"caller_surfaces": [edit, edit]})
-        )
-    missing = candidate.model_copy(update={"intake_caller_surfaces": []})
-    with pytest.raises(ValueError, match="no longer resolves"):
-        apply_corrections(missing, review)
-
-
-def test_reviewed_caller_edits_cannot_rewrite_answer_task_or_generation(candidate):
-    from tau2.multilingual.factory.localization_corrections import (
-        CallerSurfaceCorrection,
-    )
-
-    before = override(candidate)
-    for changes in [
-        {"canonical_value": "9:40 AM"},
-        {"canonical_task_id": "intake_times_hard_08"},
-        {"provenance": before.provenance.model_copy(update={"model": "fabricated"})},
-    ]:
-        with pytest.raises(ValueError, match="cannot change"):
-            CallerSurfaceCorrection(
-                before=before, after=before.model_copy(update=changes), reason="Test."
-            )

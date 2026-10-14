@@ -1,6 +1,6 @@
 """The one generation-settings shape shared by every factory authoring call."""
 
-from typing import Annotated, Any, Literal, Mapping
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -24,22 +24,3 @@ class FactoryModelConfig(BaseModel):
     def provenance_args(self) -> dict[str, str]:
         """Model arguments exactly as recorded in generation provenance."""
         return {"reasoning_effort": self.reasoning_effort}
-
-
-def regional_generation(
-    model: str, model_args: Mapping[str, Any]
-) -> FactoryModelConfig:
-    """Map a regional-review request's recorded settings onto the factory shape.
-
-    Banking/intake review requests record provider arguments verbatim. Regional
-    map drafting pins only the model and reasoning effort; ``temperature`` is
-    not a factory setting and is not forwarded. Any other argument is refused.
-    """
-    unknown = set(model_args) - {"reasoning_effort", "temperature"}
-    if unknown:
-        raise ValueError(f"Unsupported regional drafting arguments: {sorted(unknown)}")
-    if "reasoning_effort" not in model_args:
-        raise ValueError("Regional drafting requires an explicit reasoning_effort")
-    return FactoryModelConfig(
-        model=model, reasoning_effort=model_args["reasoning_effort"]
-    )

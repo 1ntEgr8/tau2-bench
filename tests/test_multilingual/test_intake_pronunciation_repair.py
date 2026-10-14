@@ -5,40 +5,7 @@ from pathlib import Path
 import pytest
 
 from tau2.multilingual.factory.intake_authoring import validate_pronunciation_script
-from tau2.multilingual.factory.intake_pronunciation import repair_native_references
-from tau2.multilingual.factory.localization_artifact import RegionalMapArtifact
 from tau2.utils.utils import DATA_DIR
-
-
-def test_reference_repair_preserves_tokens_distortions_and_other_metadata():
-    original = RegionalMapArtifact.model_validate_json(
-        (Path(DATA_DIR) / "tau2/multilingual/hi/localization/intake.json").read_text()
-    )
-    entry = next(
-        e
-        for e in original.entries
-        if isinstance(e.forms.native, list)
-        and e.forms.native
-        and isinstance(e.forms.native[0], dict)
-        and "distorted" in e.forms.native[0]
-    )
-    entry.forms.native[0]["reference"] = "STRESS-guide"
-    entry.forms.romanized[0]["reference"] = "STRESS-guide"
-    result, record = repair_native_references(original, "test-pronunciation-repair")
-    assert record.changes
-    assert record.status == "pending_native_review"
-    for before, after in zip(original.entries, result.entries):
-        expected = before.model_copy(deep=True)
-        for form in ("native", "romanized"):
-            values = getattr(expected.forms, form)
-            if isinstance(values, list):
-                for value in values:
-                    if isinstance(value, dict) and "distorted" in value:
-                        value["reference"] = value["token"]
-        assert expected == after
-    repeated, second = repair_native_references(result, result.revision)
-    assert repeated == result
-    assert second.changes == []
 
 
 @pytest.mark.parametrize("field", ["token", "reference", "distorted"])
