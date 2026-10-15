@@ -10,12 +10,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- `tau2 judges suite`/`summarize` and released-benchmark `tau2 run` (dry-run plan
+  and final score summary) print compact tables; `--json` restores the full JSON.
+  `tau2 judges ... --output FILE` saves the full export.
+- CLI startup no longer logs the registry contents, data directory or noise-bank
+  counts, so `--help` prints only help.
 
 ### Deprecated
 
 ### Removed
 
 ### Fixed
+- GPT-5 calls routed through the LiteLLM Responses bridge silently dropped
+  `tool_choice` (including `"required"` for solo agents), and printed LiteLLM's
+  "Provider List" banner twice per call.
 
 ## [2.0.0] - Unreleased
 

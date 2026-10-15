@@ -66,23 +66,56 @@ def add_judges_args(parser: argparse.ArgumentParser) -> None:
             action="append",
             help="Explicit verified promotion bundle; never an unvalidated candidate",
         )
+        if name != "export":
+            child.add_argument(
+                "--json",
+                action="store_true",
+                help="Print the full typed export (plan, summary, verdicts) as JSON "
+                "instead of the compact table",
+            )
+            child.add_argument(
+                "--output",
+                type=Path,
+                default=None,
+                help="Also write the full typed export as JSON to this file",
+            )
         child.set_defaults(func=run_judges)
     _add_lifecycle_args(commands)
 
 
 def run_judges(args: argparse.Namespace) -> None:
-    """Emit diagnostics separately from ordinary task rewards."""
+    """Emit diagnostics separately from ordinary task rewards.
+
+    ``export`` always prints the typed JSON; ``suite`` and ``summarize`` print a
+    compact table unless ``--json`` is given, and ``--output`` saves the JSON.
+    """
+    from tau2.judges.report import estimate_export_calls, render_plan, render_summary
     from tau2.judges.validation import production_catalog
 
+    catalog = production_catalog(args.registry or [])
+    dry_run = args.judge_command == "suite" and args.dry_run
     output = build_export(
         args.results,
-        production_catalog(args.registry or []),
+        catalog,
         only=args.only,
         trials=args.trials,
         force=getattr(args, "force", False),
-        execute=args.judge_command == "suite" and not args.dry_run,
+        execute=args.judge_command == "suite" and not dry_run,
     )
-    print(output.model_dump_json(indent=2))
+    document = output.model_dump_json(indent=2)
+    if args.judge_command == "export" or args.json:
+        print(document)
+    elif dry_run:
+        calls = estimate_export_calls(args.results, catalog, output)
+        print(render_plan(output, model_calls=calls))
+    else:
+        print(render_summary(output))
+    path = getattr(args, "output", None)
+    if path is not None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(document)
+        if not args.json:
+            print(f"\nFull JSON written to {path}")
 
 
 def _add_lifecycle_args(commands) -> None:

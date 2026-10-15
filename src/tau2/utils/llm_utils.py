@@ -69,6 +69,13 @@ else:
     litellm.success_callback = []
 
 litellm.drop_params = True
+# LiteLLM 1.81's Responses bridge looks up GPT-5 capabilities on the stripped
+# "responses/<model>" string with no provider; get_llm_provider then prints a
+# "Provider List" banner (twice per call) before the lookup fails and is
+# swallowed. generate() repairs that lookup's one consequence (tool_choice, see
+# _RESPONSES_BRIDGE_PARAMS); this only silences LiteLLM's console banners.
+# Exceptions are still raised and logged.
+litellm.suppress_debug_info = True
 
 warnings.filterwarnings(
     "ignore",
@@ -99,7 +106,6 @@ if LLM_CACHE_ENABLED:
         )
     litellm.enable_cache()
 else:
-    logger.info("LiteLLM: Cache is disabled")
     litellm.disable_cache()
 
 
@@ -444,6 +450,11 @@ def _openai_responses_bridge_model(model: str) -> str:
     return model  # non-OpenAI provider — leave as-is
 
 
+# Params the bridge drops because its failed capability lookup reports them
+# unsupported, although the Responses API accepts them.
+_RESPONSES_BRIDGE_PARAMS = ("tool_choice",)
+
+
 def _keep_non_leading_system_messages_positional(
     litellm_messages: list[dict],
 ) -> list[dict]:
@@ -555,6 +566,15 @@ def generate(
     tools_schema = [tool.openai_schema for tool in tools] if tools else None
     if tools_schema and tool_choice is None:
         tool_choice = "auto"
+    if api_model.startswith("openai/responses/") and tool_choice is not None:
+        kwargs["allowed_openai_params"] = list(
+            dict.fromkeys(
+                [
+                    *(kwargs.get("allowed_openai_params") or []),
+                    *_RESPONSES_BRIDGE_PARAMS,
+                ]
+            )
+        )
 
     # Prepare request data for logging
     formatted_messages = _format_messages_for_logging(litellm_messages)

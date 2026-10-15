@@ -1,4 +1,3 @@
-import json
 from typing import Callable, Dict, Optional
 
 from loguru import logger
@@ -285,7 +284,6 @@ class Registry:
 # Create a global registry instance
 try:
     registry = Registry()
-    logger.debug("Registering default components...")
     # User implementations
     registry.register_user(UserSimulator, "user_simulator")
     registry.register_user(DummyUser, "dummy_user")
@@ -361,9 +359,6 @@ try:
         get_task_splits=intake_get_tasks_split,
     )
 
-    logger.debug(
-        f"Default components registered successfully. Registry info: {json.dumps(registry.get_info().model_dump(), indent=2)}"
-    )
 
 except Exception as e:
     logger.error(f"Error initializing registry: {str(e)}")
