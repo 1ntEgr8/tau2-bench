@@ -160,13 +160,18 @@ def run_prepare_submission(args):
             raise ValueError(
                 "Benchmark submissions require one matrix root and full verification"
             )
+        from tau2.metrics.benchmark import IncompleteSubmissionError
         from tau2.scripts.leaderboard.prepare_submission import (
             prepare_benchmark_submission,
         )
 
-        prepare_benchmark_submission(
-            Path(args.input_paths[0]), Path(args.output), args.benchmark
-        )
+        try:
+            prepare_benchmark_submission(
+                Path(args.input_paths[0]), Path(args.output), args.benchmark
+            )
+        except IncompleteSubmissionError as error:
+            # An expected outcome of an unfinished run, not a crash.
+            raise SystemExit(f"Error: {error}") from None
         return
     prepare_submission(
         input_paths=args.input_paths,
@@ -202,13 +207,17 @@ def run_validate_submission(args):
             raise ValueError(
                 "Benchmark validation requires --results with the original saved matrix"
             )
+        from tau2.metrics.benchmark import IncompleteSubmissionError
         from tau2.scripts.leaderboard.prepare_submission import (
             validate_benchmark_submission,
         )
 
-        submission = validate_benchmark_submission(
-            directory, args.results, args.benchmark
-        )
+        try:
+            submission = validate_benchmark_submission(
+                directory, args.results, args.benchmark
+            )
+        except IncompleteSubmissionError as error:
+            raise SystemExit(f"Error: {error}") from None
         print(submission.summary.model_dump_json(indent=2))
         return
     if args.results is not None:
