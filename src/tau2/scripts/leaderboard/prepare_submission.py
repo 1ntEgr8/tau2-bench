@@ -1009,12 +1009,78 @@ def prepare_submission(
     console.print("  5. Submit a pull request")
 
 
-def prepare_benchmark_submission(
-    root: Path, output: Path, preset: str | None = None
-) -> None:
-    """Export a complete frozen matrix; retain originals for independent validation."""
+def _judge_gaps(coverage) -> list[str]:
+    """One line per cell whose applicable judge measures are not all judged."""
+    lines = []
+    for cell in coverage:
+        if cell.complete or cell.summary is None:
+            continue
+        parts = []
+        for measure in cell.summary:
+            if measure.complete:
+                continue
+            reasons = [
+                f"{count} {label}"
+                for count, label in (
+                    (measure.not_judged_calls, "not judged"),
+                    (measure.error_calls, "judge errors"),
+                    (measure.missing_input_calls, "missing audio"),
+                )
+                if count
+            ]
+            parts.append(
+                f"{measure.measure} {measure.judged_calls}/"
+                f"{measure.applicable_calls} judged ({', '.join(reasons)})"
+            )
+        lines.append(f"  {cell.language}-{cell.domain}: " + "; ".join(parts))
+    if lines:
+        lines.insert(
+            0,
+            f"Judges: {len(lines)}/{len(coverage)} cells have applicable measures "
+            "without a usable saved verdict.",
+        )
+    return lines
+
+
+def _incomplete_message(root: Path, frame, summary, judge_coverage) -> str:
+    """Counts per cell plus the commands that fill each kind of gap."""
+    from tau2.metrics.benchmark import describe_reward_gaps
+
+    reward_lines = describe_reward_gaps(summary)
+    judge_lines = _judge_gaps(judge_coverage or [])
+    lines = [
+        f"Submission is incomplete for {frame.benchmark_version} ({root}).",
+        *reward_lines,
+        *judge_lines,
+        "To fill the gaps:",
+    ]
+    if reward_lines:
+        lines.append(
+            "  - Rerun the original `tau2 run ... --save-to <root>` command with "
+            "--auto-resume: it keeps finished calls, adds missing ones and retries "
+            "infrastructure errors. Unscored and unexpected-error calls are not "
+            "retried; remove them from the cell results first."
+        )
+    if judge_coverage is not None:
+        lines.append(
+            f"  - {'Then run' if reward_lines else 'Run'} `tau2 judges suite {root}`: "
+            "it judges only missing, stale and errored verdicts."
+        )
+    if any("missing audio" in line for line in judge_lines):
+        lines.append(
+            "  - Calls with missing audio cannot be judged: restore their saved "
+            "recordings (<cell>/tasks/task_<id>/sim_<id>/audio/both.wav) or rerun "
+            "those calls."
+        )
+    return "\n".join(lines)
+
+
+def _benchmark_package(root: Path, preset: str | None):
+    """Rewards (and, for judged benchmarks, diagnostics) from one saved matrix."""
     from tau2.data_model.benchmark import BenchmarkFrame
-    from tau2.metrics.benchmark import export_submission
+    from tau2.judges.submission import JUDGED_BENCHMARKS, collect_diagnostics
+    from tau2.judges.validation import production_catalog
+    from tau2.metrics.benchmark import IncompleteSubmissionError, export_submission
     from tau2.runner.presets import infer_preset, verify_frame
 
     frame = BenchmarkFrame.model_validate_json(
@@ -1022,24 +1088,66 @@ def prepare_benchmark_submission(
     )
     preset = infer_preset(frame, preset)
     verify_frame(frame, preset)
-    submission = export_submission(root, frame, require_complete=True)
+    submission = export_submission(root, frame)
+    judge_coverage = diagnostics = None
+    if frame.benchmark_version in JUDGED_BENCHMARKS:
+        judge_coverage, diagnostics = collect_diagnostics(
+            root, frame, production_catalog([])
+        )
+    if not submission.summary.complete or (
+        judge_coverage is not None and diagnostics is None
+    ):
+        raise IncompleteSubmissionError(
+            _incomplete_message(root, frame, submission.summary, judge_coverage)
+        )
+    return submission, diagnostics
+
+
+def prepare_benchmark_submission(
+    root: Path, output: Path, preset: str | None = None
+) -> None:
+    """Export a complete frozen matrix; retain originals for independent validation.
+
+    Judged benchmarks (Voice V2) also require every applicable judge measure in
+    every cell to have a saved verdict from ``tau2 judges suite``.
+    """
+    from tau2.judges.submission import DIAGNOSTICS_FILE_NAME
+
+    submission, diagnostics = _benchmark_package(root, preset)
     output.mkdir(parents=True, exist_ok=True)
     destination = output / "benchmark-submission.json"
     destination.write_text(submission.model_dump_json(indent=2) + "\n")
     print(f"Saved {destination}")
+    if diagnostics is not None:
+        path = output / DIAGNOSTICS_FILE_NAME
+        path.write_text(diagnostics.model_dump_json(indent=2) + "\n")
+        print(f"Saved {path}")
+    print(f"Check it with: tau2 submit validate {output} --results {root}")
 
 
 def validate_benchmark_submission(
     directory: Path, results: Path, preset: str | None = None
 ):
-    """Recompute a submission from original saved results and installed release data."""
-    from tau2.metrics.benchmark import export_submission, load_submission
-    from tau2.runner.presets import infer_preset, verify_frame
+    """Recompute rewards and judge diagnostics from the original saved matrix."""
+    from tau2.judges.submission import DIAGNOSTICS_FILE_NAME, BenchmarkDiagnostics
+    from tau2.metrics.benchmark import load_submission
+    from tau2.runner.presets import infer_preset
 
     submission = load_submission(directory / "benchmark-submission.json")
     preset = infer_preset(submission.frame, preset)
-    verify_frame(submission.frame, preset)
-    expected = export_submission(results, submission.frame, require_complete=True)
+    diagnostics_path = directory / DIAGNOSTICS_FILE_NAME
+    diagnostics = (
+        BenchmarkDiagnostics.model_validate_json(diagnostics_path.read_text())
+        if diagnostics_path.is_file()
+        else None
+    )
+    expected, expected_diagnostics = _benchmark_package(results, preset)
+    if expected.frame != submission.frame:
+        raise ValueError("Submission frame differs from the original saved matrix")
     if expected != submission:
         raise ValueError("Submission differs from original saved result evidence")
+    if expected_diagnostics is not None and diagnostics is None:
+        raise ValueError(f"Submission lacks {DIAGNOSTICS_FILE_NAME}")
+    if expected_diagnostics != diagnostics:
+        raise ValueError("Judge diagnostics differ from the original saved verdicts")
     return expected

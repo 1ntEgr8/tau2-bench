@@ -37,6 +37,36 @@ from tau2.data_model.simulation import (
 from tau2.runner.presets import binding_revision
 
 
+class IncompleteSubmissionError(ValueError):
+    """Official coverage is incomplete; the message lists counts and remedies."""
+
+
+def describe_reward_gaps(summary: BenchmarkSummary) -> list[str]:
+    """Plain-text reward coverage gaps: an overall count, then one line per cell."""
+    lacking = summary.expected_trials - summary.scored_trials
+    if not lacking:
+        return []
+    lines = [
+        f"Rewards: {lacking}/{summary.expected_trials} calls lack a scored reward "
+        f"({summary.missing_trials} missing, {summary.error_trials} errored, "
+        f"{summary.unscored_trials} unscored)."
+    ]
+    for cell in summary.cells:
+        if cell.complete:
+            continue
+        parts = [
+            f"{count} {label}"
+            for count, label in (
+                (cell.missing_trials, "missing"),
+                (cell.error_trials, "errored"),
+                (cell.unscored_trials, "unscored"),
+            )
+            if count
+        ]
+        lines.append(f"  {cell.language}-{cell.domain}: " + ", ".join(parts))
+    return lines
+
+
 def _digest(value) -> str:
     return hashlib.sha256(
         json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
@@ -333,8 +363,8 @@ def export_submission(
         selection = plan.selection
     summary = summarize(frame, trials)
     if require_complete and not summary.complete:
-        raise ValueError(
-            "Submission is incomplete; inspect missing/error/unscored coverage"
+        raise IncompleteSubmissionError(
+            "\n".join(["Submission is incomplete.", *describe_reward_gaps(summary)])
         )
     submission = BenchmarkSubmission(
         frame=frame,

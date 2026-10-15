@@ -338,12 +338,15 @@ def test_complete_saved_matrix_submission_auto_detection(
         corrupt_path.write_text(json.dumps(corrupt))
         load_submission(corrupt_path)
 
+    from tau2.judges import submission as judge_submission
     from tau2.runner import presets
     from tau2.scripts.leaderboard.cli import add_submit_args
 
     monkeypatch.setattr(presets, "load_frame", lambda *a, **kw: published_frame)
     monkeypatch.setattr(presets, "verify_frame", lambda *a, **kw: None)
     monkeypatch.setattr(presets, "preset_names", lambda: ["voice"])
+    # Reward export only; judged Voice V2 packages: test_judged_submission.py.
+    monkeypatch.setattr(judge_submission, "JUDGED_BENCHMARKS", frozenset())
     (root / "benchmark-frame.json").write_text(published_frame.model_dump_json())
     submit_parser = argparse.ArgumentParser()
     add_submit_args(submit_parser)
