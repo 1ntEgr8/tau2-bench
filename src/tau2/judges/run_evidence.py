@@ -5,6 +5,7 @@ import hashlib
 import io
 import json
 import wave
+from collections.abc import Iterator
 from functools import cached_property
 from pathlib import Path
 from typing import Annotated, Literal
@@ -344,6 +345,18 @@ class SavedRun:
                 )
             )
         return inputs
+
+    def iter_transcripts(
+        self, simulation_ids: set[str]
+    ) -> Iterator[tuple[SimulationRun, str | None]]:
+        """Stream selected prepared calls with their opener, without audio hashing."""
+        for simulation in Results.iter_simulations(
+            self.results_path, context=_HISTORICAL_CONTEXT
+        ):
+            if simulation.id in simulation_ids:
+                simulation = self._prepare_simulation(simulation)
+                task = self.tasks[simulation.task_id]
+                yield simulation, recorded_opener(self.metadata, simulation, task)
 
     def _prepare_simulation(self, simulation: SimulationRun) -> SimulationRun:
         config = self.metadata.info.audio_native_config

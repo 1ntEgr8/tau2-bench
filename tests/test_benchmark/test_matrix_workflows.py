@@ -131,6 +131,17 @@ def test_matrix_judges_dry_run_and_summary_preserve_cells_without_model_calls(
         values = [command, str(saved_matrix), "--only", "naturalness"]
         if command == "suite":
             values.append("--dry-run")
+        if command != "export":
+            capsys.readouterr()
+            cli.run_judges(parser.parse_args(values))
+            table = capsys.readouterr().out.splitlines()
+            assert table[0].split()[:2] == ["cell", "measure"]
+            assert [row.split()[:2] for row in table if "naturalness" in row] == [
+                ["en/retail", "naturalness"],
+                ["pt/retail", "naturalness"],
+            ]
+            assert sum("(no results)" in row for row in table) == 16
+            values.append("--json")
         capsys.readouterr()
         cli.run_judges(parser.parse_args(values))
         report = MatrixDiagnosticExport.model_validate_json(capsys.readouterr().out)

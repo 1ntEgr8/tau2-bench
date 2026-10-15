@@ -240,3 +240,32 @@ def test_non_bridged_model_system_messages_untouched(capture_completion):
     sent = capture_completion["messages"]
     assert sent[0]["content"] == "system prompt"
     assert sent[2]["content"] == "[12 seconds of silence]"
+
+
+@pytest.mark.parametrize("model", ["gpt-5.5", "openai/gpt-5.4-mini-2026-03-17"])
+def test_responses_bridge_keeps_tool_choice(capture_completion, messages, model):
+    """The bridge's failed capability lookup must not drop a requested tool_choice."""
+    llm_utils.generate(model, messages, tool_choice="required")
+    assert capture_completion["model"].startswith("openai/responses/")
+    assert capture_completion["tool_choice"] == "required"
+    assert capture_completion["allowed_openai_params"] == ["tool_choice"]
+
+
+def test_non_bridged_models_keep_default_param_filtering(capture_completion, messages):
+    llm_utils.generate("gpt-4.1-2025-04-14", messages, tool_choice="required")
+    assert "allowed_openai_params" not in capture_completion
+
+
+def test_litellm_bridge_param_mapping_keeps_tool_choice_quietly(capsys):
+    """Pinned-LiteLLM regression: allowed params survive the bridge's lookup."""
+    from litellm.utils import get_optional_params
+
+    params = get_optional_params(
+        model="responses/gpt-5.5",
+        custom_llm_provider="openai",
+        tools=[{"type": "function", "function": {"name": "lookup"}}],
+        tool_choice="required",
+        allowed_openai_params=list(llm_utils._RESPONSES_BRIDGE_PARAMS),
+    )
+    assert params["tool_choice"] == "required"
+    assert "Provider List" not in capsys.readouterr().out

@@ -39,7 +39,7 @@ The caller remains GPT-5.5 with low reasoning.
 ```bash
 # Preview all 900 calls, without provider requests or output writes.
 tau2 run --audio-native --audio-native-model gpt-realtime-2 --reasoning-effort minimal --save-to voice-run --dry-run
-# Remove --dry-run to execute.
+# Remove --dry-run to execute. Add --json for the full resolved plan.
 
 # A domain across all released languages: 300 calls.
 tau2 run --audio-native --domain retail --audio-native-model gpt-realtime-2 --reasoning-effort minimal --save-to retail-run
@@ -213,6 +213,12 @@ artifacts per cell. A transport revision invalidates cached verdicts produced be
 audio forwarding and Responses routing were restored, including custom judge catalogs.
 They do not alter task success or run during viewing,
 submission preparation or validation.
+
+`tau2 judges summarize` prints one row per cell and measure (coverage, pass/fail
+units, pass fraction, completeness); `tau2 judges suite --dry-run` prints the
+planned judge/reuse/not-applicable counts and an upper bound on model requests.
+Add `--json` for the full typed export, or `--output FILE` to save it alongside
+the table. `tau2 judges export` always prints JSON.
 
 ## Submit saved results
 
