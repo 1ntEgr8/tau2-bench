@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import './Leaderboard.css'
 import ProgressView from './ProgressView'
 import MultilingualVoice from './MultilingualVoice'
+import VoiceV2Submissions from './VoiceV2Submissions'
 
 // The leaderboard is split into three buckets, one per benchmark track:
 // τ³-Banking (published as τ-knowledge), τ³-Voice (published as τ-voice:
@@ -289,7 +290,13 @@ const Leaderboard = () => {
   const [showFilterInfo, setShowFilterInfo] = useState(false)
   // Voice ranking mode: 'passk' (default) or 'interaction' (τ-voice panel)
   const [rankBy, setRankBy] = useState('passk')
-  const [voiceEdition, setVoiceEdition] = useState(() => window.location.pathname.replace(/\/$/, '') === '/progress' ? 'english' : 'multilingual')
+  // Voice tabs: the τ-i18n paper cohort, 2.0 (voice-v2) submissions, and the
+  // English 1.x/voice-v1 submissions. ?edition=v2 deep-links the 2.0 tab.
+  const [voiceEdition, setVoiceEdition] = useState(() => {
+    if (window.location.pathname.replace(/\/$/, '') === '/progress') return 'english'
+    const requested = new URLSearchParams(window.location.search).get('edition')
+    return requested === 'v2' || requested === 'english' ? requested : 'multilingual'
+  })
   // null = keep the pass^1 ordering; set by clicking a metric column header
   const [interactionMetric, setInteractionMetric] = useState(null)
   // Expanded rows state (set of model names)
@@ -759,9 +766,10 @@ const Leaderboard = () => {
 
       {isVoice && <div className="voice-edition" aria-label="Voice edition">
         <button className={voiceEdition === 'multilingual' ? 'active' : ''} aria-pressed={voiceEdition === 'multilingual'} onClick={() => setVoiceEdition('multilingual')}>τ-i18n (Multilingual)</button>
+        <button className={voiceEdition === 'v2' ? 'active' : ''} aria-pressed={voiceEdition === 'v2'} onClick={() => setVoiceEdition('v2')}>2.0 submissions</button>
         <button className={voiceEdition === 'english' ? 'active' : ''} aria-pressed={voiceEdition === 'english'} onClick={() => setVoiceEdition('english')}>English only</button>
       </div>}
-      {isVoice && voiceEdition === 'multilingual' ? <MultilingualVoice submissionTypeFilters={submissionTypeFilters} showStandard={showStandard} showCustom={showCustom} /> : <>
+      {isVoice && voiceEdition === 'v2' ? <VoiceV2Submissions submissionTypeFilters={submissionTypeFilters} showStandard={showStandard} showCustom={showCustom} /> : isVoice && voiceEdition === 'multilingual' ? <MultilingualVoice submissionTypeFilters={submissionTypeFilters} showStandard={showStandard} showCustom={showCustom} /> : <>
 
       {/* Combined Controls Row — applies to both ranking and progress views */}
       <div className="leaderboard-controls">

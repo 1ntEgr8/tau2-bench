@@ -125,3 +125,21 @@ def published_frame(tmp_path, monkeypatch):
         trials=[0],
         cells=cells,
     )
+
+
+@pytest.fixture
+def submitter_file(tmp_path) -> Path:
+    """``--metadata-file`` for a 2.0 package named fixture_test_2026-10-02."""
+    path = tmp_path / "submitter.json"
+    path.write_text(
+        json.dumps(
+            {
+                "model_name": "fixture",
+                "model_organization": "test",
+                "submitting_organization": "test",
+                "submission_date": "2026-10-02",
+                "contact_info": {"email": "review@example.org"},
+            }
+        )
+    )
+    return path

@@ -1,10 +1,16 @@
-"""Generate JSON schema from the Submission Pydantic model.
+"""Generate the leaderboard JSON schemas from their Pydantic models.
 
 Usage:
     python -m tau2.scripts.leaderboard.generate_schema [--check]
 
-Without --check, writes the schema to web/leaderboard/public/submissions/schema.json.
-With --check, verifies the file is up-to-date and exits non-zero if it differs.
+Writes, under web/leaderboard/public/submissions/:
+
+- ``schema.json``: 1.x and voice-v1 ``submission.json`` (``Submission``).
+- ``schema_benchmark_metadata.json``: the 2.0 package's
+  ``benchmark-metadata.json`` (``PackageMetadata``). The package's other files
+  are ``BenchmarkSubmission`` and ``BenchmarkDiagnostics`` exports.
+
+With --check, verifies the files are up-to-date and exits non-zero if not.
 """
 
 import argparse
@@ -12,44 +18,50 @@ import json
 import sys
 from pathlib import Path
 
-from tau2.scripts.leaderboard.submission import Submission
-from tau2.scripts.leaderboard.voice_v2_submission import VoiceV2Submission
+from pydantic import BaseModel
 
-SCHEMA_PATH = (
+from tau2.scripts.leaderboard.benchmark_package import PackageMetadata
+from tau2.scripts.leaderboard.submission import Submission
+
+SUBMISSIONS_DIR = (
     Path(__file__).parent.parent.parent.parent.parent
     / "web"
     / "leaderboard"
     / "public"
     / "submissions"
-    / "schema.json"
 )
-VOICE_V2_SCHEMA_PATH = SCHEMA_PATH.with_name("schema_voice_v2.json")
+SCHEMA_PATH = SUBMISSIONS_DIR / "schema.json"
+METADATA_SCHEMA_PATH = SUBMISSIONS_DIR / "schema_benchmark_metadata.json"
+
+
+def _schema(model: type[BaseModel], title: str, description: str) -> str:
+    raw = model.model_json_schema()
+    raw["$schema"] = "http://json-schema.org/draft-07/schema#"
+    raw["title"] = title
+    raw["description"] = description
+    return json.dumps(raw, indent=2) + "\n"
 
 
 def generate_schema() -> str:
     """Generate JSON schema string from the Submission model."""
-    raw = Submission.model_json_schema()
-
-    raw["$schema"] = "http://json-schema.org/draft-07/schema#"
-    raw["title"] = "Tau2-Bench Leaderboard Submission"
-    raw["description"] = (
+    return _schema(
+        Submission,
+        "Tau2-Bench Leaderboard Submission",
         "Schema for submitting model results to the tau2-bench leaderboard. "
         "Auto-generated from the Pydantic model in "
-        "src/tau2/scripts/leaderboard/submission.py — do not edit by hand."
+        "src/tau2/scripts/leaderboard/submission.py — do not edit by hand.",
     )
 
-    return json.dumps(raw, indent=2) + "\n"
 
-
-def generate_voice_v2_schema() -> str:
-    """Generate the independent Voice V2 submission schema."""
-    raw = VoiceV2Submission.model_json_schema()
-    raw["$schema"] = "http://json-schema.org/draft-07/schema#"
-    raw["title"] = "Tau2-Bench Voice V2 Submission"
-    raw["description"] = (
-        "Versioned multilingual Voice V2 package with saved task and judge evidence."
+def generate_metadata_schema() -> str:
+    """Generate the 2.0 package metadata schema."""
+    return _schema(
+        PackageMetadata,
+        "Tau2-Bench 2.0 Package Metadata",
+        "benchmark-metadata.json in a 2.0 leaderboard package. Auto-generated "
+        "from src/tau2/scripts/leaderboard/benchmark_package.py — do not edit "
+        "by hand.",
     )
-    return json.dumps(raw, indent=2) + "\n"
 
 
 def main():
@@ -57,50 +69,30 @@ def main():
     parser.add_argument(
         "--check",
         action="store_true",
-        help="Check that schema.json is up-to-date (exit 1 if stale)",
-    )
-    parser.add_argument(
-        "--output",
-        type=str,
-        default=None,
-        help="Output path (default: web/leaderboard/public/submissions/schema.json)",
-    )
-    parser.add_argument(
-        "--benchmark",
-        choices=("legacy", "voice-v2"),
-        default="legacy",
-        help="Select the independent submission contract",
+        help="Check that the schemas are up-to-date (exit 1 if stale)",
     )
     args = parser.parse_args()
 
-    output_path = (
-        Path(args.output)
-        if args.output
-        else (VOICE_V2_SCHEMA_PATH if args.benchmark == "voice-v2" else SCHEMA_PATH)
-    )
-    new_schema = (
-        generate_voice_v2_schema()
-        if args.benchmark == "voice-v2"
-        else generate_schema()
-    )
-
+    outputs = {
+        SCHEMA_PATH: generate_schema(),
+        METADATA_SCHEMA_PATH: generate_metadata_schema(),
+    }
     if args.check:
-        if not output_path.exists():
-            print(f"FAIL: {output_path} does not exist")
+        stale = [
+            path
+            for path, schema in outputs.items()
+            if not path.exists() or path.read_text() != schema
+        ]
+        for path in stale:
+            print(f"FAIL: {path} is out of date. Run 'make generate-schema'.")
+        if stale:
             sys.exit(1)
-        existing = output_path.read_text()
-        if existing != new_schema:
-            print(
-                f"FAIL: {output_path} is out of date. "
-                f"Run 'make generate-schema' to update."
-            )
-            sys.exit(1)
-        print(f"OK: {output_path} is up-to-date")
+        print("OK: leaderboard schemas are up-to-date")
         return
-
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(new_schema)
-    print(f"Wrote schema to {output_path}")
+    for path, schema in outputs.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(schema)
+        print(f"Wrote schema to {path}")
 
 
 if __name__ == "__main__":

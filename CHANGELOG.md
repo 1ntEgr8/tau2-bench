@@ -8,8 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- 2.0 leaderboard packages: `tau2 submit prepare <matrix-root> --metadata-file
+  submitter.json --output DIR` writes `DIR/<model>_<org>_<date>/` with
+  `benchmark-submission.json`, `benchmark-diagnostics.json` (voice-v2) and
+  `benchmark-metadata.json` (schema `schema_benchmark_metadata.json`). The
+  leaderboard lists them under the manifest key `voice_v2_submissions` on a
+  separate "2.0 submissions" voice tab with per-language × per-domain pass@1 and
+  judge-measure summaries; 1.x tabs are unchanged. Evidence is uploaded to
+  `s3://sierra-tau-bench-public/submissions/<name>/trajectories/<language>/<domain>/`.
 
 ### Changed
+- The frozen 2026-10-02 voice-v2 release adapter (`tau2 submit prepare
+  --historical-voice-v2 --judges-root ...`) now writes the same 2.0 package as
+  new runs instead of its own `VoiceV2Submission` format; judge diagnostics
+  record partial and missing verdicts as coverage gaps. New runs still must be
+  fully judged before `prepare` writes a package.
 - Docs for 2.0: a 2.0 section in the README, one page for running the text and
   voice benchmarks (`docs/running-the-benchmark.md`, replacing
   `docs/benchmark-runs.md`), a submission guide covering text-v1, voice-v2,
@@ -24,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Deprecated
 
 ### Removed
+- `tau2.scripts.leaderboard.voice_v2_submission`, `schema_voice_v2.json` and the
+  `--provider` / `--interaction-facts` flags of `tau2 submit prepare`.
 
 ### Fixed
 - GPT-5 calls routed through the LiteLLM Responses bridge silently dropped

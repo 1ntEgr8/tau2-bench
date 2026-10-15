@@ -1,16 +1,17 @@
-"""Prepare and verify Voice V2 packages entirely from saved results and verdicts."""
+"""Package the frozen 2026-10-02 Voice V2 release exports as 2.0 packages.
 
-from __future__ import annotations
+Maintainer-only. The release calls predate the current matrix layout and some
+recorded condition fields, so ``tau2 submit prepare <matrix-root>`` cannot read
+them. This adapter reads the saved exports (``trajectories/<lang>/<domain>/``)
+and their saved judge verdicts as raw JSON, checks them against the published
+frame, and writes the same package a matrix submission produces. It never runs
+a simulation or a judge, and it must never qualify an incomplete new run.
+"""
 
-import csv
 import json
-import shutil
 from collections import defaultdict
 from hashlib import sha256
 from pathlib import Path
-from typing import Annotated, Literal
-
-from pydantic import BaseModel, Field, model_validator
 
 from tau2.data_model.benchmark import (
     BenchmarkFrame,
@@ -18,265 +19,44 @@ from tau2.data_model.benchmark import (
     TaskTrial,
     TrialStatus,
 )
-from tau2.data_model.message import AssistantMessage
-from tau2.data_model.simulation import SimulationRun
-from tau2.metrics.benchmark import (
-    summarize,
+from tau2.data_model.judges import (
+    PlanAction,
+    PlannedVerdict,
+    StoredVerdict,
+    SuitePlan,
 )
-from tau2.metrics.benchmark import (
-    validate_submission as validate_benchmark_submission,
-)
+from tau2.judges.submission import export_diagnostics
+from tau2.metrics.benchmark import summarize
 from tau2.runner.presets import load_frame
-from tau2.scripts.leaderboard.submission import Submission
-from tau2.scripts.leaderboard.voice_v2_submission import (
-    DOMAINS,
-    EXPERIENCE_VERSION,
-    INTERACTION_VERSION,
-    LANGUAGES,
-    CallOutcome,
-    InteractionFacts,
-    VoiceV2Benchmark,
-    VoiceV2Cell,
-    VoiceV2Submission,
-    coverage,
-    experience_outcome,
-    file_sha256,
-    interaction_outcome,
+from tau2.scripts.leaderboard.benchmark_package import (
+    BenchmarkPackage,
+    PackageMetadata,
+    SubmitterMetadata,
+    load_package,
 )
 
-
-class InteractionFactsRow(BaseModel):
-    """One row of the saved interaction-event fact table."""
-
-    provider: Annotated[str, Field(description="Provider arm")]
-    language: Annotated[str, Field(description="Language code")]
-    domain: Annotated[str, Field(description="Domain name")]
-    simulation_id: Annotated[str, Field(description="Scored simulation ID")]
-    had_unresponsive_period: Annotated[
-        bool, Field(description="Saved unresponsive-period detector result")
-    ]
-    nonresponse_failure: Annotated[
-        int | None, Field(description="Nonresponse failure flag")
-    ]
-    interruption_count: Annotated[
-        int, Field(ge=0, description="Detected agent interruption events")
-    ]
-    selectivity_error_count: Annotated[
-        int, Field(ge=0, description="Total selectivity errors")
-    ]
-    selectivity_failure: Annotated[
-        int | None, Field(description="Saved selectivity availability and flag")
-    ]
-    monologue_failure: Annotated[int | None, Field(description="Monologue flag")]
-    tool_misuse_failure: Annotated[int | None, Field(description="Tool-use flag")]
-
-    @model_validator(mode="after")
-    def _check_flags(self) -> InteractionFactsRow:
-        for value in (
-            self.nonresponse_failure,
-            self.selectivity_failure,
-            self.monologue_failure,
-            self.tool_misuse_failure,
-        ):
-            if value not in (None, 0, 1):
-                raise ValueError("failure flags must be 0, 1, or missing")
-        return self
-
-    def facts(self) -> InteractionFacts:
-        """Convert saved detector fields into versioned Interaction inputs."""
-        return InteractionFacts(
-            nonresponse=_flag(self.nonresponse_failure),
-            interruption_count=self.interruption_count,
-            selectivity_error_count=self.selectivity_error_count,
-            selectivity_available=self.selectivity_failure is not None,
-            monologue=_flag(self.monologue_failure),
-            tool_misuse=_flag(self.tool_misuse_failure),
-            korean_unresponsive_period=(
-                self.language == "ko" and self.had_unresponsive_period
-            ),
-        )
+EVIDENCE = "historical-voice-v2-2026-10-02"
+CORRECTION_FORMAT = "voice-v2-gemini-retry-correction-v1"
 
 
-def _flag(value: int | None) -> bool | None:
-    return bool(value) if value is not None else None
+def file_sha256(path: Path) -> str:
+    """Hash a saved input without modifying it."""
+    digest = sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
-class SourceFile(BaseModel):
-    """Hash of an immutable package input relative to the package root."""
-
-    path: Annotated[str, Field(description="Relative package path")]
-    sha256: Annotated[
-        str, Field(pattern=r"^[0-9a-f]{64}$", description="Content SHA-256")
-    ]
-
-
-class VoiceV2Provenance(BaseModel):
-    """Complete source inventory needed to reproduce the V2 summary."""
-
-    format: Annotated[
-        Literal["voice-v2-provenance-v1"], Field(description="Manifest version")
-    ]
-    frame_revision: Annotated[str, Field(description="Recorded benchmark frame")]
-    provider: Annotated[str, Field(description="Provider arm")]
-    interaction_version: Annotated[
-        Literal["voice-v2-interaction-call-v1"],
-        Field(description="Interaction derivation version"),
-    ]
-    experience_version: Annotated[
-        Literal["voice-v2-experience-call-v1"],
-        Field(description="Experience derivation version"),
-    ]
-    interaction_facts_derivation: Annotated[
-        Literal[
-            "extract_interaction_quality_metrics plus CHECKER_REGISTRY for "
-            "nonresponse, interruption, selectivity and monologue; saved tool_use "
-            "judge factors for tool misuse"
-        ],
-        Field(description="Origin of the saved per-call event facts"),
-    ]
-    files: Annotated[
-        list[SourceFile], Field(description="All trajectory, judge, and fact inputs")
-    ]
-
-    @model_validator(mode="after")
-    def _unique_files(self) -> VoiceV2Provenance:
-        paths = [entry.path for entry in self.files]
-        if len(paths) != len(set(paths)):
-            raise ValueError("duplicate provenance file paths")
-        return self
-
-
-def _safe_path(root: Path, relative: str) -> Path:
-    path = root / relative
-    if not path.resolve().is_relative_to(root.resolve()):
-        raise ValueError(f"path escapes submission root: {relative}")
-    return path
-
-
-def _load_facts(
-    path: Path, provider: str
-) -> dict[tuple[str, str, str], InteractionFacts]:
-    """Load the saved event facts, rejecting duplicates and wrong provider arms."""
-    rows: dict[tuple[str, str, str], InteractionFacts] = {}
-    with path.open(newline="") as stream:
-        for raw in csv.DictReader(stream):
-            row = InteractionFactsRow.model_validate(
-                {key: value if value != "" else None for key, value in raw.items()}
-            )
-            if row.provider != provider:
-                continue
-            key = (row.language, row.domain, row.simulation_id)
-            if key in rows:
-                raise ValueError(f"duplicate interaction fact: {key}")
-            rows[key] = row.facts()
-    return rows
-
-
-def _load_judgments(path: Path, simulation_id: str) -> dict[str, dict]:
-    """Index recorded judge measures and reject duplicate or foreign verdicts."""
-    measures: dict[str, dict] = {}
-    for result in json.loads(path.read_text()):
-        identity = result["identity"]
-        if identity["input"]["simulation_id"] != simulation_id:
-            raise ValueError(f"verdict simulation ID mismatch: {path}")
-        name = identity["measure"]
-        if name in measures:
-            raise ValueError(f"duplicate judge measure {name}: {path}")
-        measures[name] = result
-    return measures
-
-
-def _experience_for_call(simulation_path: Path, verdict_path: Path) -> CallOutcome:
-    """Align the two judges by the saved agent-turn/tick-span mapping.
-
-    Naturalness unit IDs follow segment IDs or turn indexes. Speech-fidelity
-    unit IDs follow segment IDs or tick-span indexes. They cannot be joined by
-    ordinal position; some calls have excluded control utterances in only one
-    measure.
-    """
-    simulation_id = simulation_path.stem
-    measures = _load_judgments(verdict_path, simulation_id)
-    naturalness = measures.get("naturalness")
-    fidelity = measures.get("speech_fidelity")
-    if not naturalness or not fidelity:
-        return CallOutcome.UNSCORED
-    if naturalness.get("error") or fidelity.get("error"):
-        return CallOutcome.UNSCORED
-    nat_verdict = naturalness.get("verdict") or {}
-    fid_verdict = fidelity.get("verdict") or {}
-    if nat_verdict.get("unit_errors") or fid_verdict.get("unit_errors"):
-        return CallOutcome.UNSCORED
-    nat = {
-        unit["unit_id"]: unit
-        for unit in nat_verdict.get("units", [])
-        if unit["opportunity"]
-    }
-    fid = {
-        unit["unit_id"]: unit
-        for unit in fid_verdict.get("units", [])
-        if unit["opportunity"]
-    }
-    simulation = SimulationRun.model_validate_json(simulation_path.read_text())
-    if nat and all(unit_id.startswith("live-segment:") for unit_id in nat):
-        paired = {unit_id: unit_id for unit_id in nat}
-    else:
-        paired = _legacy_utterance_alignment(simulation)
-    paired_units = [
-        (nat[n], fid[f]) for n, f in paired.items() if n in nat and f in fid
-    ]
-    return experience_outcome(
-        len(nat),
-        [unit["violation"] for unit, _ in paired_units],
-        [unit["violation"] for _, unit in paired_units],
-    )
-
-
-def _legacy_utterance_alignment(simulation: SimulationRun) -> dict[str, str]:
-    """Reconstruct the frozen judge's non-Live turn-to-audio-span indexes.
-
-    The frozen scorer numbered every non-tool agent audio group, including
-    silent chunks, for fidelity. Naturalness numbered only speech-bearing
-    groups with text. Intersecting utterance IDs join consecutive chunks.
-    """
-    groups: list[list] = []
-    current_ids: set[str] = set()
-    for tick in simulation.ticks or []:
-        chunk = tick.agent_chunk
-        if chunk is None or chunk.is_tool_call():
-            continue
-        ids = set(chunk.utterance_ids or [])
-        if groups and current_ids and ids and not current_ids.isdisjoint(ids):
-            groups[-1].append(chunk)
-            current_ids.update(ids)
-        else:
-            groups.append([chunk])
-            current_ids = ids
-    paired: dict[str, str] = {}
-    turn_index = 0
-    for span_index, chunks in enumerate(groups):
-        merged = (
-            chunks[0] if len(chunks) == 1 else AssistantMessage.merge_chunks(chunks)
-        )
-        if merged.contains_speech is False or not (
-            merged.audio_script_gold or merged.content
-        ):
-            continue
-        paired[str(turn_index)] = str(span_index)
-        turn_index += 1
-    return paired
-
-
-def _load_cell(root: Path, language: str, domain: str) -> tuple[dict, list[dict]]:
-    results_path = root / "trajectories" / language / domain / "results.json"
-    data = json.loads(results_path.read_text())
-    return data, data["simulation_index"]
+def _cell_dir(root: Path, language: str, domain: str) -> Path:
+    return root / "trajectories" / language / domain
 
 
 def _validate_simulation_files(
     root: Path, simulations: list[dict], language: str, domain: str
 ) -> None:
     """Check the directory payloads against the canonical result index."""
-    sim_dir = root / "trajectories" / language / domain / "simulations"
+    sim_dir = _cell_dir(root, language, domain) / "simulations"
     indexed_ids = {entry["id"] for entry in simulations}
     file_ids = {path.stem for path in sim_dir.glob("*.json")}
     if indexed_ids != file_ids:
@@ -304,7 +84,7 @@ def _validate_cell_frame(
     domain: str,
     official: BenchmarkFrame,
 ) -> dict[str, str]:
-    """Adapt the 2026-10-02 release metadata without inventing current-run fields."""
+    """Check release metadata against the frame without inventing later fields."""
     info = data["info"]
     frame = info.get("benchmark") or {}
     cell = next(
@@ -327,10 +107,9 @@ def _validate_cell_frame(
     if info["environment_info"]["domain_name"] != domain:
         raise ValueError(f"{language}/{domain}: recorded domain mismatch")
     selected = set(frame["selected_task_ids"])
-    language_tasks = info["language_tasks"]
     mapped = {
         str(task_id): details["canonical_task_id"]
-        for task_id, details in language_tasks.items()
+        for task_id, details in info["language_tasks"].items()
     }
     task_ids = [mapped[str(task["id"])] for task in data["tasks"]]
     if (
@@ -356,34 +135,16 @@ def _validate_cell_frame(
     return mapped
 
 
-def _source_files(root: Path, provider: str) -> list[SourceFile]:
-    paths = [root / "interaction_facts.csv"]
-    for name in ("interaction_facts_upstream.json", "interaction_facts_method.md"):
-        if (root / name).is_file():
-            paths.append(root / name)
-    if (root / "source_correction.json").is_file():
-        paths.append(root / "source_correction.json")
-    for language in LANGUAGES:
-        for domain in DOMAINS:
-            base = root / "trajectories" / language / domain
-            paths.append(base / "results.json")
-            paths.extend(sorted((base / "simulations").glob("*.json")))
-        paths.extend(sorted((root / "judges" / provider / language).glob("*.json")))
-    return [
-        SourceFile(path=str(path.relative_to(root)), sha256=file_sha256(path))
-        for path in sorted(set(paths))
-    ]
-
-
 def _validate_source_correction(root: Path) -> None:
-    path = root / "source_correction.json"
+    """A retry-correction manifest must still describe the corrected export."""
+    path = root / "correction.json"
     if not path.is_file():
         return
     correction = json.loads(path.read_text())
-    if correction.get("format") != "voice-v2-gemini-retry-correction-v1":
+    if correction.get("format") != CORRECTION_FORMAT:
         raise ValueError("unknown source correction format")
     for item in correction["corrections"]:
-        cell = root / "trajectories" / item["language"] / item["domain"]
+        cell = _cell_dir(root, item["language"], item["domain"])
         simulation = cell / "simulations" / f"{item['new_index']['id']}.json"
         if file_sha256(cell / "results.json") != item["corrected_results_sha256"]:
             raise ValueError("corrected result differs from source correction")
@@ -391,294 +152,194 @@ def _validate_source_correction(root: Path) -> None:
             raise ValueError("corrected simulation differs from source correction")
 
 
-def build_voice_v2_submission(
-    package_root: Path,
-    provider: str,
-    metadata: Submission,
-) -> tuple[VoiceV2Submission, VoiceV2Provenance]:
-    """Derive V2 scores and coverage from a self-contained offline package."""
-    _validate_source_correction(package_root)
-    upstream_path = package_root / "interaction_facts_upstream.json"
-    if upstream_path.is_file():
-        upstream = json.loads(upstream_path.read_text())
-        source_hash = file_sha256(package_root / "interaction_facts.csv")
-        if source_hash not in (upstream.get("output_sha256") or {}).values():
-            raise ValueError("interaction fact table has no upstream provenance match")
-    facts = _load_facts(package_root / "interaction_facts.csv", provider)
+def _load_verdicts(
+    judges_roots: list[Path], language: str, simulation_id: str
+) -> list[StoredVerdict]:
+    """Exactly one judge root holds each scored call's saved verdict file."""
+    paths = [
+        path
+        for root in judges_roots
+        if (path := root / language / f"{simulation_id}.json").is_file()
+    ]
+    if len(paths) != 1:
+        raise ValueError(
+            f"{language}/{simulation_id}: expected one saved verdict file, "
+            f"found {len(paths)}"
+        )
+    rows = [
+        StoredVerdict.model_validate(row) for row in json.loads(paths[0].read_text())
+    ]
+    measures = [row.identity.measure for row in rows]
+    if len(measures) != len(set(measures)):
+        raise ValueError(f"{paths[0]}: duplicate judge measure")
+    if any(row.identity.input.simulation_id != simulation_id for row in rows):
+        raise ValueError(f"{paths[0]}: verdict simulation ID mismatch")
+    return rows
+
+
+def _judge_plan(
+    scored: list[str], verdicts: dict[str, list[StoredVerdict]], measures: list[str]
+) -> SuitePlan:
+    """Every saved measure of the language, for every scored call of the cell.
+
+    A call without a saved verdict for one of its language's measures stays
+    explicit as not judged; it is never dropped or counted as a failure.
+    """
+    items = []
+    for simulation_id in scored:
+        rows = {row.identity.measure: row for row in verdicts[simulation_id]}
+        call_input = next(iter(rows.values())).identity.input
+        for measure in measures:
+            row = rows.get(measure)
+            items.append(
+                PlannedVerdict(
+                    input=call_input,
+                    measure=measure,
+                    action=PlanAction.REUSE if row else PlanAction.MISSING,
+                    identity=row.identity if row else None,
+                    reason="Frozen 2026-10-02 release verdict"
+                    if row
+                    else "No saved release verdict",
+                )
+            )
+    return SuitePlan(items=items)
+
+
+def build_historical_package(
+    source_root: Path, judges_roots: list[Path], submitter: SubmitterMetadata
+) -> BenchmarkPackage:
+    """Derive the 2.0 package for one provider's frozen 18-cell export."""
+    _validate_source_correction(source_root)
     official = load_frame("voice", num_trials=1)
-    used_facts: set[tuple[str, str, str]] = set()
-    results: dict[str, dict[str, VoiceV2Cell]] = defaultdict(dict)
-    trajectory_files: dict[str, dict[str, str]] = defaultdict(dict)
     trials: list[TaskTrial] = []
     sources: dict[str, str] = {}
-    expected_judges: dict[str, set[str]] = defaultdict(set)
-    agent_models: set[str] = set()
-    user_models: set[str] = set()
-    for language in LANGUAGES:
-        for domain in DOMAINS:
-            data, simulations = _load_cell(package_root, language, domain)
-            info = data["info"]
-            agent_models.add(info["agent_info"]["llm"])
-            user_models.add(info["user_info"]["llm"])
-            audio_config = info["benchmark"]["conditions"]["audio_native_config"]
-            if (
-                audio_config["provider"]
-                != {
-                    "gemini": "gemini",
-                    "gpt_live": "openai_live",
-                    "grok": "xai",
-                }[provider]
-            ):
-                raise ValueError(f"{language}/{domain}: provider arm mismatch")
-            if audio_config["model"] != metadata.model_name:
-                raise ValueError(f"{language}/{domain}: model metadata mismatch")
-            task_mapping = _validate_cell_frame(
-                data, simulations, language, domain, official
+    agents: set[tuple[str, str]] = set()
+    caller_models: set[str] = set()
+    scored_by_cell: dict[tuple[str, str], list[str]] = {}
+    verdicts: dict[str, dict[str, list[StoredVerdict]]] = defaultdict(dict)
+    for cell in official.cells:
+        language, domain = cell.language, cell.domain
+        results_path = _cell_dir(source_root, language, domain) / "results.json"
+        data = json.loads(results_path.read_text())
+        simulations = data["simulation_index"]
+        info = data["info"]
+        audio_config = info["benchmark"]["conditions"]["audio_native_config"]
+        agents.add((audio_config["provider"], audio_config["model"]))
+        caller_models.add(info["user_info"]["llm"])
+        task_mapping = _validate_cell_frame(
+            data, simulations, language, domain, official
+        )
+        _validate_simulation_files(source_root, simulations, language, domain)
+        benchmark = info["benchmark"]
+        sources[f"{language}/{domain}"] = file_sha256(results_path)
+        trials.extend(
+            TaskTrial(
+                language=language,
+                domain=domain,
+                canonical_task_id=task_mapping[str(sim["task_id"])],
+                trial=sim["trial"],
+                condition_fingerprint=benchmark["condition_fingerprint"],
+                binding_revision=benchmark["binding_revision"],
+                status=TrialStatus.SCORED
+                if sim["reward"] is not None
+                else TrialStatus.ERROR,
+                reward=sim["reward"],
             )
-            benchmark = info["benchmark"]
-            sources[f"{language}/{domain}"] = file_sha256(
-                package_root / "trajectories" / language / domain / "results.json"
+            for sim in simulations
+        )
+        scored = [sim["id"] for sim in simulations if sim["reward"] is not None]
+        scored_by_cell[(language, domain)] = scored
+        for simulation_id in scored:
+            verdicts[language][simulation_id] = _load_verdicts(
+                judges_roots, language, simulation_id
             )
-            trials.extend(
-                TaskTrial(
-                    language=language,
-                    domain=domain,
-                    canonical_task_id=task_mapping[str(sim["task_id"])],
-                    trial=sim["trial"],
-                    condition_fingerprint=benchmark["condition_fingerprint"],
-                    binding_revision=benchmark["binding_revision"],
-                    status=(
-                        TrialStatus.SCORED
-                        if sim["reward"] is not None
-                        else TrialStatus.ERROR
-                    ),
-                    reward=sim["reward"],
-                )
-                for sim in simulations
-            )
-            _validate_simulation_files(package_root, simulations, language, domain)
-            scored = [sim for sim in simulations if sim["reward"] is not None]
-            passed = sum(sim["reward"] == 1 for sim in scored)
-            interaction: list[CallOutcome] = []
-            experience: list[CallOutcome] = []
-            for sim in scored:
-                key = (language, domain, sim["id"])
-                if key not in facts:
-                    raise ValueError(f"missing saved interaction facts: {key}")
-                used_facts.add(key)
-                expected_judges[language].add(sim["id"])
-                interaction.append(interaction_outcome(facts[key]))
-                experience.append(
-                    _experience_for_call(
-                        package_root
-                        / "trajectories"
-                        / language
-                        / domain
-                        / "simulations"
-                        / f"{sim['id']}.json",
-                        package_root
-                        / "judges"
-                        / provider
-                        / language
-                        / f"{sim['id']}.json",
-                    )
-                )
-            results[language][domain] = VoiceV2Cell(
-                selected=len(simulations),
-                scored=len(scored),
-                **{
-                    "pass": passed,
-                    "fail": len(scored) - passed,
-                },
-                infrastructure=len(simulations) - len(scored),
-                pass_1=100 * passed / len(scored) if scored else None,
-                interaction=coverage(interaction, INTERACTION_VERSION),
-                experience=coverage(experience, EXPERIENCE_VERSION),
-            )
-            trajectory_files[language][domain] = f"{language}/{domain}"
-    canonical = BenchmarkSubmission(
-        frame=official,
-        trials=trials,
-        summary=summarize(official, trials),
-        sources=sources,
-    )
-    validate_benchmark_submission(canonical)
-    if len(agent_models) != 1 or len(user_models) != 1:
-        raise ValueError("Voice V2 submission mixes agent or caller models")
-    if set(facts) != used_facts:
-        raise ValueError("interaction fact table has extra or unscored calls")
-    for language in LANGUAGES:
-        actual_judges = {
+    if len(agents) != 1 or len(caller_models) != 1:
+        raise ValueError("Voice V2 export mixes agent or caller models")
+    for language, by_call in verdicts.items():
+        saved = {
             path.stem
-            for path in (package_root / "judges" / provider / language).glob("*.json")
+            for root in judges_roots
+            for path in (root / language).glob("*.json")
         }
-        if actual_judges != expected_judges[language]:
+        if saved != set(by_call):
             raise ValueError(f"{language}: judge IDs differ from scored calls")
-    provenance = VoiceV2Provenance(
-        format="voice-v2-provenance-v1",
-        frame_revision=official.revision,
-        provider=provider,
-        interaction_version=INTERACTION_VERSION,
-        experience_version=EXPERIENCE_VERSION,
-        interaction_facts_derivation=(
-            "extract_interaction_quality_metrics plus CHECKER_REGISTRY for "
-            "nonresponse, interruption, selectivity and monologue; saved tool_use "
-            "judge factors for tool misuse"
+    catalogs = {
+        row.identity.catalog_revision
+        for by_call in verdicts.values()
+        for rows in by_call.values()
+        for row in rows
+    }
+    if len(catalogs) != 1:
+        raise ValueError(f"Saved verdicts mix judge catalogs: {sorted(catalogs)}")
+    cells = []
+    for (language, domain), scored in scored_by_cell.items():
+        measures = list(
+            dict.fromkeys(
+                row.identity.measure
+                for rows in verdicts[language].values()
+                for row in rows
+            )
+        )
+        stored = [row for call in scored for row in verdicts[language][call]]
+        cells.append(
+            (
+                language,
+                domain,
+                _judge_plan(scored, verdicts[language], measures),
+                stored,
+            )
+        )
+    provider, model = agents.pop()
+    return BenchmarkPackage(
+        metadata=PackageMetadata(
+            **submitter.model_dump(),
+            agent_provider=provider,
+            agent_model=model,
+            evidence=EVIDENCE,
         ),
-        files=_source_files(package_root, provider),
-    )
-    provenance_bytes = (
-        provenance.model_dump_json(indent=2, exclude_none=True) + "\n"
-    ).encode()
-    submission = VoiceV2Submission.model_validate(
-        {
-            **metadata.model_dump(exclude={"results", "trajectory_files"}),
-            "format": "voice-v2",
-            "trajectories_available": True,
-            "benchmark": VoiceV2Benchmark(
-                version="voice-v2",
-                frame_revision=official.revision,
-                languages=list(LANGUAGES),
-                domains=list(DOMAINS),
-                task_trials_per_cell=50,
-            ).model_dump(),
-            "benchmark_submission": canonical.model_dump(mode="json"),
-            "results": {
-                language: {
-                    domain: cell.model_dump(by_alias=True)
-                    for domain, cell in domains.items()
-                }
-                for language, domains in results.items()
-            },
-            "trajectory_files": dict(trajectory_files),
-            "provenance_file": "provenance.json",
-            "provenance_sha256": sha256(provenance_bytes).hexdigest(),
-        }
-    )
-    return submission, provenance
+        submission=BenchmarkSubmission(
+            frame=official,
+            trials=trials,
+            summary=summarize(official, trials),
+            sources=sources,
+        ),
+        diagnostics=export_diagnostics(official, catalogs.pop(), cells),
+    ).check()
 
 
-def validate_voice_v2_package(root: Path) -> VoiceV2Submission:
-    """Rehash every source and recompute every published V2 score offline."""
-    submission = VoiceV2Submission.model_validate_json(
-        (root / "submission.json").read_text()
-    )
-    provenance_path = _safe_path(root, submission.provenance_file)
-    if file_sha256(provenance_path) != submission.provenance_sha256:
-        raise ValueError("provenance manifest SHA-256 mismatch")
-    provenance = VoiceV2Provenance.model_validate_json(provenance_path.read_text())
-    if provenance.frame_revision != submission.benchmark.frame_revision:
-        raise ValueError("provenance frame revision mismatch")
-    for source in provenance.files:
-        path = _safe_path(root, source.path)
-        if not path.is_file() or file_sha256(path) != source.sha256:
-            raise ValueError(f"source SHA-256 mismatch: {source.path}")
-    derived, expected_provenance = build_voice_v2_submission(
-        root, provenance.provider, submission
-    )
-    if expected_provenance != provenance:
-        raise ValueError("source inventory mismatch")
-    if derived != submission:
-        raise ValueError("published Voice V2 fields do not match saved inputs")
-    return submission
-
-
-def prepare_voice_v2_package(
+def prepare_historical_package(
     source_root: Path,
-    destination_root: Path,
-    provider: str,
-    interaction_facts: Path,
-    judges_root: Path,
+    judges_roots: list[Path],
     metadata_file: Path,
-) -> VoiceV2Submission:
-    """Copy saved inputs, derive V2 results, and write a verified package.
+    output: Path,
+) -> BenchmarkPackage:
+    """Write ``<output>/<name>/`` from the saved export; nothing is copied."""
+    submitter = SubmitterMetadata.model_validate_json(metadata_file.read_text())
+    package = build_historical_package(source_root, judges_roots, submitter)
+    destination = output / package.name
+    if destination.exists():
+        raise FileExistsError(f"destination already exists: {destination}")
+    package.write(destination)
+    print(f"Saved {destination}")
+    return package
 
-    ``source_root`` is a pre-exported, 18-cell voice trajectory package with
-    metadata in submission.json. No simulation or judge is executed here.
-    """
-    source_path = source_root.resolve()
-    destination_path = destination_root.resolve()
-    if source_path == destination_path or destination_path.is_relative_to(source_path):
-        raise ValueError("destination must be outside the source package")
-    if destination_root.exists():
-        raise FileExistsError(f"destination already exists: {destination_root}")
-    source_metadata = json.loads((source_root / "submission.json").read_text())
-    supplied_metadata = json.loads(metadata_file.read_text())
-    metadata = {**source_metadata, **supplied_metadata}
-    missing = [
-        field
-        for field in ("submission_date", "contact_info")
-        if not metadata.get(field)
-    ]
-    if missing:
-        raise ValueError(
-            "Voice V2 publication metadata requires: " + ", ".join(missing)
-        )
-    if not isinstance(metadata["contact_info"], dict) or not metadata[
-        "contact_info"
-    ].get("email"):
-        raise ValueError("Voice V2 publication metadata requires contact_info.email")
-    upstream_path = interaction_facts.parent / "provenance.json"
-    if upstream_path.is_file():
-        upstream = json.loads(upstream_path.read_text())
-        recorded_hash = (upstream.get("output_sha256") or {}).get(
-            interaction_facts.name
-        )
-        if recorded_hash != file_sha256(interaction_facts):
-            raise ValueError("interaction fact table differs from upstream provenance")
-    draft = Submission.model_validate(
-        {
-            **{key: value for key, value in metadata.items() if key != "format"},
-            "results": {},
-            "trajectory_files": {},
-        }
+
+def validate_historical_package(
+    directory: Path, source_root: Path, judges_roots: list[Path]
+) -> BenchmarkPackage:
+    """Recompute the package from the saved export and verdicts."""
+    package = load_package(directory)
+    if package.metadata.evidence != EVIDENCE:
+        raise ValueError(f"{directory} is not a historical Voice V2 package")
+    submitter = SubmitterMetadata.model_validate(
+        package.metadata.model_dump(include=set(SubmitterMetadata.model_fields))
     )
-    if draft.modality != "voice":
-        raise ValueError("Voice V2 requires voice modality")
-    destination_root.mkdir(parents=True)
-    try:
-        for language in LANGUAGES:
-            for domain in DOMAINS:
-                shutil.copytree(
-                    source_root / "trajectories" / language / domain,
-                    destination_root / "trajectories" / language / domain,
-                )
-        if (source_root / "correction.json").is_file():
-            shutil.copy2(
-                source_root / "correction.json",
-                destination_root / "source_correction.json",
-            )
-        shutil.copy2(interaction_facts, destination_root / "interaction_facts.csv")
-        for source_name, destination_name in (
-            ("provenance.json", "interaction_facts_upstream.json"),
-            ("README.md", "interaction_facts_method.md"),
-        ):
-            source = interaction_facts.parent / source_name
-            if source.is_file():
-                shutil.copy2(source, destination_root / destination_name)
-        facts = _load_facts(destination_root / "interaction_facts.csv", provider)
-        for language, _, simulation_id in facts:
-            source = judges_root / provider / language / f"{simulation_id}.json"
-            target = (
-                destination_root
-                / "judges"
-                / provider
-                / language
-                / f"{simulation_id}.json"
-            )
-            target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source, target)
-        submission, provenance = build_voice_v2_submission(
-            destination_root, provider, draft
-        )
-        (destination_root / "provenance.json").write_text(
-            provenance.model_dump_json(indent=2, exclude_none=True) + "\n"
-        )
-        (destination_root / "submission.json").write_text(
-            submission.model_dump_json(indent=2, by_alias=True) + "\n"
-        )
-        validate_voice_v2_package(destination_root)
-    except Exception:
-        shutil.rmtree(destination_root)
-        raise
-    return submission
+    expected = build_historical_package(source_root, judges_roots, submitter)
+    expected.metadata.trajectories = package.metadata.trajectories
+    if expected.submission != package.submission:
+        raise ValueError("Submission differs from the saved release export")
+    if expected.diagnostics != package.diagnostics:
+        raise ValueError("Judge diagnostics differ from the saved release verdicts")
+    if expected.metadata != package.metadata:
+        raise ValueError("Recorded agent identity differs from the saved export")
+    return package

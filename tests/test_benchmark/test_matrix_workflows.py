@@ -156,7 +156,7 @@ def test_matrix_judges_dry_run_and_summary_preserve_cells_without_model_calls(
 
 
 def test_submit_prepare_autodetects_matrix_and_refuses_incomplete(
-    saved_matrix, tmp_path
+    saved_matrix, tmp_path, submitter_file
 ):
     from tau2.scripts.leaderboard.cli import add_submit_args
 
@@ -165,6 +165,9 @@ def test_submit_prepare_autodetects_matrix_and_refuses_incomplete(
     args = parser.parse_args(
         ["prepare", str(saved_matrix), "--output", str(tmp_path / "submission")]
     )
+    with pytest.raises(SystemExit, match="require --metadata-file"):
+        args.func(args)
+    args.metadata_file = submitter_file
     with pytest.raises(SystemExit, match="898/900 calls lack a scored reward"):
         args.func(args)
     assert not (tmp_path / "submission").exists()
