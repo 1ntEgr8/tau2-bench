@@ -123,9 +123,17 @@ class GeminiLiveProvider:
         return "gemini-3.1" in model.lower()
 
     @staticmethod
+    def _is_gemini_38_extended_thinking(model: str) -> bool:
+        """Return whether the model uses the extended-thinking Live protocol."""
+        return model.lower().split("/")[-1] == "gemini-3.8-live-extended-thinking"
+
+    @staticmethod
     def _supports_proactive_audio(model: str) -> bool:
         """Return whether the given Gemini model supports proactive audio."""
-        return not GeminiLiveProvider._is_gemini_31(model)
+        return not (
+            GeminiLiveProvider._is_gemini_31(model)
+            or GeminiLiveProvider._is_gemini_38_extended_thinking(model)
+        )
 
     @staticmethod
     def _uses_eap_input_path(model: str) -> bool:
@@ -488,7 +496,7 @@ class GeminiLiveProvider:
                 types.AudioTranscriptionConfig()
             )
 
-            # Gemini 3.1 audio EAP does not yet support proactive audio.
+            # Gemini 3.1 and 3.8 Extended Thinking do not support proactive audio.
             if DEFAULT_GEMINI_PROACTIVE_AUDIO and self._supports_proactive_audio(
                 self.model
             ):
@@ -804,6 +812,11 @@ class GeminiLiveProvider:
         from google.genai import types
 
         formatted_tools = []
+        behavior = (
+            types.Behavior.NON_BLOCKING
+            if self._is_gemini_38_extended_thinking(self.model)
+            else None
+        )
         for tool in tools:
             schema = tool.openai_schema
             parameters = schema["function"]["parameters"]
@@ -815,6 +828,7 @@ class GeminiLiveProvider:
                         name=schema["function"]["name"],
                         description=schema["function"]["description"],
                         parametersJsonSchema=parameters,
+                        behavior=behavior,
                     )
                 )
             else:
@@ -828,6 +842,7 @@ class GeminiLiveProvider:
                         name=schema["function"]["name"],
                         description=schema["function"]["description"],
                         parameters=parameters,
+                        behavior=behavior,
                     )
                 )
         return formatted_tools
@@ -894,6 +909,7 @@ class GeminiLiveProvider:
                     # Consume all responses from this turn
                     response_count = 0
                     deadline_forced_break = False
+                    last_response_completed_audio_turn = False
                     async for response in turn:
                         if self._stop_receive:
                             break
@@ -903,6 +919,32 @@ class GeminiLiveProvider:
                         events = self._parse_response(response)
                         for event in events:
                             await self._event_queue.put(event)
+
+                        # Recent SDKs keep receive() open until the interaction is
+                        # IDLE, even when an intermediate spoken turn is complete.
+                        # Advance the audio item at each turn boundary so an
+                        # interruption cannot suppress later audio in the same
+                        # interaction.
+                        server_content = getattr(response, "server_content", None)
+                        last_response_completed_audio_turn = bool(
+                            server_content
+                            and getattr(server_content, "turn_complete", False)
+                        )
+                        if last_response_completed_audio_turn:
+                            if not any(
+                                isinstance(event, GeminiTurnCompleteEvent)
+                                for event in events
+                            ):
+                                await self._event_queue.put(
+                                    GeminiTurnCompleteEvent(type="turn.complete")
+                                )
+                            await self._event_queue.put(
+                                GeminiAudioDoneEvent(
+                                    type="audio.done",
+                                    item_id=self._current_item_id,
+                                )
+                            )
+                            self._current_item_id = self._generate_item_id()
 
                         # If GoAway was received and the deadline is approaching,
                         # force-break to reconnect before the server disconnects us.
@@ -921,8 +963,13 @@ class GeminiLiveProvider:
 
                     logger.debug(f"Turn completed with {response_count} responses")
 
-                    # Emit turn complete unless we force-broke mid-turn
-                    if not self._stop_receive and not deadline_forced_break:
+                    # Older SDKs end receive() on turn_complete. Avoid emitting
+                    # the same boundary twice when that was the final response.
+                    if (
+                        not self._stop_receive
+                        and not deadline_forced_break
+                        and not last_response_completed_audio_turn
+                    ):
                         await self._event_queue.put(
                             GeminiTurnCompleteEvent(type="turn.complete")
                         )
@@ -1404,10 +1451,15 @@ class GeminiLiveProvider:
             server_content = response.server_content
             if hasattr(server_content, "interrupted") and server_content.interrupted:
                 events.append(GeminiInterruptionEvent(type="interruption"))
-            if (
-                hasattr(server_content, "turn_complete")
-                and server_content.turn_complete
-            ):
+            interaction_status = getattr(server_content, "interaction_status", None)
+            status = getattr(interaction_status, "value", interaction_status)
+            if status and status != "INTERACTION_STATUS_UNSPECIFIED":
+                interaction_complete = status == "IDLE"
+            else:
+                interaction_complete = bool(
+                    getattr(server_content, "turn_complete", False)
+                )
+            if interaction_complete:
                 events.append(GeminiTurnCompleteEvent(type="turn.complete"))
             # Check for output transcription (what Gemini said)
             if (

@@ -23,6 +23,14 @@ The default model is `gemini-3.1-flash-live-preview`. The provider auto-detects 
 | Thinking config | No | Yes (`DEFAULT_GEMINI_THINKING_LEVEL`) |
 | Text input path | `session.send()` | `send_realtime_input()` (non-Vertex) |
 
+## Gemini 3.8 Live Extended Thinking
+
+For `gemini-3.8-live-extended-thinking`, the provider omits proactive audio,
+declares every function as `NON_BLOCKING`, and uses `interaction_status=IDLE`
+to mark the end of an interaction. A spoken `turn_complete` with
+`interaction_status=IN_PROGRESS` is an intermediate update, not the end of the
+interaction. This requires google-genai 2.30.1 or newer.
+
 ## Session Resumption
 
 Gemini sessions have a ~10 minute timeout. The provider handles this via:

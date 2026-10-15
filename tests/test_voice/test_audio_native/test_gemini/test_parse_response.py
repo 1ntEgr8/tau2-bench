@@ -17,6 +17,7 @@ import pytest
 
 from tau2.voice.audio_native.gemini.events import (
     GeminiAudioDeltaEvent,
+    GeminiAudioDoneEvent,
     GeminiFunctionCallDoneEvent,
     GeminiGoAwayEvent,
     GeminiInputTranscriptionEvent,
@@ -72,6 +73,82 @@ def _make_server_content(**overrides) -> SimpleNamespace:
     }
     defaults.update(overrides)
     return SimpleNamespace(**defaults)
+
+
+def test_extended_thinking_waits_for_idle_status():
+    """An intermediate spoken turn does not end the interaction."""
+    from google.genai import types
+
+    provider = _make_provider()
+    in_progress = _empty_response(
+        server_content=_make_server_content(
+            turn_complete=True,
+            interaction_status=types.InteractionStatus.IN_PROGRESS,
+        )
+    )
+    idle = _empty_response(
+        server_content=_make_server_content(
+            turn_complete=True,
+            interaction_status=types.InteractionStatus.IDLE,
+        )
+    )
+    legacy = _empty_response(server_content=_make_server_content(turn_complete=True))
+
+    assert not any(
+        isinstance(event, GeminiTurnCompleteEvent)
+        for event in provider._parse_response(in_progress)
+    )
+    assert any(
+        isinstance(event, GeminiTurnCompleteEvent)
+        for event in provider._parse_response(idle)
+    )
+    assert any(
+        isinstance(event, GeminiTurnCompleteEvent)
+        for event in provider._parse_response(legacy)
+    )
+
+
+def test_receive_loop_starts_new_audio_item_before_interaction_is_idle():
+    """An intermediate turn boundary must not make later speech unplayable."""
+    from google.genai import types
+
+    async def check():
+        provider = _make_provider()
+        provider._stop_receive = False
+        provider._event_queue = asyncio.Queue()
+        provider._generate_item_id = Mock(return_value="test_item_2")
+
+        async def responses():
+            yield _empty_response(data=b"first utterance")
+            yield _empty_response(
+                server_content=_make_server_content(
+                    turn_complete=True,
+                    interaction_status=types.InteractionStatus.IN_PROGRESS,
+                )
+            )
+            yield _empty_response(data=b"second utterance")
+            provider._stop_receive = True
+
+        provider._session = Mock()
+        provider._session.receive.return_value = responses()
+
+        await provider._receive_loop_coro()
+        events = []
+        while not provider._event_queue.empty():
+            events.append(provider._event_queue.get_nowait())
+
+        audio_items = [
+            event.item_id
+            for event in events
+            if isinstance(event, GeminiAudioDeltaEvent)
+        ]
+        completed_items = [
+            event.item_id for event in events if isinstance(event, GeminiAudioDoneEvent)
+        ]
+        assert audio_items == ["test_item_1", "test_item_2"]
+        assert completed_items == ["test_item_1"]
+
+    asyncio.run(check())
 
 
 # =============================================================================
