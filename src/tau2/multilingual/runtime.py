@@ -195,9 +195,14 @@ def list_languages() -> list[str]:
     return sorted(path.parent.name for path in language_root().glob("*/pack.yaml"))
 
 
+def voice_id_env_key(language: str, persona_id: str) -> str:
+    """The ``TAU2_VOICE_ID_<LANG>_<PERSONA>`` variable for one pack persona."""
+    return "TAU2_VOICE_ID_" + f"{language}_{persona_id}".replace("-", "_").upper()
+
+
 def _voice_id_override(language: str, persona_id: str, default: str) -> str:
     """``TAU2_VOICE_ID_<LANG>_<PERSONA>`` replaces a pack persona's voice."""
-    key = "TAU2_VOICE_ID_" + f"{language}_{persona_id}".replace("-", "_").upper()
+    key = voice_id_env_key(language, persona_id)
     voice_id = os.environ.get(key)
     if voice_id is None:
         return default

@@ -49,8 +49,7 @@ Pleno Premium and task 097's stated residence now matches its São Paulo address
 These two caller-text edits also have their own versioned bundle revision. The
 Korean and Mandarin bundles also correct name spacing and distinct-person name
 collisions. Native review of the five replacement Korean names and two
-replacement Mandarin names is complete, as confirmed by the release owner on
-2026-10-14.
+replacement Mandarin names is complete.
 Source-bound correction records are retained as regression fixtures under
 `tests/test_multilingual/fixtures/banking_name_review/` and tested against the
 versioned name maps. Earlier scored bundles and their review status are unchanged.
@@ -175,9 +174,9 @@ retain their reviewed placement.
 for example `TAU2_VOICE_ID_ES_MALE=...` for the `male` persona of `es`. The key is
 upper-cased and hyphens become underscores (`TAU2_VOICE_ID_PT_BR_FEMALE`). The run
 logs a warning and records the substituted voice in each task's language context;
-results produced with an override are not comparable to released runs. The
-English domain personas documented in [voice-personas.md](voice-personas.md)
-(`TAU2_VOICE_ID_MATT_DELANEY`, ...) are a separate, per-task voice catalog.
+results produced with an override are not comparable to released runs. English
+runs use the same pattern (`TAU2_VOICE_ID_EN_MAMADOU_DIALLO`,
+`TAU2_VOICE_ID_EN_PRIYA_PATIL`); see [voice-personas.md](voice-personas.md).
 
 Pack-provided Portuguese spelling tables correct consistent PT-BR letter-name
 mispronunciation in TTS-bound text. They apply only to explicit character-separated

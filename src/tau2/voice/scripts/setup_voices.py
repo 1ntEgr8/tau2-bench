@@ -1,21 +1,15 @@
 #!/usr/bin/env python3
 # Copyright Sierra
-"""Create ElevenLabs voices for all τ-bench personas via the Voice Design API.
+"""Create ElevenLabs voices for the English pack personas via the Voice Design API.
 
 This script automates the voice setup described in docs/voice-personas.md.
-It generates a voice for each persona using the ElevenLabs Voice Design API,
-saves it to your ElevenLabs account, and prints the environment variables
-you need to add to your .env file.
+It generates a voice for each English caller persona using the ElevenLabs
+Voice Design API, saves it to your ElevenLabs account, and prints the
+``TAU2_VOICE_ID_EN_<PERSONA>`` environment variables to add to your .env file.
 
 Usage:
-    # Create all 7 voices
+    # Create the English caller voices
     python -m tau2.voice.scripts.setup_voices
-
-    # Create only the 2 control personas (for quick testing)
-    python -m tau2.voice.scripts.setup_voices --complexity control
-
-    # Create only the 5 regular personas
-    python -m tau2.voice.scripts.setup_voices --complexity regular
 
     # Dry run — show what would be created without calling the API
     python -m tau2.voice.scripts.setup_voices --dry-run
@@ -36,6 +30,7 @@ from dotenv import load_dotenv
 from loguru import logger
 
 from tau2.data_model.voice import VoiceCreateRequest, VoiceDesignRequest
+from tau2.multilingual.runtime import voice_id_env_key
 from tau2.voice.elevenlabs_operations import create_voice, design_voice
 
 load_dotenv()
@@ -78,18 +73,24 @@ def _get_existing_tau2_voices(client) -> dict[str, list[tuple[str, str]]]:
     return existing
 
 
+def english_pack_personas() -> list:
+    """Voice Design prompts for the personas English voice runs speak with."""
+    from tau2.data_model.voice_personas import ALL_PERSONAS
+    from tau2.multilingual.runtime import load_pack
+
+    return [ALL_PERSONAS[persona_id] for persona_id in load_pack("en").personas]
+
+
 def setup_voices(
-    complexity: str = "all",
     dry_run: bool = False,
     preview: bool = False,
     seed: int = VOICE_DESIGN_SEED,
     model: str = VOICE_DESIGN_MODEL,
     force: bool = False,
 ) -> dict[str, str]:
-    """Create ElevenLabs voices for τ-bench personas.
+    """Create ElevenLabs voices for the English pack personas.
 
     Args:
-        complexity: Which persona group to create — "control", "regular", or "all".
         dry_run: If True, print what would be created without calling the API.
         preview: If True, play each voice preview before saving.
         seed: Random seed for reproducible voice generation (same seed +
@@ -102,18 +103,7 @@ def setup_voices(
     """
     from elevenlabs import ElevenLabs
 
-    from tau2.data_model.voice_personas import (
-        ALL_PERSONAS,
-        CONTROL_PERSONAS,
-        REGULAR_PERSONAS,
-    )
-
-    if complexity == "control":
-        personas = CONTROL_PERSONAS
-    elif complexity == "regular":
-        personas = REGULAR_PERSONAS
-    else:
-        personas = list(ALL_PERSONAS.values())
+    personas = english_pack_personas()
 
     if dry_run:
         print("\n=== DRY RUN — no API calls will be made ===\n")
@@ -131,12 +121,10 @@ def setup_voices(
 
         print("Would create voices for the following personas:\n")
         for p in personas:
-            env_key = f"TAU2_VOICE_ID_{p.name.upper()}"
             voice_name = f"{VOICE_NAME_PREFIX}_{p.name}"
             conflict = voice_name in existing_voices
             print(f"  {p.display_name} ({p.name})")
-            print(f"    Complexity: {p.complexity}")
-            print(f"    Env var: {env_key}")
+            print(f"    Env var: {voice_id_env_key('en', p.name)}")
             print(f"    Voice name: {voice_name}")
             if conflict:
                 existing_ids = [vid for vid, _ in existing_voices[voice_name]]
@@ -296,26 +284,19 @@ def print_env_block(created_voices: dict[str, str]) -> None:
     print("=" * 60)
     print()
     for name, voice_id in created_voices.items():
-        env_key = f"TAU2_VOICE_ID_{name.upper()}"
-        print(f"{env_key}={voice_id}")
+        print(f"{voice_id_env_key('en', name)}={voice_id}")
     print()
     print("=" * 60)
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Create ElevenLabs voices for τ-bench personas.",
+        description="Create ElevenLabs voices for the English pack personas.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Create all 7 voices
+  # Create the English caller voices
   python -m tau2.voice.scripts.setup_voices
-
-  # Create only the 2 control personas (for quick testing)
-  python -m tau2.voice.scripts.setup_voices --complexity control
-
-  # Create only the 5 regular personas
-  python -m tau2.voice.scripts.setup_voices --complexity regular
 
   # See what would be created without calling the API
   python -m tau2.voice.scripts.setup_voices --dry-run
@@ -325,13 +306,6 @@ Examples:
 
 See docs/voice-personas.md for the full setup guide.
 """,
-    )
-    parser.add_argument(
-        "--complexity",
-        choices=["all", "control", "regular"],
-        default="all",
-        help="Which persona group to create: 'control' (2 American accents), "
-        "'regular' (5 diverse accents), or 'all' (default).",
     )
     parser.add_argument(
         "--model",
@@ -366,7 +340,6 @@ See docs/voice-personas.md for the full setup guide.
     logger.configure(handlers=[{"sink": sys.stderr, "level": "WARNING"}])
 
     created_voices = setup_voices(
-        complexity=args.complexity,
         dry_run=args.dry_run,
         preview=args.preview,
         seed=args.seed,

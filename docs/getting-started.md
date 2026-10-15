@@ -77,12 +77,11 @@ If you're using voice features, add the following to your `.env` file:
 
 ### Voice Persona Setup (for voice-enabled features)
 
-The voice pipeline uses ElevenLabs voices for the user simulator. The default voice IDs are Sierra-internal and won't work for external users. You need to create your own voices and configure them via environment variables in your `.env` file:
+The voice pipeline uses ElevenLabs voices for the user simulator. The default voice IDs are Sierra-internal and won't work for external users. You need to create your own voices and configure them via environment variables in your `.env` file, one per language-pack persona (`TAU2_VOICE_ID_<LANG>_<PERSONA>`):
 
 ```bash
-TAU2_VOICE_ID_MATT_DELANEY=your_voice_id_here
-TAU2_VOICE_ID_LISA_BRENNER=your_voice_id_here
-# ... (one per persona)
+TAU2_VOICE_ID_EN_MAMADOU_DIALLO=your_voice_id_here
+TAU2_VOICE_ID_EN_PRIYA_PATIL=your_voice_id_here
 ```
 
 See the [Voice Persona Setup Guide](voice-personas.md) for step-by-step instructions on creating matching voices using ElevenLabs Voice Design.
