@@ -7,6 +7,9 @@ language prompts together, and all of them go through one content review before
 any voice work. [Regional database localization](database-localization.md)
 describes the maps and runtime bundles this produces.
 
+> Terms such as *pack*, *cell*, *binding revision* and *pin* are defined in the
+> [glossary](glossary.md).
+
 Each stage reads a typed JSON request and writes a new, immutable artifact.
 Only the stages listed under [Credentials and cost](#credentials-and-cost) call
 a model or a voice provider. Request models live beside their stage in

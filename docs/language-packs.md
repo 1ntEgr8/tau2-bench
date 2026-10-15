@@ -2,6 +2,9 @@
 
 To create a language or extend its domains, see [Language authoring](language-authoring.md).
 
+> Terms such as *pack*, *cell*, *binding revision* and *pin* are defined in the
+> [glossary](glossary.md).
+
 The ordinary runner accepts `--language` for both text and voice runs:
 
 ```bash
@@ -230,7 +233,7 @@ Install the voice extra for the ElevenLabs LiveKit plugin; it uses the repositor
 `ELEVENLABS_API_KEY` (with the plugin's `ELEVEN_API_KEY` accepted as a fallback).
 
 The default `tau2 run --audio-native` entrypoint supplies benchmark conditions from
-`config.py`: GPT-5.5 with low reasoning, 2400 simulated seconds and Marin.
+`config.py`: GPT-5.5 with low reasoning, a 2400-second call limit and Marin.
 The caller uses the explicit `openai/gpt-5.5` route with temperature left unset.
 The shared resolver supplies these defaults when omitted and preserves explicit
 overrides. Select released cells with repeated `--language` and `--domain` flags.
@@ -280,11 +283,11 @@ construction, explicit run conditions, canonical acoustics, prompt rendering,
 resume guards, provider configuration and separate telecom databases. Live voice
 capability and synthesis remain a separate release smoke check.
 
-See [benchmark runs](benchmark-runs.md) for matrix execution, coverage and submissions.
+See [Running the benchmark](running-the-benchmark.md) for matrix execution, coverage and submissions.
 
 ## Authoring and benchmark integration
 
-The [language factory](language-authoring.md) publishes schema-2 packs with explicit
+The [language factory](language-authoring.md) publishes schema 3 packs with explicit
 prompt content. Benchmark presets supply conditions for each cell and distinguish
 language hints from shared model, voice, reasoning and acoustic settings, including
 the recorded LiveKit component configuration.
@@ -303,6 +306,6 @@ is {last_name}. When asked for your full name, give your last name first and
 your first name second: {full_name}." Korean and Mandarin use the same wording
 as tau multi. Given-first packs explicitly instruct the caller to give the first
 name first and the last name second. Names are supplied even when the original
-task mentions only a user ID. The `regional-release-data-v8` benchmark frame retains
+task mentions only a user ID. The `regional-release-data-v16` benchmark frame retains
 all task IDs and the same frozen 50-task selection per domain while
 selecting the [regional database bundles](database-localization.md).

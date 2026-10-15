@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Changed
+- Docs for 2.0: a 2.0 section in the README, one page for running the text and
+  voice benchmarks (`docs/running-the-benchmark.md`, replacing
+  `docs/benchmark-runs.md`), a submission guide covering text-v1, voice-v2,
+  voice-v1 and 1.x, a glossary, and `docs/cli-reference.md` generated from
+  `--help` by `scripts/generate_cli_reference.py`.
 - `tau2 judges suite`/`summarize` and released-benchmark `tau2 run` (dry-run plan
   and final score summary) print compact tables; `--json` restores the full JSON.
   `tau2 judges ... --output FILE` saves the full export.
@@ -32,6 +37,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > Re-run rather than compare 1.x results against 2.0 numbers.
 
 ### Upgrading from 1.x
+- 2.0 English runs are not input-identical to 1.0.1. The differences:
+  - English retail and telecom each use 50 reviewed task replacements (same IDs).
+  - User-simulator prompts add a language clause and an entity-order rule
+    (`language-guidelines-v4`).
+  - The text user simulator gets a `## Persona Guidelines` block.
+  - Communication checks are semantic (LLM-judged) by default.
+  - The NL-assertion judge is `gpt-5.4-mini-2026-03-17` (was `gpt-4.1`).
+  - Name, ID and phone lookups fold case, accents and formatting.
+  - Voice benchmark defaults: user simulator `openai/gpt-5.5` at
+    `reasoning_effort: low` (was `gpt-4.1`), `max_steps_seconds` 2400 (was
+    1200) and OpenAI agent voice `marin` (was `alloy`).
+- For scores comparable to the 1.x leaderboard, run the `v1.0.1` tag. 1.x and
+  2.0 results are shown on separate leaderboard tabs, and 1.x submissions are
+  still accepted.
 - No flag combination reproduces 1.0.1 inputs exactly.
 - Closest text run: `--communicate-scorer substring`. Still different: the
   English retail/telecom task replacements, the persona block and language
@@ -48,6 +67,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Results saved by 1.x cannot be resumed; re-run into a new output path.
 
 ### Added
+- `intake` domain (τ-entity): exact entity capture on outbound calls, 200
+  tasks, agent-directed (voice) by default with a `scaffolded` ablation that
+  also runs in text. See `docs/elicitation.md`.
 - Multilingual text and voice runs: `--language` selects a language pack
   (`en`, `es`, `pt`, `hi`, `zh`, `ko`) with a localized database and tasks for
   airline, retail and telecom. See `docs/language-packs.md`.

@@ -7,6 +7,9 @@ domains (`airline`, `retail`, `telecom`), with 50 selected task/trial keys per
 cell. The contract is generated at
 `web/leaderboard/public/submissions/schema_voice_v2.json`.
 
+> Terms such as *pack*, *cell*, *binding revision* and *pin* are defined in the
+> [glossary](glossary.md).
+
 The preparation command consumes **saved** trajectories, interaction-event
 facts, and judge verdicts. It does not run simulations or judges:
 
@@ -57,7 +60,7 @@ binding revision, selected tasks/trials, result index, and simulation reward
 against the published Voice V2 frame. It preserves the recorded condition
 fingerprint and hashes each `results.json`; it does not invent condition fields
 that were added after those calls ran. New runs use the strict
-`tau2 submit prepare --benchmark voice` matrix reader, which remains unchanged
+`tau2 submit prepare <matrix-root>` reader (described in the [submission guide](leaderboard-submission.md#20-benchmarks-text-v1-and-voice-v2)), which remains unchanged
 and requires the current complete recorded conditions. The historical adapter
 must never be used to qualify an otherwise incomplete new run.
 

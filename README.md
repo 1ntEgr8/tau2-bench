@@ -12,29 +12,119 @@
 <img src="figs/traj.png" width="95%" alt="Trajectory">
 </div>
 
-<div align="center">
-<h3>🚀 τ³-bench is here!</h3>
-<p>From text-only to multimodal, knowledge-aware agent evaluation.<br>
-Voice full-duplex · Knowledge retrieval · 75+ task fixes<br>
-<a href="https://arxiv.org/abs/2603.13686">τ-Voice paper</a> · <a href="https://arxiv.org/abs/2603.04370">τ-Knowledge paper</a> · <a href="https://arxiv.org/abs/2512.07850">Task fixes paper</a> · <a href="https://github.com/sierra-research/tau2-bench/releases/tag/v1.0.0">Release notes</a></p>
-</div>
+## τ-bench 2.0
 
-> **How do you say $\tau^3$-bench?** We just say "tau three," but you do you!
+τ-bench 2.0 adds **τ-i18n** (also called τ-multi): the same customer-service
+tasks in six languages, in text and in full-duplex voice, plus post-hoc judges
+for how the agent speaks.
 
-## What's New in $\tau^3$-bench
+What's new:
 
-> **📢 July 2026 — v1.0.1 grading update:** This release fixes a couple of `banking_knowledge` task errors. Scores on that domain change as a result — **results produced with tau2-bench < 1.0.1 are not comparable with >= 1.0.1**, and affected leaderboard submissions have been re-graded. Old results files can be re-scored with `tau2 evaluate-trajs --fresh-tasks`; to reproduce pre-fix behavior, pin the [`pre-v1.0.1`](https://github.com/sierra-research/tau2-bench/releases/tag/pre-v1.0.1) tag. Details in the [changelog](CHANGELOG.md) and [release notes](RELEASE_NOTES.md). Other domains are unaffected.
+- **Six languages.** `--language` selects a language pack: English, Spanish,
+  Portuguese, Hindi, Chinese and Korean. Each pack localizes the tasks, the
+  database and the caller personas for airline, retail and telecom.
+- **Voice in every language.** Full-duplex voice runs with realtime agents
+  (OpenAI, Gemini, xAI and others) against a simulated caller who speaks the
+  language.
+- **New `intake` domain** (τ-entity): capturing names, addresses and other
+  entities exactly on an outbound call, over 200 tasks. See
+  [τ-entity](docs/elicitation.md).
+- **`banking_knowledge` in voice.** The retrieval domain from v1.0 now also runs
+  as a custom voice run (`--audio-native --benchmark none`).
+- **Judges.** `tau2 judges` scores naturalness, speech fidelity, tool use and
+  language-specific checks after a run. Judges do not change the task reward.
+- **Released benchmarks.** Frozen task sets with pinned data, so runs can be
+  checked and compared.
 
-- **Knowledge Domain (`banking_knowledge`)** — A knowledge-retrieval-based customer service domain with configurable RAG pipelines, document search, embeddings, and agentic shell-based search. [Learn more →](src/tau2/knowledge/README.md)
-- **Voice Full-Duplex (Audio Native)** — End-to-end voice evaluation with realtime providers (OpenAI, Gemini, xAI). [Learn more →](src/tau2/voice/README.md)
-- **Task Quality (75+ fixes)** — Removed incorrect expected actions, clarified ambiguous instructions, fixed impossible constraints, and added missing fallback behaviors across airline, retail, and banking domains. Based on analysis from [SABER](https://arxiv.org/abs/2512.07850) (Cuadron et al., 2025). [Learn more →](https://taubench.com/blog/tau3-task-fixes.html)
-- **Updated Leaderboard** — Now includes voice and knowledge results. Compare model performance at [taubench.com](https://taubench.com). [Submit your results →](docs/leaderboard-submission.md)
+### The benchmarks
 
-See [CHANGELOG.md](CHANGELOG.md) for the full version history.
+| Benchmark | Mode | Cells | Calls at 1 trial | Run with |
+|---|---|---|---|---|
+| `text-v1` | text | 6 languages × 3 domains | 900 | `tau2 run --benchmark text` |
+| `voice-v2` (τ-i18n) | voice | 6 languages × 3 domains | 900 | `tau2 run --audio-native` |
+| `voice-v1` | voice | English × 3 domains | 278 | `tau2 run --audio-native --benchmark voice-v1` |
 
-> **Backward compatibility note**: If you are evaluating an agent (not training), use the `base` task split to evaluate on the complete task set that matches the original τ-bench structure. This is the default.
+The domains are airline, retail and telecom. `text-v1` and `voice-v2` use the
+same 50 frozen tasks per domain in every language. `voice-v1` is the English-only
+frame of the current English voice leaderboard (50 airline, 114 retail, 114
+telecom tasks). See the [glossary](docs/glossary.md) for *cell*, *frame* and
+the other terms used in these docs.
 
-> **Upgrading from $\tau^2$-bench?** Installation now uses `uv` instead of `pip install -e .`, and Python `>=3.12, <3.14` is required (was `>=3.10`). Some internal APIs have been refactored — see [CHANGELOG.md](CHANGELOG.md) for details.
+### Quickstart
+
+```bash
+git clone https://github.com/sierra-research/tau2-bench
+cd tau2-bench
+uv sync --extra voice          # drop --extra voice for text only
+cp .env.example .env           # add OPENAI_API_KEY (and voice keys for voice)
+```
+
+Text benchmark:
+
+```bash
+tau2 run --benchmark text --agent-llm openai/gpt-5.5 \
+  --agent-llm-args '{"reasoning_effort":"low"}' --save-to text-run --dry-run
+```
+
+Voice benchmark (create your own caller voices first; the shipped voice IDs are
+Sierra-internal):
+
+```bash
+python -m tau2.voice.scripts.setup_voices --language all   # prints TAU2_VOICE_ID_... lines for .env
+tau2 run --audio-native --audio-native-model gpt-realtime-2 \
+  --reasoning-effort minimal --save-to voice-run --dry-run
+```
+
+`--dry-run` prints the plan without making calls. Remove it to run, then:
+
+```bash
+tau2 view --file data/simulations/voice-run      # scores and calls
+tau2 judges suite data/simulations/voice-run     # judges (needed for a voice-v2 submission)
+```
+
+Add `--domain retail --num-tasks 2` for a 12-call smoke test. Full details:
+[Running the benchmark](docs/running-the-benchmark.md) and the
+[submission guide](docs/leaderboard-submission.md).
+
+**Cost and time.** TODO (owner): rough API cost and wall-clock time for a full
+text-v1, voice-v2 and voice-v1 run. Each voice call is capped at 2400 simulated
+seconds, and a benchmark run uses one worker with 3 concurrent calls unless you
+raise `--workers` and `--max-concurrency`.
+
+### Comparing with v1.0.1
+
+2.0 English runs are **not** input-identical to v1.0.1, so 2.0 scores are not
+comparable with the 1.x leaderboard. The differences:
+
+- English retail and telecom each use 50 reviewed task replacements.
+- The prompts add a language clause and an entity-order rule (keep multi-part
+  values such as addresses in the task's order).
+- The text user simulator gets a persona block.
+- Communication checks use a semantic LLM judge instead of substring matching.
+- The NL-assertion judge is `gpt-5.4-mini-2026-03-17` (was `gpt-4.1`).
+- Name, ID and phone lookups fold case, accents and formatting.
+- Voice defaults: user simulator `gpt-5.5` (was `gpt-4.1`), a 2400-second call
+  limit (was 1200) and agent voice `marin` (was `alloy`).
+
+For scores comparable to the 1.x leaderboard, use the
+[`v1.0.1` release](https://github.com/sierra-research/tau2-bench/releases/tag/v1.0.1).
+1.x and 2.0 results are shown on separate leaderboard tabs, and 1.x submissions
+are still accepted. The full list is in the
+[CHANGELOG](CHANGELOG.md#upgrading-from-1x).
+
+### Previous release: τ³-bench (v1.0)
+
+τ³-bench added voice full-duplex evaluation, the `banking_knowledge` domain and
+75+ task fixes:
+[τ-Voice paper](https://arxiv.org/abs/2603.13686) ·
+[τ-Knowledge paper](https://arxiv.org/abs/2603.04370) ·
+[task fixes paper](https://arxiv.org/abs/2512.07850) ·
+[v1.0.0 release notes](https://github.com/sierra-research/tau2-bench/releases/tag/v1.0.0).
+v1.0.1 fixed `banking_knowledge` grading; results from before 1.0.1 are not
+comparable on that domain (see the [CHANGELOG](CHANGELOG.md#101---2026-07-15)).
+
+> **Upgrading from τ²-bench?** Installation uses `uv` instead of
+> `pip install -e .`, and Python `>=3.12, <3.14` is required.
 
 ## Overview
 
@@ -64,7 +154,7 @@ remain in technical identifiers, historical provenance, and published paper
 titles. The τ-entity domain is still `intake`; CLI flags and result fields are
 unchanged.
 
-## Quick Start
+## Installation and a first custom run
 
 ### 1. Install
 
@@ -111,7 +201,10 @@ Results are saved to `data/simulations/`. Use `tau2 view` to browse them.
 | Document | Description |
 |----------|-------------|
 | [Getting Started](docs/getting-started.md) | Installation, API keys, first run, output structure, configuration |
-| [CLI Reference](docs/cli-reference.md) | All `tau2` commands and options |
+| [Running the benchmark](docs/running-the-benchmark.md) | Text and voice benchmark commands, defaults, results layout, resume, scoring and judges |
+| [Submission guide](docs/leaderboard-submission.md) | Submitting text-v1, voice-v2, voice-v1 and 1.x results |
+| [Glossary](docs/glossary.md) | Pack, cell, frame, binding revision, pin, trial, judge, manifest |
+| [CLI Reference](docs/cli-reference.md) | Every `tau2` command's `--help`, generated from the CLI |
 
 ### Core Concepts
 
@@ -121,6 +214,15 @@ Results are saved to `data/simulations/`. Use `tau2 view` to browse them.
 | [Domains](src/tau2/domains/README.md) | Domain structure, data format, and available domains |
 | [Orchestrator & Communication Modes](src/tau2/orchestrator/README.md) | Half-duplex and full-duplex orchestration |
 | [Task Schema & Evaluation](docs/evaluation.md) | What `evaluation_criteria.actions` means, how `reward_basis` gates the reward, and how to inspect action correctness |
+
+### Languages and judges
+
+| Document | Description |
+|----------|-------------|
+| [Language packs](docs/language-packs.md) | What a language pack contains and how runs resolve it |
+| [Adding a language](docs/language-authoring.md) | The `tau2 factory` authoring workflow |
+| [Judge validation](docs/judge-validation.md) | Production judges, and authoring and validating new ones |
+| [τ-entity](docs/elicitation.md) | The `intake` domain and its strategies |
 
 ### Knowledge Retrieval
 
@@ -145,7 +247,7 @@ Results are saved to `data/simulations/`. Use `tau2 view` to browse them.
 
 | Document | Description |
 |----------|-------------|
-| [Leaderboard Submission](docs/leaderboard-submission.md) | How to submit results to [taubench.com](https://taubench.com) |
+| [Submission guide](docs/leaderboard-submission.md) | How to submit results to [taubench.com](https://taubench.com) |
 | [Experiments](src/experiments/README.md) | Experimental features and research code |
 
 ### Project
@@ -158,16 +260,6 @@ Results are saved to `data/simulations/`. Use `tau2 view` to browse them.
 ## Contributing
 
 We welcome contributions! Whether you're fixing bugs, adding features, creating domains, or contributing research code, see our [Contributing Guide](CONTRIBUTING.md) for guidelines.
-
-## τ-i18n voice benchmark
-
-`tau2 run --audio-native` runs τ-i18n, the released multilingual voice benchmark: six languages,
-three domains and 50 frozen tasks per domain (900 calls). Preview with `--dry-run`;
-select a slice with `--language` / `--domain`, or a small frozen sample with
-`--num-tasks`. Use `--benchmark none` for custom domains or unreleased languages.
-Adding a language pack does not change the released benchmark's score population.
-See [Running a voice benchmark](docs/benchmark-runs.md) for defaults, resume,
-coverage, prompt review and submissions.
 
 ## Citation
 
