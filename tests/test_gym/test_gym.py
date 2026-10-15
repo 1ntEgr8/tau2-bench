@@ -22,6 +22,7 @@ class TestTauGymEnv:
         assert isinstance(env.observation_space, TauSpace)
         assert isinstance(env.action_space, TauSpace)
 
+    @pytest.mark.live_api
     @timeout(10)
     def test_tau_gym_env_reset(self):
         """Test that TauGymEnv reset works correctly."""
@@ -44,6 +45,7 @@ class TestTauGymEnv:
         assert env._orchestrator_thread is not None
         assert env._orchestrator_thread.is_alive()
 
+    @pytest.mark.live_api
     @timeout(15)
     def test_tau_gym_env_step(self):
         """Test that TauGymEnv step works correctly."""
@@ -66,6 +68,7 @@ class TestTauGymEnv:
         # Check that the action was processed
         assert len(observation) > 0
 
+    @pytest.mark.live_api
     @timeout(20)
     def test_tau_gym_env_multiple_steps(self):
         """Test that TauGymEnv can handle multiple steps."""
@@ -103,6 +106,7 @@ class TestTauGymEnv:
         with pytest.raises(RuntimeError, match="Orchestrator not initialized"):
             env.step("test action")
 
+    @pytest.mark.live_api
     @timeout(15)
     def test_tau_gym_env_reset_multiple_times(self):
         """Test that TauGymEnv can be reset multiple times."""
@@ -118,6 +122,7 @@ class TestTauGymEnv:
             assert env._orchestrator is not None
             assert env._agent is not None
 
+    @pytest.mark.live_api
     @timeout(15)
     def test_tau_gym_env_observation_format(self):
         """Test that TauGymEnv formats observations correctly."""
@@ -141,6 +146,7 @@ class TestTauGymEnv:
                 if line.strip():  # Skip empty lines
                     assert ":" in line, f"Line '{line}' should contain ':'"
 
+    @pytest.mark.live_api
     @timeout(30)
     def test_tau_gym_env_termination(self):
         """Test that TauGymEnv properly handles simulation termination."""
@@ -165,6 +171,7 @@ class TestTauGymEnv:
         # Check that we either terminated or reached max steps
         assert step_count <= max_steps
 
+    @pytest.mark.live_api
     @timeout(15)
     def test_tau_gym_env_thread_safety(self):
         """Test that TauGymEnv handles threading correctly."""
