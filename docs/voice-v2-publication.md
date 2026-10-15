@@ -77,10 +77,14 @@ python -m tau2.scripts.leaderboard.review_submission \
   --historical-voice-v2 --judges-root ... --judges-root ... [--upload]
 ```
 
-It copies `trajectories/<language>/<domain>/`, `correction.json` and
-`judges/<language>/` under `s3://sierra-tau-bench-public/submissions/<name>/`,
-so a download of that prefix validates with `--results <prefix>
---judges-root <prefix>/judges`. See the [maintainer guide](../src/tau2/scripts/leaderboard/MAINTAINER.md).
+It copies `trajectories/<language>/<domain>/`, the export's `correction.json`
+(as `source_correction.json`) and the verdicts (as
+`judges/<agent_provider>/<language>/`) under
+`s3://sierra-tau-bench-public/submissions/<name>/`, the layout of the uploaded
+Gemini entry. To re-validate a download of that prefix, rename
+`source_correction.json` to `correction.json` and pass `--results <prefix>
+--judges-root <prefix>/judges/<agent_provider>`. See the
+[maintainer guide](../src/tau2/scripts/leaderboard/MAINTAINER.md).
 
 ## The 2026-10-02 Gemini package
 
@@ -90,4 +94,7 @@ replaces two infrastructure attempts (hi-airline, zh-telecom) with their
 completed retries; `correction.json` records old and new simulation IDs,
 rewards and hashes, and the original draft is preserved. The package built from
 it has 900/900 scored calls; its judge diagnostics cover every measure and
-record the few partial verdicts as coverage gaps.
+record the few partial verdicts as coverage gaps. Its evidence is already at
+`s3://sierra-tau-bench-public/submissions/gemini-3-8-live-extended-thinking_google_2026-10-07/`
+in this layout; the package files are added there by the review tool when the
+entry is listed.

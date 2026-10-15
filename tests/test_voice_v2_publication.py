@@ -259,6 +259,24 @@ def test_historical_export_is_a_canonical_package(package, release_export):
     _validate(package, release_export)
 
 
+def test_upload_layout_matches_the_uploaded_release_entry(package, release_export):
+    """Review uploads use the S3 layout of the 2026-10-09 Gemini entry."""
+    from tau2.scripts.leaderboard.review_submission import _package_uploads
+
+    source, judges, _ = release_export
+    (source / "correction.json").write_text("{}")
+    try:
+        keys = {
+            key for _, key in _package_uploads(load_package(package), source, [judges])
+        }
+    finally:
+        (source / "correction.json").unlink()
+    assert "trajectories/hi/airline/" in keys
+    assert "source_correction.json" in keys
+    assert "judges/openai_live/ko/" in keys
+    assert not any(key.startswith(("judges/ko", "correction")) for key in keys)
+
+
 def test_validate_rejects_changed_package_and_evidence(package, release_export):
     submission = json.loads((package / SUBMISSION_FILE_NAME).read_text())
     submission["summary"]["score"] = 0.9

@@ -124,7 +124,9 @@ Release packages cite the release export instead of a matrix
 (`"evidence": "historical-voice-v2-2026-10-02"`). Build and review them with
 `--historical-voice-v2` and one `--judges-root` per judge suite; see
 [docs/voice-v2-publication.md](../../../../docs/voice-v2-publication.md). The
-upload also copies `correction.json` and `judges/<language>/`.
+upload also copies the export's `correction.json` to `source_correction.json`
+and the verdicts to `judges/<agent_provider>/<language>/`, matching the
+uploaded Gemini entry.
 
 ## Manual S3 Commands
 

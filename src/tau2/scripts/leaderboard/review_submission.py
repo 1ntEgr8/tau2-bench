@@ -398,8 +398,10 @@ def _package_uploads(
 
     Cells go to ``trajectories/<language>/<domain>/`` for both evidence layouts.
     A matrix root's own files (frame, plan, execution record) go to
-    ``trajectories/``; the historical export's correction manifest and saved
-    verdicts go to the package root and ``judges/<language>/``.
+    ``trajectories/``. For the historical export, its ``correction.json`` goes
+    to ``source_correction.json`` and saved verdicts to
+    ``judges/<agent_provider>/<language>/``, the layout of the 2026-10-09 Gemini
+    upload.
     """
     cells = [(cell.language, cell.domain) for cell in package.submission.frame.cells]
     uploads = [
@@ -415,10 +417,11 @@ def _package_uploads(
         )
     else:
         if (source / "correction.json").is_file():
-            uploads.append((source / "correction.json", "correction.json"))
+            uploads.append((source / "correction.json", "source_correction.json"))
         languages = dict.fromkeys(language for language, _ in cells)
+        provider = package.metadata.agent_provider
         uploads.extend(
-            (root / language, f"judges/{language}/")
+            (root / language, f"judges/{provider}/{language}/")
             for root in judges_roots
             for language in languages
             if (root / language).is_dir()
