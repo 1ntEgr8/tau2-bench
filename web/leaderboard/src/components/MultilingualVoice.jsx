@@ -263,14 +263,13 @@ export default function MultilingualVoice({ submissionTypeFilters, showStandard 
   const leaderboardRows = [...rows, ...packageRows].filter(row => (row.submissionType || 'standard') === 'custom' ? showCustom : showStandard)
   const active = rows.find(row => row.id === selected)
   return <section className="mv" aria-label="Multilingual voice benchmark">
-    <DomainToggle domain={domain} setDomain={setDomain} />
     <div className="mv-toolbar"><div className="mv-view-tabs" aria-label="Chart views">{[['space', '01', '3D explorer'], ['languages', '02', 'Language map']].map(([id, number, label]) => <button key={id} aria-pressed={view === id} className={view === id ? 'active' : ''} onClick={() => setView(id)}><span>{number}</span>{label}</button>)}</div></div>
     <div className="mv-main-panel">
       {view === 'space' && <div className="mv-panel-heading"><h2>Three dimensions of a good conversation.</h2><span className="mv-core-note">{domain === 'all' ? 'Core domains only · Airline, Retail, Telecom' : `Task completion: ${domainLabel} · other axes: all core domains`}</span></div>}
       {!rows.some(row => row.task != null) ? <div className="mv-cube-empty"><span>Not yet evaluated</span><h3>No multilingual {domainLabel} results yet.</h3><p>The paper cohort covers Airline, Retail, and Telecom. Submitted packages that include {domainLabel} are ranked in the leaderboard below.</p></div> : view === 'languages' ? <LanguageMap metric={mapMetric} setMetric={setMapMetric} domain={domain} /> : <Space rows={rows} onSelect={selectModel} selected={selected} focused={focused} onClearFocus={() => setFocused(false)} />}
       <div className="mv-panel-footer"><span><strong>4,500</strong> calls</span><span><strong>3</strong> core domains</span></div>
     </div>
-    <div className="mv-leaderboard-heading"><h2>Leaderboard</h2>{submissionTypeFilters}</div>
+    <div className="mv-leaderboard-heading"><h2>Leaderboard</h2><div className="mv-leaderboard-controls"><DomainToggle domain={domain} setDomain={setDomain} />{submissionTypeFilters}</div></div>
     <div className="mv-ranking-meta"><span>All languages{domain !== 'all' && ` · ${domainLabel}`}</span><span>Click a score to see its breakdown.</span></div>
     <div className="reliability-metrics mv-scores">
       <div className="metrics-table-container">

@@ -305,7 +305,8 @@
 .mv .mv-factor-heatmap .mv-extra-row > th { color: var(--mv-muted); font-weight: 500; }
 .mv .mv-heatmap td .mv-heat-cell { padding: 18px 14px; color: #1a4731; font-size: 14px; }
 .mv .mv-heatmap .mv-overall-row .mv-heat-cell, .mv .mv-heatmap .mv-overall .mv-heat-cell { font-weight: 700; }
-.mv .mv-domain-toggle { display: flex; justify-content: center; margin: 0 0 32px; }
+.mv-leaderboard-controls { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; min-width: 0; max-width: 100%; }
+.mv .mv-domain-toggle { display: flex; min-width: 0; max-width: 100%; }
 .mv-pooled-note { display: block; color: var(--mv-muted); font-size: 10px; font-weight: 500; text-transform: none; letter-spacing: 0; }
 @media (max-width: 768px) {
   .mv .mv-domain-toggle { justify-content: flex-start; overflow-x: auto; max-width: 100%; padding: 4px 0 8px; }
