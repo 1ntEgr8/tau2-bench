@@ -26,8 +26,9 @@ This confirmation is distinct from the historical receipt; no matching archived
 receipt is asserted or fabricated, and the pinned map remains unchanged.
 
 Maps retain their source descriptors, binding evidence, and generation provenance.
-Historical audit fixtures under `tests/test_multilingual/fixtures/intake_review`
-remain explicitly stale and do not confer native approval on newer map revisions.
+Historical gender-repair lineage and reviewed-correction fixtures under
+`tests/test_multilingual/fixtures/intake_review` do not confer native approval on
+newer map revisions.
 The reviewed naturalness contracts are retained in
 `tests/test_judges/fixtures/naturalness_review.json`; held-out judge validation
 remains pending as recorded in the catalog.

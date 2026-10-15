@@ -533,60 +533,19 @@ def add_factory_args(parser: argparse.ArgumentParser) -> None:
 
 
 def _add_regional_authoring_args(commands) -> None:
-    """Selective map drafting/revision plus banking and intake authoring verbs."""
-    from tau2.multilingual.factory.banking_address_repair import (
-        add_banking_address_repair_args,
-    )
-    from tau2.multilingual.factory.banking_localization import (
-        add_banking_pilot_review_args,
-    )
-    from tau2.multilingual.factory.banking_name_gender import (
-        add_banking_name_gender_args,
-    )
-    from tau2.multilingual.factory.banking_prose import add_banking_prose_args
-    from tau2.multilingual.factory.intake_address_repair import (
-        add_intake_address_repair_args,
-    )
-    from tau2.multilingual.factory.intake_candidate_review import (
-        add_intake_candidate_review_args,
-    )
-    from tau2.multilingual.factory.intake_difficulty_cli import (
-        add_intake_difficulty_args,
-    )
-    from tau2.multilingual.factory.intake_medication_identity import (
-        add_intake_medication_identity_args,
-    )
-    from tau2.multilingual.factory.localization_address_components import (
-        add_address_component_repair_args,
-    )
+    """Selective map drafting/revision, pack extensions and review exports."""
     from tau2.multilingual.factory.localization_cli import (
         add_database_localization_args,
     )
-    from tau2.multilingual.factory.localization_corrections import add_correction_args
     from tau2.multilingual.factory.localization_entity_csv import (
         add_localization_entity_csv_args,
     )
     from tau2.multilingual.factory.localization_spreadsheet import (
         add_localization_spreadsheet_args,
     )
-    from tau2.multilingual.factory.regional_name_gender import (
-        add_regional_name_audit_args,
-    )
-
-    add_database_localization_args(commands)
     from tau2.multilingual.factory.pack_extension import add_pack_extension_args
 
+    add_database_localization_args(commands)
     add_pack_extension_args(commands)
-    add_banking_address_repair_args(commands)
-    add_address_component_repair_args(commands)
-    add_correction_args(commands)
-    add_regional_name_audit_args(commands)
-    add_banking_name_gender_args(commands)
-    add_banking_pilot_review_args(commands)
     add_localization_spreadsheet_args(commands)
     add_localization_entity_csv_args(commands)
-    add_intake_candidate_review_args(commands)
-    add_intake_address_repair_args(commands)
-    add_intake_difficulty_args(commands)
-    add_intake_medication_identity_args(commands)
-    add_banking_prose_args(commands)

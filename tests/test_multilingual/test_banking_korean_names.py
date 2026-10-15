@@ -6,6 +6,10 @@ from pathlib import Path
 
 from tau2.multilingual.factory.localization_artifact import RegionalMapArtifact
 from tau2.multilingual.runtime import load_language
+from tests.test_multilingual.reviewed_corrections import (
+    assert_review_reproduces_published_names,
+    load_review,
+)
 
 DATA = Path(__file__).resolve().parents[2] / "data"
 OLD_MAP = DATA / "tau2/multilingual/ko/localization/banking_knowledge.json"
@@ -16,27 +20,13 @@ NEW_MAP = (
 
 
 def test_korean_corrections_reproduce_published_name_forms():
-    from tau2.multilingual.factory.localization_artifact import restore_localization_map
-    from tau2.multilingual.factory.localization_corrections import (
-        ReviewedCorrections,
-        apply_corrections,
-    )
-    from tau2.multilingual.factory.localization_inventory import inventory_localization
-
-    original = restore_localization_map(
+    review = load_review(Path(__file__).parent / "fixtures/banking_name_review/ko.json")
+    assert len(review["corrections"]) == 89
+    assert_review_reproduces_published_names(
         RegionalMapArtifact.model_validate_json(OLD_MAP.read_bytes()),
-        inventory_localization("banking_knowledge", DATA),
-        validate_candidate=False,
+        RegionalMapArtifact.model_validate_json(NEW_MAP.read_bytes()),
+        review,
     )
-    review = ReviewedCorrections.model_validate_json(
-        (Path(__file__).parent / "fixtures/banking_name_review/ko.json").read_bytes()
-    )
-    revised = apply_corrections(original, review)
-    published = RegionalMapArtifact.model_validate_json(NEW_MAP.read_bytes())
-    assert revised.revision == published.revision
-    assert {
-        e.id: e.forms for e in revised.entries if e.category == "identity_name"
-    } == {e.id: e.forms for e in published.entries if e.category == "identity_name"}
 
 
 def test_corrected_korean_name_map_preserves_aliases_and_separates_people():

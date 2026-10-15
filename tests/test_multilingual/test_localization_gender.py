@@ -235,30 +235,6 @@ def test_each_name_decoy_has_independent_gender_and_exact_index_binding():
         LocalizationEntry.model_validate(restored.model_dump())
 
 
-def test_banking_alias_groups_never_merge_different_owners_with_same_source_name():
-    from tau2.multilingual.factory.banking_name_gender import banking_name_groups
-    from tests.test_multilingual.test_banking_prose import entry, proposal
-
-    first = entry(
-        "first", "Marcus Chen", "Ana Rubio", category="identity_name", owner="owner-a"
-    )
-    alias = entry(
-        "alias", "MARCUS CHEN", "Ana Rubio", category="identity_name", owner="owner-a"
-    )
-    namesake = entry(
-        "second",
-        "Marcus Chen",
-        "Javier Pérez",
-        category="identity_name",
-        owner="owner-b",
-    )
-    groups = banking_name_groups(proposal(first, alias, namesake))
-    assert {frozenset(group.entry_ids) for group in groups} == {
-        frozenset({"first", "alias"}),
-        frozenset({"second"}),
-    }
-
-
 def test_offline_audit_never_calls_model_and_requires_exact_checkpoint(
     tmp_path, monkeypatch
 ):

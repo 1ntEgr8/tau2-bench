@@ -46,6 +46,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Every run resolves a language pack.** No `--language` is identical to
   `--language en`; English prompts (personas, agent language clause, persona
   gender line) now come from the English pack.
+- **English retail and telecom runs use 50 reviewed task replacements each.**
+  The English pack replaces 50 of the 114 base tasks per domain with same-ID
+  versions, so every English retail and telecom run (text or voice) differs
+  from 1.x on those tasks. Retail callers get an explicit first/last-name
+  ordering line; telecom callers are renamed from the shared "John Smith" to
+  distinct names, with matching customer records in the agent database (their
+  emails still read `john.smith@example.com`). Airline is unchanged.
+  `tau2 submit` now verifies tasks against the recorded language binding, so
+  these runs pass leaderboard verification; 1.x results are still checked
+  against the registry tasks.
 - **Communication checks are LLM-judged for every run** (`CommunicateScoring`
   is semantic by default; substring matching only when requested). The judge
   model (`gpt-5.5`, `reasoning_effort: low`) and prompt version are saved with

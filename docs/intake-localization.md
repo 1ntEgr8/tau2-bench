@@ -203,28 +203,11 @@ reviewer. Human review and live audio evidence cannot be replaced by offline gol
 replay. These gates leave the PR in draft; no default language binding or official
 headline manifest is changed here.
 
-## Country-specific candidate audit and repair
+## Entity review form
 
-`tau2 factory audit-intake-candidates --request REQUEST.json --output AUDIT.json
---checkpoints DIRECTORY` reviews the selected primary entities and their linked
-pronunciation/decoy candidates. The typed request names the map, revision, model,
-explicit model arguments, batch size and concurrency. An optional `entry_ids` list records an explicit bounded follow-up audit scope.
-Country/language settings
-come from the source-checked map; the engine is reusable across locales. Fixed
-versioned prompts distinguish actual local identities from foreign-name
-transliterations and literal property/company calques, while preserving legitimate
-industry borrowings and pharmaceutical identities. Reviewed donor forms remain
-local; their task roles are checked and recorded independently.
-
-The audit records keep/revise decisions without claiming human approval and emits
-a normal `revise-database-localization` request for only the flagged entries and
-all necessary dependent stimulus records. A clean audit writes evidence without
-creating an empty revision request. Explicit source-review corrections can reuse
-an exact prior audit with `prior_audit_file`, `required_revision_ids` and
-`required_revision_reason`; these corrections have separate provenance and do not
-impersonate model findings. Fixed country checks reject malformed Indian phone
-shapes. License plates use local orthography, including Korean and Chinese plate letters, while VINs,
-member-ID checksums, dates/times and medication strengths remain invariant.
+License plates use local orthography, including Korean and Chinese plate letters,
+while VINs, member-ID checksums, dates/times and medication strengths remain
+invariant.
 
 `tau2 factory export-localization-entities-csv --map MAP.json --output DIRECTORY`
 produces the short seven-column entity-only review form. It includes selected decoy
@@ -232,13 +215,6 @@ and pronunciation examples, with source-bound lineage in a separate sidecar, and
 excludes simulator scripts and protocol instructions. That entity form is not an
 approval of the full map: linked instructions, speech difficulty and actual TTS
 behavior still need their separate review gates.
-
-Audit records identify their exact parent map and source digest. A targeted
-follow-up covers only the repaired groups, not a fresh full-map audit. A model's
-`keep` decision is not human approval. Historical Hindi follow-up and repair
-lineage are retained as regression fixtures under
-`tests/test_multilingual/fixtures/intake_review/hi/`; they remain pending review
-and must not be reused as evidence for newer map revisions.
 
 ## Plain pronunciation references
 
@@ -249,12 +225,6 @@ Latin letters; actual distortions retain their exact native orthography. ASCII
 phone, email and code protocols are unaffected. Romanized metadata stays separate
 and its correct reference likewise uses the plain romanized token.
 
-`tau2 factory repair-intake-pronunciation-references --map INPUT.json --revision
-REVISION --output NEW.json --record REPAIR.json` performs the deterministic,
-source-checked reference repair without an LLM call. The emitted repair record binds the previous and resulting map digests
-and lists the exact reference-only changes. Earlier model audit records remain
-bound to their original map; this mechanical repair does not claim a new model or
-native approval. All 69 tokens and actual distortions are unchanged in both forms.
 The entity CSV presents correct native tokens and actual native errors; redundant
 correct-reference rows, including source stress guides, are omitted.
 
@@ -275,134 +245,15 @@ incidental values instead of implying they are independently scored. Identical
 banking reference pairs are consolidated with every source binding retained in
 manifest reference_occurrences.
 
-### Complete Hard-difficulty review
+### Hard time caller surfaces
 
-The locality review above does not establish capture difficulty. The separate
-difficulty pipeline enumerates all 100 Hard slots in each of the five locales,
-including dates, times, identifiers and coined names (company, employer and
-aftermarket-brand names). Each case carries all ten same-family Easy controls,
-its caller lookup, complete known answer, selected decoys and speech dependencies.
-Reused callback identities and unrelated narrative context stay out of model
-payloads. Each artifact pins the map, source, display versions and evidence hashes.
-
-```bash
-tau2 factory inventory-intake-difficulty --map intake.json --output inventory.json
-tau2 factory audit-intake-difficulty --request audit-request.json \
-  --output audit.json --checkpoints audit-checkpoints
-tau2 factory plan-intake-difficulty --map intake.json --audit audit.json \
-  --output plan.json
-tau2 factory revise-intake-difficulty --request revision-request.json \
-  --output revised-intake.json --checkpoints revision-checkpoints
-tau2 factory report-intake-difficulty \
-  --plan hi-plan.json --plan es-plan.json --plan pt-plan.json \
-  --plan zh-plan.json --plan ko-plan.json --output difficulty-summary.json
-```
-
-`DifficultyAuditRequest` records `map_file`, `revision`, `model`, `model_args`,
-`batch_size` and `max_concurrency`. `DifficultyRevisionRequest` adds `audit_file`.
-Requests are JSON generated from those models. Authoring uses fixed versioned
-prompts through `generate()`. The plan selects exact entries, closes changed
-primary dependencies and leaves Easy controls and reused identities unchanged.
-An omission-only finding does not require regenerating a good primary name.
-Immutable or shared-scope conflicts remain explicit blockers in the plan.
-
-Hard time repairs use typed `intake_caller_surfaces` instead of changing canonical
-time values. Each authored initial phrase is bound to one task and its exact
-H:MM AM/PM answer. Compilation appends the complete local time privately; the
-caller initially uses the bare phrase and supplies the known day period when
-asked. Relative-date repairs likewise retain their exact canonical-date anchor
-and the pinned source clock. The original relative wording is not immutable.
-
-Entity and time-expression revisions are separate validated stages. Their merge
-checks that neither stage changed the other's fields, unselected entries, source
-or settings, and records both input digests. Re-audit the resulting exact map
-with a new audit request and output path before treating any finding as resolved.
-The initial audit remains evidence of its original inputs. A temporal source
-blocker may receive a conservative repair attempt, but authoring alone cannot
-clear that blocker or establish Hard difficulty.
-
-If an entity stage fails compilation, retain its typed failed-draft evidence and
-repair the exact offending entries through `revise-database-localization` with
-`previous_kind="failed"`. `merge-intake-difficulty --request merge-request.json
---output revised-intake.json --record merge.json` accepts validated stage outputs
-through `DifficultyMergeRequest`. It rechecks the original audit plan's allowed
-scope before joining a repaired entity-stage descendant with the caller surfaces.
-It does not replace the failed evidence or relax the final audit requirement.
-
-Plans export a separate CSV ledger containing every Hard task, hazards, Easy
-comparisons, repair scope, model disposition and blockers. The ordinary entity
-CSVs retain their seven review columns with blank human decisions. Neither a
-compiled candidate nor a model `keep` decision grants native approval. The
-machine gate stays closed for any unresolved revision, source blocker or audit
-error; naturalness, pronunciation, local conventions and actual relative
-difficulty still require native-speaker and listening review.
-
-Time-authoring v2 records `feasible` or `source_limited` in its typed generation
-checkpoint. When a fixed answer cannot naturally be harder than the Easy controls,
-the generator must use ordinary clock speech and retain the limitation instead
-of inventing a long countdown. Supplemental review feedback must name the exact
-task and map digest; it does not masquerade as an independent audit decision.
-Resuming a completed time stage requires its exact validated checkpoints and a
-reconstructed map identical to the saved output. Missing evidence or changed
-speech/metadata fails locally without issuing another provider call.
-
-Read model findings against the actual complication sampler. A call samples one
-complication kind, and the spelling-style branch selects one nonempty style from
-the array. Those entries are alternatives, not simultaneous instructions. Likewise,
-lazy omission applies only when selected; a complete default caller value does not
-mean the caller has lost day-period knowledge. Preserve raw model findings and
-record any source-grounded disagreement separately. Clinical decoy identities,
-strengths and formulations cannot be replaced merely to make a judge label a case
-Hard. These limitations keep the readiness gate closed pending review.
-
-### Independent Easy review
-
-Easy controls in a Hard comparison are not independent Easy approvals. Audit each
-of the 100 selected Easy cases per language with the separate factory stage:
-
-```bash
-tau2 factory audit-intake-easy --request easy-request.json \
-  --output easy-audit.json --checkpoints easy-checkpoints
-tau2 factory inspect-intake-easy --request easy-request.json \
-  --output easy-inspection.json --checkpoints easy-checkpoints
-tau2 factory plan-intake-easy --map intake.json --audit easy-audit.json \
-  --output easy-plan.json
-tau2 factory revise-intake-easy --request easy-revision-request.json \
-  --output revised-intake.json --checkpoints easy-revision-checkpoints
-tau2 factory report-intake-easy \
-  --report hi-easy-audit.json --report es-easy-audit.json \
-  --report pt-easy-audit.json --report zh-easy-audit.json \
-  --report ko-easy-audit.json --output easy-summary.json
-```
-
-`EasyAuditRequest` records the same explicit map, revision, model and batching
-settings as the Hard audit. `EasyRevisionRequest` also requires the exact
-`audit_file`. The audit emits one decision or explicit error for every Easy task,
-a separate CSV ledger and a typed manifest. The five-language report requires
-all 500 unique Easy cases from the same source frame. Neither report approves
-content for native use.
-
-The Easy prompt checks local plausibility, straightforward capture, known-answer
-recoverability and every linked speech/decoy dependency. It distinguishes
-ordinary consumer number reading from specialist code words, calendar years from
-quantities, and hour/minute and postal-code conventions. Complication sampling
-does not disable always-active lookup guidance: a style can conflict with the
-initial bare-time instruction even when the complete time is privately known.
-In this outbound domain the agent is the caller and the user simulator is the
-callee; references to asking or correcting "the caller" are therefore intentional.
-
-The Easy repair plan selects only audited Easy entries and closes primary changes
-over their dependent content. Shared owners, protected Hard entries and immutable
-source constraints remain explicit blockers. Repairs preserve canonical answers,
-clinical identities and doses, source-relative phone errors, and existing Hard
-caller surfaces. Use fixed versioned generation, re-audit the resulting map, and
-refresh Hard audits when their Easy comparisons change. Keep previous review
-exports intact and generate new entity CSVs with blank human feedback fields.
-
-Source review can identify a concrete defect missed by a model `keep`.
-`EasyRevisionRequest.review_feedback` accepts typed `EasyReviewFeedback` records
-bound to the exact map and Easy task, with precise repair targets and factual
-constraints. The planner also accepts their JSON array via `--feedback`. These
-records remain separate from the unchanged audit verdicts and pass the same
-scope and source-invariant checks; they do not create native approval or override
-a source blocker to permit a different clinical or protocol identity.
+Hard time stimuli may carry typed `intake_caller_surfaces` instead of changed
+canonical time values. Each authored initial phrase is bound to one task and its
+exact H:MM AM/PM answer. Compilation appends the complete local time privately;
+the caller initially uses the bare phrase and supplies the known day period when
+asked. Relative-date surfaces likewise retain their exact canonical-date anchor
+and the pinned source clock. A reviewed surface records a digest-bound approval,
+and editing its wording, answer or lineage invalidates that approval. Neither a
+compiled candidate nor a model decision grants native approval; naturalness,
+pronunciation, local conventions and actual relative difficulty still require
+native-speaker and listening review.

@@ -58,39 +58,6 @@ def test_protected_binding_cannot_change_protocol_or_geography():
         )
 
 
-def test_incidental_generation_is_source_only_and_checkpointed(monkeypatch, tmp_path):
-    import json
-    from types import SimpleNamespace
-
-    from tau2.multilingual.factory.banking_prose import draft_bindings
-    from tau2.utils import llm_utils
-
-    calls = []
-
-    def fake_generate(**kwargs):
-        payload = json.loads(kwargs["messages"][1].content)
-        calls.append(payload)
-        assert "PRIVATE_DONOR" not in json.dumps(payload)
-        result = {
-            row["id"]: {
-                "forms": {"native": "Ana", "romanized": "Ana", "english": "Given name"},
-                "operation": "adapt",
-                "notes": "Review pending",
-            }
-            for row in payload["entries"]
-        }
-        return SimpleNamespace(content=json.dumps({"entries": result}))
-
-    monkeypatch.setattr(llm_utils, "generate", fake_generate)
-    name = entry("private", "Other Person", "PRIVATE_DONOR", "identity_name")
-    text = entry("text", "A worker named Marcus calls.", "A worker named Marcus calls.")
-    p = proposal(name, text)
-    result = draft_bindings(p, tmp_path / "bindings.json", "test", {})
-    assert result.bindings[0].forms.native == "Ana"
-    assert draft_bindings(p, tmp_path / "bindings.json", "test", {}) == result
-    assert len(calls) == 1
-
-
 def test_explicit_daughter_alias_reuses_whole_scoped_name():
     from tau2.domains.banking_knowledge.localization_bindings import (
         bind_explicit_person_aliases,

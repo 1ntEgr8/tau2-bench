@@ -22,32 +22,7 @@ authoring. The existing human approval of an exact map remains necessary; a mode
 assessment is not native-speaker approval. Banking publication rejects changed
 personal names without assessment coverage.
 
-## Banking audit and repair
-
-Run the versioned factory command with all desired map paths. One source-only
-assessment is shared across languages. It audits structured identities and all
-generated prose surfaces, excludes non-person entities from name repair, and
-repairs only evidenced incompatibilities. The final stage regenerates owner-linked
-emails with the existing allocator, reconstructs source-bound English prose,
-checks source-world name collisions and compiles both representations.
-
-```bash
-tau2 factory repair-banking-name-genders \
-  --map data/tau2/multilingual/es/localization/banking_knowledge.json \
-  --map data/tau2/multilingual/hi/localization/banking_knowledge.json \
-  --map data/tau2/multilingual/pt/localization/banking_knowledge.json \
-  --map data/tau2/multilingual/zh/localization/banking_knowledge.json \
-  --map data/tau2/multilingual/ko/localization/banking_knowledge.json \
-  --output-root /tmp/banking-gender-review \
-  --checkpoints /tmp/banking-gender-checkpoints \
-  --model gpt-5.5 --reasoning-effort medium --workers 8
-```
-
-Each language receives a compact map, `.gender.json` audit lineage, and refreshed
-prose/household reconstruction records. Outputs are immutable: use a new output
-root for changed inputs. Exact checkpoint hits are reused. `--offline` requires
-all exact checkpoints and cannot call a provider; use it for final replay after
-completed generation. The command does not publish a pack or export review CSVs.
+## Native review
 
 Native reviewers should check inferred source-name associations, target-name
 compatibility, family/given components, and retained name difficulty where relevant.

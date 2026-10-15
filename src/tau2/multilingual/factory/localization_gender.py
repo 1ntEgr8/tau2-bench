@@ -355,7 +355,7 @@ def require_name_gender_coverage(proposal) -> None:
     missing = [entry.id for entry in names if entry.name_gender is None]
     if missing:
         raise ValueError(
-            f"Personal-name gender assessment missing for {len(missing)} entries; run the name-gender audit before publication"
+            f"Personal-name gender assessment missing for {len(missing)} entries; name-gender evidence is required before publication"
         )
     for entry in names:
         entry.name_gender.require(entry.forms)
