@@ -1,7 +1,7 @@
 # Reviewed naturalness candidates
 
-These five `CandidateJudge` entries incorporate the wording approved in
-[`naturalness-language-criteria-review-v2`](../../../docs/designs/naturalness-language-criteria/review.html).
+These five `CandidateJudge` entries incorporate the wording approved in the
+`naturalness-language-criteria-review-v2` review.
 They are **reviewed and runnable, but unvalidated**. The packaged production
 naturalness judge and every specific judge remain unchanged. After a separate
 validation round, these candidates are intended to replace naturalness for their
@@ -29,9 +29,9 @@ female-agent and Hindi male-agent validation does not transfer. Portuguese
 call-wide register drift and Mandarin call-wide particle patterns remain covered
 by the existing specific judges, since no call history is added to naturalness.
 
-The authoring envelope records the Codex GPT-6 author and user review of the HTML;
-these were directly authored and reviewed prompt edits, not a new `draft-judge`
-model invocation. Compilation and registration made no model calls. The review
+The authoring envelope records the author and the wording review; these were
+directly authored and reviewed prompt edits, not a new `draft-judge` model
+invocation. Compilation and registration made no model calls. The review
 digest binds the approved wording and its source/proposed execution metadata;
 it is not human accuracy-label evidence.
 

@@ -75,7 +75,6 @@ def test_setup_preserves_account_name_short_description_and_existing_ids(
 ):
     import elevenlabs
 
-    from tau2.data_model import voice_personas
     from tau2.voice.scripts import setup_voices
 
     persona = SimpleNamespace(
@@ -84,14 +83,12 @@ def test_setup_preserves_account_name_short_description_and_existing_ids(
         prompt="long acoustic brief",
         short_description="short account description",
     )
-    monkeypatch.setattr(voice_personas, "CONTROL_PERSONAS", [persona])
+    monkeypatch.setattr(setup_voices, "english_pack_personas", lambda: [persona])
     monkeypatch.setattr(elevenlabs, "ElevenLabs", lambda: client)
     client.voices.get_all.return_value = SimpleNamespace(
         voices=[SimpleNamespace(name="tau2_example", voice_id="old")]
     )
-    result = setup_voices.setup_voices(
-        complexity="control", seed=17, model="chosen", force=True
-    )
+    result = setup_voices.setup_voices(seed=17, model="chosen", force=True)
     assert result == {"example": "saved"}
     client.voices.delete.assert_called_once_with(voice_id="old")
     client.text_to_voice.design.assert_called_once_with(

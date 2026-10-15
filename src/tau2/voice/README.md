@@ -111,18 +111,17 @@ The voice module has two main components:
 
 ## Voice Persona Setup
 
-The user simulator uses ElevenLabs voices defined in `src/tau2/data_model/voice_personas.py`. The default voice IDs are Sierra-internal and **will not work** for external users.
+The user simulator speaks with each language pack persona's ElevenLabs voice (`voice.voice_id` in `data/tau2/multilingual/<lang>/pack.yaml`). The default voice IDs are Sierra-internal and **will not work** for external users.
 
-To run voice evaluations, create your own voices in ElevenLabs and configure them via environment variables:
+To run voice evaluations, create your own voices in ElevenLabs and configure them via environment variables (`TAU2_VOICE_ID_<LANG>_<PERSONA>`):
 
 ```bash
 # In your .env file:
-TAU2_VOICE_ID_MATT_DELANEY=your_voice_id_here
-TAU2_VOICE_ID_LISA_BRENNER=your_voice_id_here
-# ... (one per persona)
+TAU2_VOICE_ID_EN_MAMADOU_DIALLO=your_voice_id_here
+TAU2_VOICE_ID_EN_PRIYA_PATIL=your_voice_id_here
 ```
 
-For a minimal setup, create just the two control personas and use `--speech-complexity control`.
+`python -m tau2.voice.scripts.setup_voices` creates the English voices and prints these lines.
 
 See the [Voice Persona Setup Guide](../../docs/voice-personas.md) for step-by-step instructions on creating matching voices with ElevenLabs Voice Design.
 
@@ -135,4 +134,4 @@ See the [Voice Persona Setup Guide](../../docs/voice-personas.md) for step-by-st
 | `XAI_API_KEY` | xAI Grok Voice provider |
 | `ELEVENLABS_API_KEY` | User simulator TTS (synthesis) |
 | `DEEPGRAM_API_KEY` | Transcription (Deepgram nova-2, nova-3) |
-| `TAU2_VOICE_ID_*` | Custom voice ID overrides (see [Voice Persona Setup](../../docs/voice-personas.md)) |
+| `TAU2_VOICE_ID_<LANG>_<PERSONA>` | Custom voice ID overrides (see [Voice Persona Setup](../../docs/voice-personas.md)) |
