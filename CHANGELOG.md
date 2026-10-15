@@ -24,47 +24,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > Re-run rather than compare 1.x results against 2.0 numbers.
 
 ### Upgrading from 1.x
-- To get closer to 1.x behavior on a custom run, pass `--benchmark none` (no
-  released manifest) and `--communicate-scorer substring` (1.x substring
-  communication checks). To keep the 1.x Gemini model, pass
+- No flag combination reproduces 1.0.1 inputs exactly.
+- Closest text run: `--communicate-scorer substring`. Still different: the
+  English retail/telecom task replacements, the persona block and language
+  clause in the user prompt, the NL-assertion judge model, and folded ID lookups.
+- Closest voice run: `--audio-native --benchmark voice-v1 --user-llm gpt-4.1
+  --user-llm-args '{"temperature":0.0}' --max-steps-seconds 1200 --voice alloy`.
+  Still different: the v2 agent prompt, the spelling, persona and greeting
+  changes, semantic communication checks, the new judges and folded ID lookups.
+- For a custom run without a released manifest, pass `--benchmark none`. To
+  keep the 1.x Gemini model, pass
   `--audio-native-model gemini-3.1-flash-live-preview`.
-- `--benchmark voice-v1` runs the English voice frame on the original registry
-  tasks (no English task replacements).
-- These differences cannot be turned off: the English pack's personas, greeting
-  and prompts; its task replacements (outside `voice-v1`); the NL-assertion
-  judge and voice user-simulator models; folded ID lookups; and English LiveKit
-  STT/TTS resolution from the CLI (an explicit `CascadedConfig` in Python can
-  still select Deepgram Aura).
-- Results saved by 1.x cannot be resumed; re-run into a new output path.
-
-### Added
-
-### Changed
-
-### Deprecated
-
-### Removed
-
-### Fixed
-
-## [2.0.0] - Unreleased
-
-> **⚠️ Scoring change — scores are not comparable with 1.x.** Communication checks,
-> NL-assertion judging, tool-argument lookup and the English prompts all changed.
-> Re-run rather than compare 1.x results against 2.0 numbers.
-
-### Upgrading from 1.x
-- To get closer to 1.x behavior on a custom run, pass `--benchmark none` (no
-  released manifest) and `--communicate-scorer substring` (1.x substring
-  communication checks). `--benchmark voice-v1` runs the English voice frame
-  on the original registry tasks (no English task replacements). To keep the 1.x Gemini model, pass
-  `--audio-native-model gemini-3.1-flash-live-preview`.
-- These differences cannot be turned off: the English pack's personas, greeting
-  and prompts, its task replacements (outside `voice-v1`), the NL-assertion
-  judge model, the voice
-  user-simulator model, folded ID lookups, and English LiveKit STT/TTS
-  resolution from the CLI (an explicit `CascadedConfig` in Python can still
-  select Deepgram Aura).
+- English LiveKit STT/TTS resolution cannot be changed from the CLI (an explicit
+  `CascadedConfig` in Python can still select Deepgram Aura).
 - Results saved by 1.x cannot be resumed; re-run into a new output path.
 
 ### Added
@@ -73,6 +45,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   airline, retail and telecom. See `docs/language-packs.md`.
 - Released benchmark manifests `voice` and `text` (18 cells each, frozen 50-task
   subsets) and the `tau2 benchmarks list` / `tau2 benchmarks pin` verbs.
+- Released benchmark manifest `voice-v1`: the English-only voice frame (airline,
+  retail, telecom) on the original registry tasks, for the current voice
+  leaderboard. It refuses partial runs (`--num-tasks`, `--task-ids`); use
+  `--benchmark none --language en` for samples.
 - `tau2 factory` language-authoring verbs (`init-request`, `approve`,
   `refresh-regional-bundle`, …); see `docs/language-authoring.md`.
 - `tau2 judges`: post-hoc judge suite (not part of the reward) and the public
@@ -123,8 +99,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `--audio-native` defaults to `--benchmark voice`; text runs are custom unless
   `--benchmark text` is given.
 - `gpt-5*` models are always routed through the OpenAI Responses API.
-- Language pack schema v3: mode-neutral packs with a `voice:` section; spoken-call-only
-  persona behavior lives in `voice.pragmatics_clauses` and never reaches text runs.
+- Language pack schema v3: mode-neutral packs with a `voice:` section. Clauses in
+  `voice.pragmatics_clauses` render only in voice runs; the persona's gender line
+  and mode-neutral pragmatics clauses render in text runs too (see below).
 - Judge catalog `validated-measures-v4`; judge `call_name`s renamed.
 - Persona voice seeds use stable SHA-256 hashing.
 - Default OpenAI live model is `gpt-live-1`.
@@ -134,8 +111,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Default Gemini model is `gemini-3.8-live-extended-thinking` (was
   `gemini-3.1-flash-live-preview`). With it, Gemini tools are `NON_BLOCKING` and
   proactive audio stays off. Requires `google-genai>=2.25,<3`.
-- xAI voice runs pin `grok-voice-think-fast-2.0` (passed as `?model=`); 1.x used
-  the endpoint's default model.
+- xAI voice runs pin `grok-voice-think-fast-2.0` (passed as `?model=`) with
+  reasoning effort `high`; 1.x used the endpoint's default model.
+- Qwen defaults are `qwen3.5-omni-plus-realtime` with voice `Tina` (was
+  `qwen3-omni-flash-realtime` with `Cherry`).
+- Gemini input audio is sent at 8 kHz (was 16 kHz); transcription language codes
+  default to `["en-US"]`.
+- Released benchmark runs (`voice`, `text`, `voice-v1`) default the user
+  simulator to `openai/gpt-5.5` at `reasoning_effort: low` (1.x: `gpt-4.1` at
+  temperature 0) and always auto-resume. Voice benchmark runs default to
+  `max_steps_seconds` 2400 (was 1200) and OpenAI agent voice `marin` (was
+  `alloy`), and record the OpenAI transcription language (`en` for English, the
+  value 1.x hard-coded).
+- Voice agent instructions end with "Your gender is <gender>." when the agent
+  voice has a known gender (e.g. `marin` → female).
+- `VOICE_USER_SIMULATOR_VERSION` is `v1.1` (was `v1.0`).
 - English LiveKit (cascaded) runs resolve TTS to ElevenLabs `eleven_flash_v2_5`
   (was Deepgram `aura-asteria-en`) and STT to Deepgram `nova-3` with language
   `en`. They now need `ELEVENLABS_API_KEY` and cost more per character. Explicit
@@ -151,9 +141,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (was "Hi! How can I help you today?"). The text greeting is unchanged.
 - Voice user-simulator prompt: callers spell names, IDs and emails only when
   the agent asks, and are no longer told to say "at"/"dot"/"underscore" or to
-  use `[pause]` markers.
+  use `[pause]` markers. The 1.x `## MINIMAL VERBOSITY` block (on every voice
+  task) is replaced by the pack persona's pragmatics clauses, including a
+  voice-only clause about cutting in and finishing the agent's sentences.
 - Text user-simulator prompt adds the address-order rule and a
-  `## Persona Guidelines` header (empty with the default persona).
+  `## Persona Guidelines` block. Each task is assigned one of the two English
+  pack personas (in every domain, including `banking_knowledge`), and the block
+  carries its gender line and 5–6 mode-neutral pragmatics clauses. On telecom
+  this stacks on top of the task's own `[PERSONA:Easy/Hard]` persona text.
 - Airline user, reservation and flight lookups ignore case, surrounding
   whitespace and accents. Telecom phone-number lookups ignore formatting, and
   telecom name lookups ignore case and accents. Ambiguous matches raise.
