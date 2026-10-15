@@ -217,3 +217,20 @@ def test_prepare_refuses_missing_judges_per_cell_and_measure(judged_matrix, tmp_
     assert f"tau2 judges suite {judged_matrix}" in message
     assert "--auto-resume" not in message
     assert not (tmp_path / "package").exists()
+
+
+def test_prepare_refuses_partial_judge_errors_cleanly(judged_matrix, tmp_path):
+    """A verdict with unit errors but some units is incomplete, never a crash."""
+    verdicts_path = judged_matrix / "es-retail" / "diagnostics" / "verdicts.json"
+    rows = json.loads(verdicts_path.read_text())
+    partial = next(row for row in rows if row["identity"]["measure"] == "naturalness")
+    partial["verdict"]["unit_errors"] = [
+        {"unit_id": "late-utterance", "kind": "response", "error": "fixture"}
+    ]
+    verdicts_path.write_text(json.dumps(rows))
+    with pytest.raises(SystemExit) as raised:
+        _submit("prepare", judged_matrix, "--output", tmp_path / "package")
+    message = str(raised.value.code)
+    assert "es-retail: naturalness 49/50 judged (1 judge errors)" in message
+    assert f"Run `tau2 judges suite {judged_matrix}`" in message
+    assert not (tmp_path / "package").exists()
