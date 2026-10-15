@@ -2,7 +2,7 @@ import { Fragment, useRef, useState } from 'react'
 import data from '../data/multilingual/results.json'
 import { summarize, frontier, percent, mean, heatScale } from '../data/multilingual/metrics'
 import PackageBreakdown from './PackageBreakdown'
-import { packageLogo, packageScore, useVoiceV2Packages } from '../data/voiceV2Packages'
+import { packageLogo, packageScore, toPercent, useVoiceV2Packages } from '../data/voiceV2Packages'
 import './MultilingualVoice.css'
 
 const metrics = [['task', 'Task completion'], ['interaction', 'Interaction'], ['experience', 'Experience']]
@@ -112,9 +112,31 @@ function Space({ rows, onSelect, selected, focused, onClearFocus }) {
   </div>
 }
 
-function LanguageMap({ metric, setMetric }) {
+// Only task completion is split by domain; Interaction and Experience are pooled
+// over the three core domains in the paper export.
+const domainOptions = [
+  { key: 'all', label: '📊 Overall' },
+  { key: 'retail', label: '🛍️ Retail' },
+  { key: 'airline', label: '✈️ Airline' },
+  { key: 'telecom', label: '📱 Telecom' },
+  { key: 'banking_knowledge', label: '🏦 Banking' },
+  { key: 'intake', label: '📋 Intake' },
+]
+const forDomain = (row, domain) => domain === 'all' ? row : { ...row, task: row.domains[domain] ?? null }
+
+function DomainToggle({ domain, setDomain }) {
+  const index = domainOptions.findIndex(option => option.key === domain)
+  return <div className="domain-toggle-switch mv-domain-toggle">
+    <div className="toggle-container domain-toggle-container" style={{ '--domain-count': domainOptions.length }}>
+      {domainOptions.map(option => <button key={option.key} className={`toggle-option domain-toggle-option ${domain === option.key ? 'active' : ''}`} aria-pressed={domain === option.key} onClick={() => setDomain(option.key)}>{option.label}</button>)}
+      <div className="toggle-slider domain-toggle-slider" style={{ width: `calc((100% - 8px) / ${domainOptions.length})`, transform: `translateX(${index * 100}%)` }} />
+    </div>
+  </div>
+}
+
+function LanguageMap({ metric, setMetric, domain }) {
   const columns = [...data.languages, { id: 'all', name: 'Overall' }]
-  const rows = data.models.map(model => ({ ...model, values: Object.fromEntries(columns.map(language => [language.id, summarize(model, language.id)[metric]])) }))
+  const rows = data.models.map(model => ({ ...model, values: Object.fromEntries(columns.map(language => [language.id, forDomain(summarize(model, language.id), domain)[metric]])) }))
   rows.push({ id: 'overall', name: 'Overall', values: Object.fromEntries(columns.map(language => [language.id, mean(rows.map(row => row.values[language.id]))])) })
   const metricLabel = metrics.find(([key]) => key === metric)[1]
   const heat = heatScale(rows.flatMap(row => columns.map(language => row.values[language.id])))
@@ -211,6 +233,8 @@ function PackageRow({ row, index, open, onToggle }) {
 
 export default function MultilingualVoice({ submissionTypeFilters, showStandard = true, showCustom = false }) {
   const language = 'all'
+  const [domain, setDomain] = useState('all')
+  const domainLabel = domainOptions.find(option => option.key === domain).label.replace(/^\S+ /, '')
   const [view, setView] = useState(() => {
     const requested = new URLSearchParams(window.location.search).get('view')
     return requested === 'languages' ? 'languages' : 'space'
@@ -230,29 +254,30 @@ export default function MultilingualVoice({ submissionTypeFilters, showStandard 
     setFocused(!(focused && selected === id))
     setSelected(id)
   }
-  const rows = data.models.map(model => summarize(model, language))
+  const rows = data.models.map(model => forDomain(summarize(model, language), domain))
   // Submitted voice-v2 packages join the paper cohort as rows scored on task
   // completion only; Interaction and Experience are paper-cohort measures.
   const { packages, errors: packageErrors } = useVoiceV2Packages()
   const [openPackage, setOpenPackage] = useState(null)
-  const packageRows = (packages || []).map(pkg => ({ id: `package:${pkg.dir}`, pkg, name: pkg.metadata.model_name, submissionType: pkg.metadata.submission_type, task: packageScore(pkg, language), interaction: null, experience: null }))
+  const packageRows = (packages || []).map(pkg => ({ id: `package:${pkg.dir}`, pkg, name: pkg.metadata.model_name, submissionType: pkg.metadata.submission_type, task: domain === 'all' ? packageScore(pkg, language) : toPercent(pkg.submission.summary.by_domain[domain]?.score), interaction: null, experience: null }))
   const leaderboardRows = [...rows, ...packageRows].filter(row => (row.submissionType || 'standard') === 'custom' ? showCustom : showStandard)
   const active = rows.find(row => row.id === selected)
   return <section className="mv" aria-label="Multilingual voice benchmark">
+    <DomainToggle domain={domain} setDomain={setDomain} />
     <div className="mv-toolbar"><div className="mv-view-tabs" aria-label="Chart views">{[['space', '01', '3D explorer'], ['languages', '02', 'Language map']].map(([id, number, label]) => <button key={id} aria-pressed={view === id} className={view === id ? 'active' : ''} onClick={() => setView(id)}><span>{number}</span>{label}</button>)}</div></div>
     <div className="mv-main-panel">
-      {view === 'space' && <div className="mv-panel-heading"><h2>Three dimensions of a good conversation.</h2><span className="mv-core-note">Core domains only · Airline, Retail, Telecom</span></div>}
-      {view === 'languages' ? <LanguageMap metric={mapMetric} setMetric={setMapMetric} /> : <Space rows={rows} onSelect={selectModel} selected={selected} focused={focused} onClearFocus={() => setFocused(false)} />}
+      {view === 'space' && <div className="mv-panel-heading"><h2>Three dimensions of a good conversation.</h2><span className="mv-core-note">{domain === 'all' ? 'Core domains only · Airline, Retail, Telecom' : `Task completion: ${domainLabel} · other axes: all core domains`}</span></div>}
+      {!rows.some(row => row.task != null) ? <div className="mv-cube-empty"><span>Not yet evaluated</span><h3>No multilingual {domainLabel} results yet.</h3><p>The paper cohort covers Airline, Retail, and Telecom. Submitted packages that include {domainLabel} are ranked in the leaderboard below.</p></div> : view === 'languages' ? <LanguageMap metric={mapMetric} setMetric={setMapMetric} domain={domain} /> : <Space rows={rows} onSelect={selectModel} selected={selected} focused={focused} onClearFocus={() => setFocused(false)} />}
       <div className="mv-panel-footer"><span><strong>4,500</strong> calls</span><span><strong>3</strong> core domains</span></div>
     </div>
     <div className="mv-leaderboard-heading"><h2>Leaderboard</h2>{submissionTypeFilters}</div>
-    <div className="mv-ranking-meta"><span>All languages</span><span>Click a score to see its breakdown.</span></div>
+    <div className="mv-ranking-meta"><span>All languages{domain !== 'all' && ` · ${domainLabel}`}</span><span>Click a score to see its breakdown.</span></div>
     <div className="reliability-metrics mv-scores">
       <div className="metrics-table-container">
         <table className="reliability-table mv-leaderboard-table">
           <thead><tr>
             <th>Rank</th><th>Model</th><th>Provider</th><th>Reasoning</th>
-            {metrics.map(([key, label]) => <th key={key} className="mv-metric-header" aria-sort={sort === key ? 'descending' : 'none'}><button onClick={() => setSort(key)}>{label} ↑{sort === key && <span className="mv-sort-dot"> •</span>}</button></th>)}
+            {metrics.map(([key, label]) => <th key={key} className="mv-metric-header" aria-sort={sort === key ? 'descending' : 'none'}><button onClick={() => setSort(key)}>{label} ↑{sort === key && <span className="mv-sort-dot"> •</span>}</button>{domain !== 'all' && key !== 'task' && <small className="mv-pooled-note" title="Interaction and Experience are not split by domain">all domains</small>}</th>)}
             <th className="expand-header"><span className="mv-visually-hidden">Breakdown</span></th>
           </tr></thead>
           <tbody>{[...leaderboardRows].sort((a, b) => a[sort] == null ? b[sort] == null ? 0 : 1 : b[sort] == null ? -1 : b[sort] - a[sort]).map((row, index) => {
@@ -278,7 +303,8 @@ export default function MultilingualVoice({ submissionTypeFilters, showStandard 
     </div>
     {packageErrors.length > 0 && <p className="mv-footnote" role="alert">Skipped submissions: {packageErrors.join('; ')}</p>}
     <nav className="mv-paper-links" aria-label="Research papers"><span>Papers</span>{[
-      ['Multilingual', '2609.35820', 'τ-Multilingual: Benchmarking Voice Agents Across Languages'],
+      ['τ-Multilingual', '2609.35820', 'τ-Multilingual: Benchmarking Voice Agents Across Languages'],
+      ['τ-Elicitation', '2609.13602', 'τ-Elicitation: Benchmarking multi-turn entity extraction in voice agents'],
       ['τ-Voice', '2603.13686', 'τ-Voice: Benchmarking Full-Duplex Voice Agents on Real-World Domains'],
     ].map(([label, id, title]) => <a key={id} href={`https://arxiv.org/abs/${id}`} title={title} target="_blank" rel="noopener noreferrer">{label} ↗</a>)}</nav>
   </section>

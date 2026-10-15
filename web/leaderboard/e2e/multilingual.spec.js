@@ -168,7 +168,7 @@ test('multilingual explorer, breakdowns, filters and navigation', async ({ page 
     assert.equal(await page.getByText(text, { exact: true }).count(), 0)
   }
   assert.equal(await page.locator('.mv-methodology').count(), 0)
-  assert.equal(await page.locator('.mv-paper-links a[href^="https://arxiv.org/abs/"]').count(), 2)
+  assert.deepEqual(await page.locator('.mv-paper-links a[href^="https://arxiv.org/abs/"]').allInnerTexts(), ['τ-Multilingual ↗', 'τ-Elicitation ↗', 'τ-Voice ↗'])
 
   await page.locator('.mv-map-metrics').getByRole('button', { name: 'Experience', exact: true }).click()
   assert.equal(await page.locator('.mv-heatmap tbody .mv-heat-cell').filter({ hasText: '—' }).count(), 6)
@@ -183,6 +183,14 @@ test('multilingual explorer, breakdowns, filters and navigation', async ({ page 
     const row = page.locator(`.mv-task-heatmap tr.mv-extra-row[data-factor="${factor}"]`)
     assert.equal(await row.locator('.is-missing').count(), 7)
   }
+  await page.locator('.mv-domain-toggle').getByRole('button', { name: /Airline/ }).click()
+  const airlineScores = await page.locator('.mv-scores .model-row td.score-cell:nth-of-type(5) .score-bar-value').allInnerTexts()
+  assert.deepEqual(airlineScores, data.models.map(model => summarize(model).domains.airline).sort((x, y) => y - x).map(value => `${value.toFixed(1)}%`))
+  assert.equal(await page.locator('.mv-pooled-note').count(), 2)
+  await page.locator('.mv-domain-toggle').getByRole('button', { name: /Banking/ }).click()
+  assert.ok((await page.locator('.mv-main-panel .mv-cube-empty').innerText()).includes('No multilingual Banking results yet'))
+  await page.locator('.mv-domain-toggle').getByRole('button', { name: /Overall/ }).click()
+  assert.equal(await page.locator('.mv-pooled-note').count(), 0)
   await page.getByRole('button', { name: 'Experience ↑' }).click()
   assert.ok((await page.locator('.mv-scores .model-row').first().innerText()).includes('xhigh'))
   await page.getByRole('button', { name: 'English only', exact: true }).click()
