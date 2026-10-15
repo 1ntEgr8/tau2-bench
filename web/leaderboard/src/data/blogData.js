@@ -298,6 +298,16 @@ export const AUTHORS = {
 // is resolved against import.meta.env.BASE_URL.
 export const BLOG_POSTS = [
   {
+    slug: 'hyper-tau-bench-announcement',
+    title: 'Hyper-τ-bench: Evaluating Agents That Build Agents',
+    category: 'Announcement',
+    date: 'September 2026',
+    description:
+      'Hyper-τ-bench makes agent construction the task: a developer agent recovers requirements from a business’s records and client, builds a customer-service agent within a model and cost budget, and is scored on held-out τ-bench-style traffic.',
+    href: 'https://sierra.ai/blog/hyper-t-bench-evaluating-agents-that-build-agents',
+    authorSlugs: ['ben-shi', 'keshav-dhandhania', 'karthik-narasimhan', 'victor-barres'],
+  },
+  {
     slug: 'stanford-aims-talk',
     title: 'The τ-bench Family: Guest Lecture at the Stanford AIMS Seminar',
     category: 'Talk',
