@@ -10,9 +10,8 @@ from deepdiff import DeepDiff
 from dotenv import load_dotenv
 from loguru import logger
 
-res = load_dotenv()
-if not res:
-    logger.warning("No .env file found")
+# Optional: API keys may also come from the environment.
+load_dotenv()
 
 # Try to get data directory from environment variable first
 DATA_DIR_ENV = os.getenv("TAU2_DATA_DIR")
