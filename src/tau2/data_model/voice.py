@@ -141,6 +141,31 @@ class VoiceCreateRequest(BaseModel):
     )
 
 
+class PersonaVoiceDesign(BaseModel):
+    """Voice Design inputs that recreate one pack persona's caller voice."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    gender: Literal["male", "female"] = Field(description="Pack persona gender.")
+    model: str = Field(min_length=1, description="ElevenLabs voice-design model.")
+    prompt: str = Field(min_length=1, description="Acoustic voice-design brief.")
+    audition_text: str = Field(
+        min_length=100,
+        description="Native preview line the designed voice speaks (API minimum 100).",
+    )
+
+
+class LanguageVoiceDesign(BaseModel):
+    """Voice Design inputs for every persona of one language pack."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    language: str = Field(min_length=1, description="Language pack code.")
+    personas: dict[str, PersonaVoiceDesign] = Field(
+        min_length=1, description="Design inputs keyed by pack persona ID."
+    )
+
+
 ProviderConfig = ElevenLabsTTSConfig
 
 
