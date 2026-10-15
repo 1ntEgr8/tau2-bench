@@ -10,6 +10,7 @@ from tau2.data_model.simulation import (
     RewardInfo,
     SimulationRun,
     TerminationReason,
+    TextRunConfig,
     VoiceRunConfig,
 )
 from tau2.multilingual.runtime import load_language
@@ -49,6 +50,46 @@ def saved_matrix(tmp_path):
             root / f"{config.language}-retail" / "results.json", format="dir"
         )
     return root
+
+
+def test_text_matrix_counts_inline_simulations(tmp_path):
+    """Text cells keep simulations inside results.json; all must be counted."""
+    from tau2.metrics.benchmark import load_saved_benchmark
+
+    root = tmp_path / "text-matrix"
+    root.mkdir()
+    frame = load_frame("text")
+    (root / "benchmark-frame.json").write_text(frame.model_dump_json())
+    plan = resolve_configs(
+        frame,
+        TextRunConfig(workers=0),
+        root,
+        languages=["en", "pt"],
+        domains=["retail"],
+    )
+    for config in plan.configs:
+        loaded = load_language(config.language, config.domain, mode="text")
+        info = get_info(config)
+        tasks = [task for task in loaded.tasks if task.id in config.task_ids]
+        task = tasks[0]
+        simulation = SimulationRun(
+            id="text-call",
+            task_id=task.id,
+            trial=0,
+            start_time="start",
+            end_time="end",
+            duration=1,
+            termination_reason=TerminationReason.USER_STOP,
+            reward_info=RewardInfo(reward=1),
+            language_context=info.language_tasks[task.id],
+        )
+        Results(info=info, tasks=tasks, simulations=[simulation]).save(
+            root / f"{config.language}-retail" / "results.json", format="json"
+        )
+
+    summary = load_saved_benchmark(root).submission.summary
+    assert summary.scored_trials == 2
+    assert summary.missing_trials == 898
 
 
 def test_matrix_discovery_validates_membership_and_ignores_unreleased_dirs(

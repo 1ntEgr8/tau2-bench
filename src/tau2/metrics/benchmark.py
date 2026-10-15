@@ -315,13 +315,14 @@ def export_submission(
     trials = []
     sources = {}
     for cell in frame.cells:
-        path = root / f"{cell.language}-{cell.domain}"
-        if not (path / "results.json").exists():
+        # The results file, not its directory: a directory always reads as the
+        # per-simulation (voice) layout, which would drop text cells' inline runs.
+        path = root / f"{cell.language}-{cell.domain}" / "results.json"
+        if not path.exists():
             continue
         trials.extend(read_task_trials(path, frame))
-        metadata, _ = Results._resolve_paths(path)
         sources[f"{cell.language}/{cell.domain}"] = hashlib.sha256(
-            metadata.read_bytes()
+            path.read_bytes()
         ).hexdigest()
     selection = None
     plan_path = root / "benchmark-plan.json"
