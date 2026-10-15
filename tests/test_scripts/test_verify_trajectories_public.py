@@ -1,5 +1,7 @@
 """Leaderboard task checks compare against the recorded language binding."""
 
+import hashlib
+import json
 from types import SimpleNamespace
 
 import pytest
@@ -67,3 +69,26 @@ def test_intake_results_use_recorded_strategy_variant(strategy):
     other = next(s for s in ElicitationStrategy if s != strategy)
     swapped = _results("intake", tasks_for(other), language="en", elicitation=config)
     assert not check_tasks(swapped)[0]
+
+
+# 1.x submissions (no recorded language) are checked against the registry base
+# split. Those tasks must stay byte-identical to the v1.0.1 release so results
+# produced with v1.0.1 keep verifying; changing them is a breaking change for
+# every 1.x leaderboard entry and needs a deliberate update here.
+V1_0_1_BASE_TASKS = {
+    "airline": (50, "0673fb5ce6150c759d97ac6e7202e8ad9f36a4cfdc444be393cea87945276411"),
+    "retail": (114, "736b6e436c8278b2268631a6b7d6447fd97955784fc1c2ea5f08bc46ef137768"),
+    "telecom": (
+        114,
+        "fed0f81f4c5a57255906cf2673a4c56a05a540e2b4802aab1f5ffe9ad61b25a7",
+    ),
+}
+
+
+@pytest.mark.parametrize("domain", sorted(V1_0_1_BASE_TASKS))
+def test_registry_base_tasks_match_v1_0_1(domain):
+    tasks = registry.get_tasks_loader(domain)("base")
+    digest = hashlib.sha256(
+        json.dumps([t.model_dump(mode="json") for t in tasks], sort_keys=True).encode()
+    ).hexdigest()
+    assert (len(tasks), digest) == V1_0_1_BASE_TASKS[domain]
