@@ -5,7 +5,7 @@ name: Tests
 on:
   pull_request:
   push:
-    branches: [main, codex/voice-v2-release]
+    branches: [main]
   workflow_dispatch:
   schedule:
     - cron: "0 6 * * 0"

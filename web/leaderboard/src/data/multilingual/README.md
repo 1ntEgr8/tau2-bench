@@ -7,15 +7,16 @@ historical provenance keep their original names.
 
 The Voice leaderboard defaults to this fixed paper cohort. The English-only
 leaderboard and progress view retain the existing submission-backed behavior.
-This view does not yet ingest Voice V2 submissions; do not present the static
-cohort as an automatically updated submission leaderboard.
+This view does not ingest Voice V2 submissions; it is a static cohort, not an
+automatically updated submission leaderboard.
 
-`results.json` contains 30 language/configuration summaries from commit
-`4c7d1463bf3efe0fb85f9406fda4d0d00add1df8` on
-`codex/tau-multilingual-public-release`. Its source metadata records the original
-artifact paths and SHA-256 hashes. Task and domain scores came from `audit.json`;
-the other measurements came from `experience.json`, using the same trial-0 slice.
-The imported JSON is unchanged from the website design session.
+`results.json` contains 30 language/configuration summaries built from the
+reproduction files at commit `4c7d1463bf3efe0fb85f9406fda4d0d00add1df8`. Those
+files are not in this branch; they live at
+<https://github.com/sierra-research/tau2-bench/tree/4c7d1463bf3efe0fb85f9406fda4d0d00add1df8/papers/tau-multilingual/reproduction>.
+The `source` block in `results.json` records each file's path and SHA-256 hash.
+Task and domain scores came from `audit.json`; the other measurements came from
+`experience.json`, using the same trial-0 slice.
 
 - Task completion and Interaction macro-average six languages: 900 calls per
   configuration, 4,500 total, with 50 calls per domain/language/configuration.
@@ -31,8 +32,8 @@ The imported JSON is unchanged from the website design session.
 
 The homepage Voice card uses the same six-language task averages. Supplemental
 banking/elicitation results, raw trajectories, audio, and recovery artifacts are
-not included in this integration. Historical judging and infrastructure-outcome checks are complete, as confirmed
-by the release owner on 2026-10-14.
+not included in this integration. Historical judging and infrastructure-outcome
+checks are complete.
 
 Run `npm run build && npm run prerender && npm run test:e2e` from
 `web/leaderboard`. `e2e/multilingual.spec.js` checks the frozen aggregates,
