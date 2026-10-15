@@ -23,6 +23,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > NL-assertion judging, tool-argument lookup and the English prompts all changed.
 > Re-run rather than compare 1.x results against 2.0 numbers.
 
+### Upgrading from 1.x
+- To get closer to 1.x behavior on a custom run, pass `--benchmark none` (no
+  released manifest) and `--communicate-scorer substring` (1.x substring
+  communication checks). To keep the 1.x Gemini model, pass
+  `--audio-native-model gemini-3.1-flash-live-preview`.
+- `--benchmark voice-v1` runs the English voice frame on the original registry
+  tasks (no English task replacements).
+- These differences cannot be turned off: the English pack's personas, greeting
+  and prompts; its task replacements (outside `voice-v1`); the NL-assertion
+  judge and voice user-simulator models; folded ID lookups; and English LiveKit
+  STT/TTS resolution from the CLI (an explicit `CascadedConfig` in Python can
+  still select Deepgram Aura).
+- Results saved by 1.x cannot be resumed; re-run into a new output path.
+
+### Added
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+## [2.0.0] - Unreleased
+
+> **⚠️ Scoring change — scores are not comparable with 1.x.** Communication checks,
+> NL-assertion judging, tool-argument lookup and the English prompts all changed.
+> Re-run rather than compare 1.x results against 2.0 numbers.
+
+### Upgrading from 1.x
+- To get closer to 1.x behavior on a custom run, pass `--benchmark none` (no
+  released manifest) and `--communicate-scorer substring` (1.x substring
+  communication checks). `--benchmark voice-v1` runs the English voice frame
+  on the original registry tasks (no English task replacements). To keep the 1.x Gemini model, pass
+  `--audio-native-model gemini-3.1-flash-live-preview`.
+- These differences cannot be turned off: the English pack's personas, greeting
+  and prompts, its task replacements (outside `voice-v1`), the NL-assertion
+  judge model, the voice
+  user-simulator model, folded ID lookups, and English LiveKit STT/TTS
+  resolution from the CLI (an explicit `CascadedConfig` in Python can still
+  select Deepgram Aura).
+- Results saved by 1.x cannot be resumed; re-run into a new output path.
+
 ### Added
 - Multilingual text and voice runs: `--language` selects a language pack
   (`en`, `es`, `pt`, `hi`, `zh`, `ko`) with a localized database and tasks for
@@ -87,9 +131,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A language pack may bind a registry domain with `task_metadata_file` alone; the
   English airline binding now uses the registry tasks directly.
 - Regional caller emails use the language's reviewed mailbox domain.
+- Default Gemini model is `gemini-3.8-live-extended-thinking` (was
+  `gemini-3.1-flash-live-preview`). With it, Gemini tools are `NON_BLOCKING` and
+  proactive audio stays off. Requires `google-genai>=2.25,<3`.
+- xAI voice runs pin `grok-voice-think-fast-2.0` (passed as `?model=`); 1.x used
+  the endpoint's default model.
+- English LiveKit (cascaded) runs resolve TTS to ElevenLabs `eleven_flash_v2_5`
+  (was Deepgram `aura-asteria-en`) and STT to Deepgram `nova-3` with language
+  `en`. They now need `ELEVENLABS_API_KEY` and cost more per character. Explicit
+  configs outside the supported STT/TTS models are rejected.
+- English voice runs speak with the English pack's personas (`mamadou_diallo`,
+  `priya_patil`) instead of the legacy persona pool. Verbosity, interruptions
+  and speech inserts now come from the persona, so `--speech-complexity control`
+  and `regular` callers both interrupt. Voice-ID overrides are now
+  `TAU2_VOICE_ID_<LANG>_<PERSONA>` (e.g. `TAU2_VOICE_ID_EN_PRIYA_PATIL`); the
+  legacy `TAU2_VOICE_ID_<PERSONA>` variables no longer affect `tau2 run`.
+  `setup_voices` creates the English pack voices and drops `--complexity`.
+- English voice greeting is "Hi, thanks for calling. How can I help you today?"
+  (was "Hi! How can I help you today?"). The text greeting is unchanged.
+- Voice user-simulator prompt: callers spell names, IDs and emails only when
+  the agent asks, and are no longer told to say "at"/"dot"/"underscore" or to
+  use `[pause]` markers.
+- Text user-simulator prompt adds the address-order rule and a
+  `## Persona Guidelines` header (empty with the default persona).
+- Airline user, reservation and flight lookups ignore case, surrounding
+  whitespace and accents. Telecom phone-number lookups ignore formatting, and
+  telecom name lookups ignore case and accents. Ambiguous matches raise.
+- `banking_knowledge` task 102 is rewritten: the user volunteers Ember's correct
+  age, and the NL assertion no longer names the startups.
+- `tau2 run --audio-native` with a domain outside the voice benchmark (e.g.
+  `banking_knowledge`) needs `--benchmark none`.
+- `--domain` on `tau2 run` is repeatable (`action="append"`), so `args.domain`
+  is a list.
+- Resuming results saved by 1.x (no recorded language) is refused.
+- `evaluate_simulation(...)` requires the keyword-only `communicate_scoring`
+  argument.
+- Gymnasium environments seed simulations with `300` by default (1.x was
+  unseeded).
 - The `es`/`hi`/`ko`/`pt`/`zh` retail and airline bundles are rebuilt from the
   reconciled address and entity maps (benchmark manifests pinned as
-  `regional-release-data-v16`); the newly reconciled names still await native review.
+  `regional-release-data-v16`); native review of the replacement Korean and
+  Mandarin names is complete.
 
 ### Removed
 - `tau2.agent.base.streaming_utils` and its re-exports from `tau2.agent`; the
@@ -104,6 +186,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `tau2.user.guidelines`.
 - `data/tau2/multilingual/en/airline_tasks_en.json` (identical to the registry
   airline tasks).
+- `get_global_user_sim_guidelines`, `get_global_user_sim_guidelines_voice` and
+  the `GLOBAL_USER_SIM_GUIDELINES_*` path constants; use `tau2.user.guidelines`.
+- `DEFAULT_LLM_NL_ASSERTIONS_TEMPERATURE` (the NL judge uses `reasoning_effort`).
+- Linearization helpers from `tau2.agent.base.streaming` and the
+  `tau2.agent.base` exports (`consolidate_messages`, `merge_homogeneous_chunks`,
+  `linearize_ticks`, `can_merge_messages`, `append_or_merge_chunk`, …) moved to
+  `tau2.utils.transcript.linearization`; `ParticipantTick` and
+  `LinearizationStrategy` moved to `tau2.data_model.transcript`.
 
 ## [1.0.1] - 2026-07-15
 
