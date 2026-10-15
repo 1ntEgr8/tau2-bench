@@ -123,6 +123,12 @@ def add_benchmark_run_args(parser: argparse.ArgumentParser) -> None:
         help="Resolve and display the run without provider calls or output writes.",
     )
     parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Released benchmarks: print the full resolved plan (with --dry-run) "
+        "and the full score summary as JSON instead of compact tables.",
+    )
+    parser.add_argument(
         "--global-limit",
         type=int,
         help="Total concurrent calls across the benchmark worker fleet.",
@@ -244,6 +250,7 @@ def benchmark_workers(requested: int | None) -> int:
 def run_benchmark(args: argparse.Namespace, template: RunConfig) -> None:
     """Resolve one typed request and execute all cells through the shared controller."""
     from tau2.metrics.benchmark import export_submission
+    from tau2.runner.report import render_plan, render_summary
     from tau2.utils import DATA_DIR
 
     output = (
@@ -276,7 +283,7 @@ def run_benchmark(args: argparse.Namespace, template: RunConfig) -> None:
         f"Scope: {'sample/slice' if plan.partial else 'complete released benchmark'}. Output: {output}"
     )
     if args.dry_run:
-        print(plan.model_dump_json(indent=2))
+        print(plan.model_dump_json(indent=2) if args.json else render_plan(plan))
     execute_plan(plan, output, settings, dry_run=args.dry_run)
     if not args.dry_run:
         submission = export_submission(output, plan.frame)
@@ -286,7 +293,12 @@ def run_benchmark(args: argparse.Namespace, template: RunConfig) -> None:
             else "incomplete"
         )
         print(f"Overall pass@1: {headline}")
-        print(submission.summary.model_dump_json(indent=2))
-        if submission.requested is not None:
-            print("Requested scope:")
-            print(submission.requested.model_dump_json(indent=2))
+        if args.json:
+            print(submission.summary.model_dump_json(indent=2))
+            if submission.requested is not None:
+                print("Requested scope:")
+                print(submission.requested.model_dump_json(indent=2))
+        else:
+            # A sample/slice reports its requested cells; the released frame's
+            # other cells would only list missing trials.
+            print(render_summary(submission.requested or submission.summary))

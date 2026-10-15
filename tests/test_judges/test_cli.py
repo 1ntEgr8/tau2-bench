@@ -445,3 +445,78 @@ def test_directory_call_edits_are_rejected_before_judging(saved_run):
     path.write_text(simulation.model_dump_json())
     with pytest.raises(ValueError, match="inputs changed"):
         reader.load(item)
+
+
+def test_suite_and_summarize_print_compact_tables_by_default(
+    saved_run, monkeypatch, capsys, tmp_path
+):
+    from tau2.judges.cli import run_judges
+    from tau2.judges.summary import DiagnosticExport
+
+    monkeypatch.setattr(
+        "tau2.judges.suite.create_judge",
+        lambda *_: pytest.fail("read-only command reached backend"),
+    )
+    selection = ["--only", "naturalness,tool_use"]
+
+    run_judges(args("summarize", str(saved_run), *selection))
+    table = capsys.readouterr().out
+    assert table.splitlines()[0].split() == [
+        "measure",
+        "applicable",
+        "judged",
+        "errors",
+        "not_judged",
+        "pass",
+        "fail",
+        "pass_frac",
+        "complete",
+    ]
+    assert table.splitlines()[2].split() == [
+        "naturalness", "2", "0", "0", "2", "0", "0", "-", "no"
+    ]  # fmt: skip
+    assert "{" not in table
+
+    run_judges(args("suite", str(saved_run), "--only", "tool_use", "--dry-run"))
+    plan = capsys.readouterr().out
+    assert plan.splitlines()[0].split() == [
+        "measure",
+        "judge",
+        "reuse",
+        "not_applicable",
+        "missing_input",
+    ]
+    assert plan.splitlines()[2].split() == ["tool_use", "2", "0", "0", "0"]
+    assert "Verdicts to judge: 2; reused: 0." in plan
+    # Tool use asks at most one question per calibrated criterion per call.
+    assert "Estimated model calls (upper bound): 6." in plan
+
+    # --json restores the full typed export, identical to the library result.
+    run_judges(args("summarize", str(saved_run), *selection, "--json"))
+    exported = DiagnosticExport.model_validate_json(capsys.readouterr().out)
+    assert exported == export_run(
+        saved_run, load_catalog(), only=selection[1].split(",")
+    )
+
+    # --output saves the same JSON while the terminal keeps the table.
+    output = tmp_path / "out" / "diagnostics.json"
+    run_judges(
+        args("suite", str(saved_run), *selection, "--dry-run", "--output", str(output))
+    )
+    printed = capsys.readouterr().out
+    assert printed.startswith("measure")
+    assert f"Full JSON written to {output}" in printed
+    assert DiagnosticExport.model_validate_json(output.read_text()).plan == (
+        exported.plan
+    )
+    assert not progress_path(saved_run.resolve()).exists()
+
+
+def test_export_command_stays_json(saved_run, capsys):
+    from tau2.judges.cli import run_judges
+    from tau2.judges.summary import DiagnosticExport
+
+    run_judges(args("export", str(saved_run), "--only", "tool_use"))
+    DiagnosticExport.model_validate_json(capsys.readouterr().out)
+    with pytest.raises(SystemExit):
+        args("export", str(saved_run), "--json")
