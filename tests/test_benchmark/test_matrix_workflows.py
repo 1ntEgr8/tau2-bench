@@ -154,7 +154,7 @@ def test_submit_prepare_autodetects_matrix_and_refuses_incomplete(
     args = parser.parse_args(
         ["prepare", str(saved_matrix), "--output", str(tmp_path / "submission")]
     )
-    with pytest.raises(ValueError, match="incomplete"):
+    with pytest.raises(SystemExit, match="898/900 calls lack a scored reward"):
         args.func(args)
     assert not (tmp_path / "submission").exists()
     args.no_verify = True

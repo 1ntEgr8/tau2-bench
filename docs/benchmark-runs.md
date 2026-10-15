@@ -217,14 +217,21 @@ submission preparation or validation.
 ## Submit saved results
 
 ```bash
+tau2 judges suite data/simulations/voice-run   # Voice V2 (voice preset) only
 tau2 submit prepare data/simulations/voice-run --output ./voice-submission
 tau2 submit validate ./voice-submission --results data/simulations/voice-run
 ```
 
 Commands recognize matrix provenance automatically. Preparation requires complete
-coverage and writes `benchmark-submission.json`. Keep the original saved matrix
+coverage and writes `benchmark-submission.json`. For Voice V2 it also requires a
+usable saved verdict for every applicable judge measure in every cell, and writes
+`benchmark-diagnostics.json`: per-cell, per-measure judge summaries, the judge
+contracts used, and a content fingerprint of each verdict. An incomplete matrix is
+refused with per-cell missing, errored and unscored counts, unjudged measures, and
+the commands that fill them. Keep the original saved matrix
 and pinned release data; the export does not copy audio or trajectories. Validation
-reads those sources, checks settings and artifact provenance, and recomputes scores.
+reads those sources, checks settings and artifact provenance, and recomputes scores
+and, for Voice V2, the judge summaries and verdict fingerprints.
 It rejects changed membership, incompatible conditions, duplicate trials, missing
 evidence and summaries that disagree with their source results. Python readers use
 `tau2.metrics.benchmark.load_submission(path)` to validate retained observations
