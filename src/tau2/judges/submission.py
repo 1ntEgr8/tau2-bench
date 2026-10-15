@@ -249,6 +249,10 @@ def collect_diagnostics(
                 language=cell.language, domain=cell.domain, summary=summary
             )
         )
+        if not coverage[-1].complete:
+            # Incomplete cells are only reported; partial verdicts (unit errors)
+            # count units in the summary but are never fingerprinted.
+            continue
         fingerprints, used = _cell_rows(result.plan.items, result.verdicts)
         for row in used:
             identity = row.identity
