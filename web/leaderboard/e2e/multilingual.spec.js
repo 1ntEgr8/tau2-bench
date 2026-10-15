@@ -207,7 +207,7 @@ test('multilingual explorer, breakdowns, filters and navigation', async ({ page 
 
 test('multilingual submission filters and English progress remain available', async ({ page }) => {
   await page.goto('/leaderboard?benchmark=voice')
-  await expect(page.getByText(/Multilingual voice benchmark within τ³-Voice/)).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Three dimensions of a good conversation/ })).toBeVisible()
   const filters = page.locator('.mv-leaderboard-heading')
   await expect(filters.getByRole('heading', { name: 'Leaderboard', exact: true })).toBeVisible()
   await expect(page.locator('.mv-scores .model-row')).toHaveCount(5)

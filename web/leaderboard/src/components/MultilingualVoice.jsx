@@ -239,7 +239,6 @@ export default function MultilingualVoice({ submissionTypeFilters, showStandard 
   const leaderboardRows = [...rows, ...packageRows].filter(row => (row.submissionType || 'standard') === 'custom' ? showCustom : showStandard)
   const active = rows.find(row => row.id === selected)
   return <section className="mv" aria-label="Multilingual voice benchmark">
-    <p className="mv-footnote mv-intro">Multilingual voice benchmark within τ³-Voice. Published paper cohort. Task completion and Interaction cover six languages; Experience covers five (English not evaluated). Scores average evaluated languages equally. Submitted voice-v2 packages (marked “submission”) are ranked on task completion only; Interaction and Experience are measured for the paper cohort.</p>
     <div className="mv-toolbar"><div className="mv-view-tabs" aria-label="Chart views">{[['space', '01', '3D explorer'], ['languages', '02', 'Language map']].map(([id, number, label]) => <button key={id} aria-pressed={view === id} className={view === id ? 'active' : ''} onClick={() => setView(id)}><span>{number}</span>{label}</button>)}</div></div>
     <div className="mv-main-panel">
       {view === 'space' && <div className="mv-panel-heading"><h2>Three dimensions of a good conversation.</h2><span className="mv-core-note">Core domains only · Airline, Retail, Telecom</span></div>}
