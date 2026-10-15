@@ -192,11 +192,14 @@ custom setup in `notes` and link it in `references`. Unknown fields are rejected
    then copy the matrix to
    `s3://sierra-tau-bench-public/submissions/<name>/trajectories/<language>/<domain>/`.
 
-voice-v2 packages appear on the τ³-Voice leaderboard under **2.0 submissions**
-(`/leaderboard?benchmark=voice&edition=v2`): overall pass@1, pass@1 per language
-and per language × domain, and each judge measure per language with its
-coverage. Judge measures are diagnostics and never change the rank. 1.x and
-voice-v1 submissions keep their own tabs and are still accepted.
+voice-v2 packages appear as rows of the τ³-Voice **τ-i18n (Multilingual)**
+leaderboard (`/leaderboard?benchmark=voice`), next to the paper cohort and
+marked "submission". They rank on task completion (pass@1, overall or for the
+selected language); Interaction and Experience are paper-cohort measures and
+show "—". A package's breakdown shows pass@1 per language × domain and each
+judge measure per language with its coverage. Judge measures are diagnostics
+and never change the rank. 1.x and voice-v1 submissions keep their own tabs and
+are still accepted.
 
 The frozen 2026-10-02 voice-v2 release calls predate the matrix layout. A
 maintainer-only adapter, `tau2 submit prepare --historical-voice-v2`, reads

@@ -12,9 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   submitter.json --output DIR` writes `DIR/<model>_<org>_<date>/` with
   `benchmark-submission.json`, `benchmark-diagnostics.json` (voice-v2) and
   `benchmark-metadata.json` (schema `schema_benchmark_metadata.json`). The
-  leaderboard lists them under the manifest key `voice_v2_submissions` on a
-  separate "2.0 submissions" voice tab with per-language × per-domain pass@1 and
-  judge-measure summaries; 1.x tabs are unchanged. Evidence is uploaded to
+  leaderboard lists them under the manifest key `voice_v2_submissions` as
+  rows of the τ-i18n voice leaderboard, ranked with the paper cohort on task
+  completion, with a per-language × per-domain pass@1 and judge-measure
+  breakdown; 1.x tabs are unchanged. Evidence is uploaded to
   `s3://sierra-tau-bench-public/submissions/<name>/trajectories/<language>/<domain>/`.
 
 ### Changed

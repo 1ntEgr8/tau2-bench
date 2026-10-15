@@ -1,6 +1,8 @@
 import { Fragment, useRef, useState } from 'react'
 import data from '../data/multilingual/results.json'
 import { summarize, frontier, percent, mean } from '../data/multilingual/metrics'
+import PackageBreakdown from './PackageBreakdown'
+import { packageLogo, packageScore, useVoiceV2Packages } from '../data/voiceV2Packages'
 import './MultilingualVoice.css'
 
 const metrics = [['task', 'Task completion'], ['interaction', 'Interaction'], ['experience', 'Experience']]
@@ -187,6 +189,24 @@ function MetricBreakdown({ active, language, metric, onMetricChange, onClose }) 
   </div>
 }
 
+function PackageRow({ row, index, open, onToggle }) {
+  const { pkg } = row
+  const logo = packageLogo(pkg)
+  return <Fragment>
+    <tr className={`model-row mv-package-row${open ? ' expanded' : ''}`} data-package={pkg.dir}>
+      <td className="rank-cell"><span className={`rank-number ${['rank-gold', 'rank-silver', 'rank-bronze'][index] || ''}`}>#{index + 1}</span></td>
+      <td className="model-info"><button className="mv-model-trigger" onClick={onToggle} aria-expanded={open}><span className="model-name">{row.name}</span></button><span className="legacy-badge">{row.submissionType === 'custom' ? 'custom submission' : 'submission'}</span></td>
+      <td className="organization-info"><div className="org-container">{logo && <div className="company-logo"><img src={`${import.meta.env.BASE_URL}${logo}`} alt="" className="logo-img" /></div>}<div className="org-text"><span className="org-name">{pkg.metadata.model_organization}</span></div></div></td>
+      <td className="reasoning-info">—</td>
+      {metrics.map(([key]) => <td key={key} className="metric-cell score-cell" data-metric={key}>{row[key] != null
+        ? <span className="score-bar-container"><span className="score-bar-track"><span className="score-bar-fill" style={{ width: `${row[key]}%` }} /></span><span className="score-bar-value">{percent(row[key])}</span></span>
+        : <span className="no-data">—</span>}</td>)}
+      <td className="expand-cell"><button className="mv-expand-trigger" aria-label={`${open ? 'Collapse' : 'Expand'} ${row.name} breakdown`} aria-expanded={open} onClick={onToggle}><span className={`expand-caret${open ? ' open' : ''}`}>▶</span></button></td>
+    </tr>
+    {open && <tr className="domain-detail-row"><td colSpan={8} className="domain-detail-cell"><PackageBreakdown pkg={pkg} onClose={onToggle} /></td></tr>}
+  </Fragment>
+}
+
 export default function MultilingualVoice({ submissionTypeFilters, showStandard = true, showCustom = false }) {
   const [language, setLanguage] = useState('all')
   const [view, setView] = useState(() => {
@@ -197,6 +217,7 @@ export default function MultilingualVoice({ submissionTypeFilters, showStandard 
   const [sort, setSort] = useState('task')
   const [breakdown, setBreakdown] = useState(null)
   const openBreakdown = (id, metric) => {
+    setOpenPackage(null)
     setSelected(id)
     setBreakdown(metric)
     requestAnimationFrame(() => document.getElementById('voice-metric-breakdown')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
@@ -208,11 +229,16 @@ export default function MultilingualVoice({ submissionTypeFilters, showStandard 
     setSelected(id)
   }
   const rows = data.models.map(model => summarize(model, language))
-  const leaderboardRows = rows.filter(row => (row.submissionType || 'standard') === 'custom' ? showCustom : showStandard)
+  // Submitted voice-v2 packages join the paper cohort as rows scored on task
+  // completion only; Interaction and Experience are paper-cohort measures.
+  const { packages, errors: packageErrors } = useVoiceV2Packages()
+  const [openPackage, setOpenPackage] = useState(null)
+  const packageRows = (packages || []).map(pkg => ({ id: `package:${pkg.dir}`, pkg, name: pkg.metadata.model_name, submissionType: pkg.metadata.submission_type, task: packageScore(pkg, language), interaction: null, experience: null }))
+  const leaderboardRows = [...rows, ...packageRows].filter(row => (row.submissionType || 'standard') === 'custom' ? showCustom : showStandard)
   const active = rows.find(row => row.id === selected)
   const languageLabel = language === 'all' ? 'All languages' : data.languages.find(item => item.id === language).name
   return <section className="mv" aria-label="τ-i18n voice benchmark">
-    <p className="mv-footnote">τ-i18n (formerly τ-Multilingual), the multilingual benchmark within τ³-Voice. Published paper cohort. Task completion and Interaction cover six languages; Experience covers five (English not evaluated). Scores average evaluated languages equally. New submissions are not yet included in this view.</p>
+    <p className="mv-footnote">τ-i18n (formerly τ-Multilingual), the multilingual benchmark within τ³-Voice. Published paper cohort. Task completion and Interaction cover six languages; Experience covers five (English not evaluated). Scores average evaluated languages equally. Submitted voice-v2 packages (marked “submission”) are ranked on task completion only; Interaction and Experience are measured for the paper cohort.</p>
     <div className="mv-toolbar"><div className="mv-view-tabs" aria-label="Chart views">{[['space', '01', '3D explorer'], ['languages', '02', 'Language map']].map(([id, number, label]) => <button key={id} aria-pressed={view === id} className={view === id ? 'active' : ''} onClick={() => setView(id)}><span>{number}</span>{label}</button>)}</div><label className="mv-scope">Language <select value={language} onChange={event => setLanguage(event.target.value)}><option value="all">All languages</option>{data.languages.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label></div>
     <div className="mv-main-panel">
       {view === 'space' && <div className="mv-panel-heading"><h2>Three dimensions of a good conversation.</h2></div>}
@@ -230,6 +256,7 @@ export default function MultilingualVoice({ submissionTypeFilters, showStandard 
             <th className="expand-header"><span className="mv-visually-hidden">Breakdown</span></th>
           </tr></thead>
           <tbody>{[...leaderboardRows].sort((a, b) => a[sort] == null ? b[sort] == null ? 0 : 1 : b[sort] == null ? -1 : b[sort] - a[sort]).map((row, index) => {
+            if (row.pkg) return <PackageRow key={row.id} row={row} index={index} open={openPackage === row.pkg.dir} onToggle={() => { setBreakdown(null); setOpenPackage(openPackage === row.pkg.dir ? null : row.pkg.dir) }} />
             const expanded = !!breakdown && selected === row.id
             const [provider, logo] = providers[row.id.split('_')[0]]
             return <Fragment key={row.id}>
@@ -249,6 +276,7 @@ export default function MultilingualVoice({ submissionTypeFilters, showStandard 
         </table>
       </div>
     </div>
+    {packageErrors.length > 0 && <p className="mv-footnote" role="alert">Skipped submissions: {packageErrors.join('; ')}</p>}
     <nav className="mv-paper-links" aria-label="Research papers"><span>Papers</span>{[
       ['τ-i18n', '2609.35820', 'τ-Multilingual: Benchmarking Voice Agents Across Languages'],
       ['τ-Voice', '2603.13686', 'τ-Voice: Benchmarking Full-Duplex Voice Agents on Real-World Domains'],

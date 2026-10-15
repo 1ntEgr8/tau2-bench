@@ -91,9 +91,3 @@ completed retries; `correction.json` records old and new simulation IDs,
 rewards and hashes, and the original draft is preserved. The package built from
 it has 900/900 scored calls; its judge diagnostics cover every measure and
 record the few partial verdicts as coverage gaps.
-
-The copy at `s3://sierra-tau-bench-public/releases/voice-v2/2026-10-02/` is
-incomplete as of 2026-10-15. It has only `trajectories/en/airline` and
-`trajectories/en/retail`, which match the corrected export byte-for-byte.
-`en/telecom` has audio but no `results.json`. The other five languages and the
-verdicts are absent, and its `submission.json` is the pre-correction draft.

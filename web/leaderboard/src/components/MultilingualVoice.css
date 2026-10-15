@@ -289,15 +289,12 @@
 .mv-leaderboard-heading .submission-type-filter { width: auto; }
 .mv-leaderboard-heading + .mv-ranking-meta { margin-top: 16px; }
 
-/* 2.0 submissions view */
-.v2-submissions code { font-size: 12px; }
-.v2-table .metric-cell .mv-heat-cell { display: inline-block; min-width: 56px; padding: 6px 8px; border-radius: 6px; text-align: right; }
+/* Submitted voice-v2 packages in the τ-i18n leaderboard */
+.mv-package-row .legacy-badge { margin-left: 8px; }
+.mv-package-row .score-bar-fill { display: block; }
+.mv-detail code { font-size: 12px; }
 .v2-meta { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 16px 0 0; font-size: 13px; color: var(--mv-text); }
 .v2-meta dt { color: var(--mv-muted); font-weight: 600; }
 .v2-meta dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .v2-meta dd a { margin-right: 12px; }
 .v2-command { display: block; padding: 8px 10px; border-radius: 6px; background: var(--mv-surface); border: 1px solid var(--mv-border); white-space: pre-wrap; word-break: break-all; }
-.v2-table .score-bar-fill { display: block; }
-.mv .v2-table > thead > tr > .mv-metric-header, .mv .v2-table > tbody > tr > td.score-cell { min-width: 0; width: 1%; padding: 16px 6px !important; }
-.mv .v2-table > thead > tr > .mv-metric-header[data-column="all"], .mv .v2-table > tbody > tr > td.score-cell[data-language="all"] { min-width: 150px; width: auto; }
-.mv .v2-table > thead > tr > th:nth-child(2) { min-width: 180px; }

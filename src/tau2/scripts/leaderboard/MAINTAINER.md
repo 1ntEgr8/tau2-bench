@@ -83,8 +83,9 @@ The GitHub Actions workflow will sync `submission.json` and `manifest.json` to S
 A 2.0 package is three files in `web/leaderboard/public/submissions/<name>/`:
 `benchmark-submission.json`, `benchmark-diagnostics.json` (voice-v2) and
 `benchmark-metadata.json`. voice-v2 packages are listed in the manifest's
-`voice_v2_submissions` array and shown on the τ³-Voice **2.0 submissions** tab
-(`/leaderboard?benchmark=voice&edition=v2`). 1.x tabs are unaffected.
+`voice_v2_submissions` array and shown as rows of the τ³-Voice **τ-i18n
+(Multilingual)** leaderboard, ranked with the paper cohort on task completion.
+1.x tabs are unaffected.
 
 1. **Review** the PR: the directory name equals
    `{model_name}_{model_organization}_{submission_date}` (slugified; the review

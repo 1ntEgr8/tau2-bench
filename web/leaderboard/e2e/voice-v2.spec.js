@@ -1,4 +1,5 @@
-// 2.0 (voice-v2) packages listed under manifest.voice_v2_submissions.
+// 2.0 (voice-v2) packages listed under manifest.voice_v2_submissions appear as
+// rows of the τ-i18n leaderboard, next to the paper cohort.
 // The package is synthetic and served through request interception, so the
 // committed manifest stays untouched.
 import { test, expect } from '@playwright/test'
@@ -44,14 +45,19 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/submissions/fixture_v2/*', route => route.fulfill({ json: files[route.request().url().split('/').pop()] }))
 })
 
-test('2.0 tab ranks packages by overall pass@1 with a language dimension', async ({ page }) => {
-  await page.goto('/leaderboard?benchmark=voice&edition=v2')
-  const row = page.locator('.v2-table tr[data-package="fixture_v2"]')
+test('τ-i18n leaderboard ranks packages with the paper cohort', async ({ page }) => {
+  await page.goto('/leaderboard?benchmark=voice')
+  const table = page.locator('.mv-leaderboard-table')
+  await expect(table.locator('tr.model-row:not(.mv-package-row)')).toHaveCount(5)
+  const row = table.locator('tr[data-package="fixture_v2"]')
   await expect(row.locator('.model-name')).toHaveText('fixture-live')
-  await expect(row.locator('td[data-language="all"]')).toContainText(`${(100 * pkg.submission.summary.score).toFixed(1)}%`)
-  await expect(row.locator('td[data-language="ko"]')).toContainText('65.0%')
+  await expect(row).toContainText('submission')
+  await expect(row.locator('td[data-metric="task"]')).toContainText(`${(100 * pkg.submission.summary.score).toFixed(1)}%`)
+  await expect(row.locator('td[data-metric="interaction"]')).toHaveText('—')
+  await page.locator('.mv-scope select').selectOption('ko')
+  await expect(row.locator('td[data-metric="task"]')).toContainText('65.0%')
   await row.locator('.mv-model-trigger').click()
-  const detail = page.locator('.v2-submissions .mv-detail')
+  const detail = page.locator('.mv-leaderboard-table .mv-detail')
   await expect(detail.locator('tr[data-factor="telecom"] td[data-language="en"]')).toHaveText('60.0%')
   await expect(detail.locator('tr[data-factor="honorific_agreement"] td[data-language="ko"]')).toHaveText('90.0%')
   await expect(detail.locator('tr[data-factor="honorific_agreement"] td[data-language="en"]')).toHaveText('—')
@@ -60,7 +66,8 @@ test('2.0 tab ranks packages by overall pass@1 with a language dimension', async
 })
 
 test('1.x English voice tab is unchanged by 2.0 packages', async ({ page }) => {
-  await page.goto('/leaderboard?benchmark=voice&edition=english')
+  await page.goto('/leaderboard?benchmark=voice')
+  await page.getByRole('button', { name: 'English only' }).click()
   await expect(page.locator('.reliability-table.voice-table tbody tr.model-row').first()).toBeVisible()
-  await expect(page.locator('.v2-submissions')).toHaveCount(0)
+  await expect(page.locator('tr[data-package]')).toHaveCount(0)
 })
