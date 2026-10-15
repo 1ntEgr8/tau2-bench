@@ -121,7 +121,7 @@ TAU2_VOICE_ID_EN_MAMADOU_DIALLO=your_voice_id_here
 TAU2_VOICE_ID_EN_PRIYA_PATIL=your_voice_id_here
 ```
 
-`python -m tau2.voice.scripts.setup_voices` creates the English voices and prints these lines.
+`python -m tau2.voice.scripts.setup_voices` creates the English voices and prints these lines; add `--language all` for every voice-v2 language.
 
 See the [Voice Persona Setup Guide](../../docs/voice-personas.md) for step-by-step instructions on creating matching voices with ElevenLabs Voice Design.
 

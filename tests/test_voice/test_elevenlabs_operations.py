@@ -70,41 +70,104 @@ def test_shared_operations_preserve_parameters_and_never_retry_creation(client):
     )
 
 
-def test_setup_preserves_account_name_short_description_and_existing_ids(
+def test_setup_designs_from_the_language_prompts_and_replaces_existing_ids(
     client, monkeypatch
 ):
     import elevenlabs
 
+    from tau2.data_model.voice import PersonaVoiceDesign
     from tau2.voice.scripts import setup_voices
 
-    persona = SimpleNamespace(
-        name="example",
-        display_name="Example",
+    design = PersonaVoiceDesign(
+        gender="female",
+        model="persona-model",
         prompt="long acoustic brief",
-        short_description="short account description",
+        audition_text="native audition " * 10,
     )
-    monkeypatch.setattr(setup_voices, "english_pack_personas", lambda: [persona])
+    target = setup_voices.PersonaDesignTarget(
+        language="pt-br", persona_id="example", design=design
+    )
+    requested = []
+
+    def fake_targets(languages):
+        requested.append(languages)
+        return [target]
+
+    monkeypatch.setattr(setup_voices, "design_targets", fake_targets)
     monkeypatch.setattr(elevenlabs, "ElevenLabs", lambda: client)
     client.voices.get_all.return_value = SimpleNamespace(
-        voices=[SimpleNamespace(name="tau2_example", voice_id="old")]
+        voices=[SimpleNamespace(name="tau2_pt-br_example", voice_id="old")]
     )
-    result = setup_voices.setup_voices(seed=17, model="chosen", force=True)
-    assert result == {"example": "saved"}
+    result = setup_voices.setup_voices(languages=["pt-br"], seed=17, force=True)
+    assert requested == [["pt-br"]]
+    assert result == {"TAU2_VOICE_ID_PT_BR_EXAMPLE": "saved"}
     client.voices.delete.assert_called_once_with(voice_id="old")
     client.text_to_voice.design.assert_called_once_with(
         voice_description="long acoustic brief",
-        text=setup_voices.SAMPLE_TEXT,
-        model_id="chosen",
+        text="native audition " * 10,
+        model_id="persona-model",
         seed=17,
         loudness=setup_voices.VOICE_DESIGN_LOUDNESS,
         guidance_scale=setup_voices.VOICE_DESIGN_GUIDANCE_SCALE,
         auto_generate_text=False,
     )
     client.text_to_voice.create.assert_called_once_with(
-        voice_name="tau2_example",
-        voice_description="short account description",
+        voice_name="tau2_pt-br_example",
+        voice_description="tau2 pt-br caller example (female)",
         generated_voice_id="first",
     )
+
+
+def test_setup_model_override_and_skip_keep_existing_voices(client, monkeypatch):
+    import elevenlabs
+
+    from tau2.voice.scripts import setup_voices
+
+    targets = setup_voices.design_targets(["en", "es"])
+    monkeypatch.setattr(setup_voices.time, "sleep", lambda _: None)
+    monkeypatch.setattr(elevenlabs, "ElevenLabs", lambda: client)
+    monkeypatch.setattr("builtins.input", lambda _: "s")
+    existing = targets[0].voice_name
+    client.voices.get_all.return_value = SimpleNamespace(
+        voices=[
+            SimpleNamespace(name=existing, voice_id="kept"),
+            # The pre-language naming never shadows a language-prefixed voice.
+            SimpleNamespace(name="tau2_mamadou_diallo", voice_id="legacy"),
+        ]
+    )
+    result = setup_voices.setup_voices(
+        languages=["en", "es"], model="eleven_multilingual_ttv_v2"
+    )
+    assert list(result) == [t.env_key for t in targets[1:]]
+    client.voices.delete.assert_not_called()
+    calls = client.text_to_voice.design.call_args_list
+    assert len(calls) == len(targets) - 1
+    assert {c.kwargs["model_id"] for c in calls} == {"eleven_multilingual_ttv_v2"}
+    assert [c.kwargs["text"] for c in calls] == [
+        t.design.audition_text for t in targets[1:]
+    ]
+
+
+def test_dry_run_makes_no_design_calls(client, monkeypatch, capsys):
+    import elevenlabs
+
+    from tau2.voice.scripts import setup_voices
+
+    monkeypatch.setattr(elevenlabs, "ElevenLabs", lambda: client)
+    client.voices.get_all.return_value = SimpleNamespace(voices=[])
+    assert setup_voices.setup_voices(languages=["hi"], dry_run=True) == {}
+    client.text_to_voice.design.assert_not_called()
+    client.text_to_voice.create.assert_not_called()
+    out = capsys.readouterr().out
+    assert "TAU2_VOICE_ID_HI_RISHIKA_HINDI_V1" in out
+    assert "tau2_hi_imran_hindi_v1" in out
+
+
+def test_env_block_prints_runtime_override_lines(capsys):
+    from tau2.voice.scripts import setup_voices
+
+    setup_voices.print_env_block({"TAU2_VOICE_ID_KO_JIHUN_KO_V1": "abc"})
+    assert "TAU2_VOICE_ID_KO_JIHUN_KO_V1=abc" in capsys.readouterr().out.splitlines()
 
 
 def test_factory_keeps_reviewed_text_and_selected_preview(client):

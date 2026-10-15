@@ -210,11 +210,14 @@ The voice user simulator uses ElevenLabs TTS with specific voice personas. The d
 The recommended approach is the automated setup script:
 
 ```bash
-# Create the English caller voices (uses a fixed seed for reproducibility)
+# Create the caller voices for every voice-v2 language (fixed seed for reproducibility)
+python -m tau2.voice.scripts.setup_voices --language all
+
+# English only (the Voice V1 frame)
 python -m tau2.voice.scripts.setup_voices
 ```
 
-The script creates voices via the ElevenLabs Voice Design API, saves them to your account, and prints `TAU2_VOICE_ID_EN_<PERSONA>=...` lines to paste into your `.env` file. See the [Voice Persona Setup Guide](voice-personas.md) for full details.
+The script creates voices via the ElevenLabs Voice Design API, saves them to your account, and prints `TAU2_VOICE_ID_<LANG>_<PERSONA>=...` lines to paste into your `.env` file. See the [Voice Persona Setup Guide](voice-personas.md) for full details.
 
 > **Note:** Your custom voices will sound different from Sierra's internal voices. Sierra runs all final/published evaluations with its own voices to ensure parity across leaderboard results.
 
