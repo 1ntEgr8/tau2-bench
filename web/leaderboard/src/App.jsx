@@ -218,6 +218,7 @@ function App() {
                     >
                       <span className="nav-dropdown-item-label">
                         <span className="nav-dropdown-item-name">{renderBenchName(item.label)}</span>
+                        {item.badge && <span className="nav-dropdown-badge">{item.badge}</span>}
                       </span>
                       <span className="nav-dropdown-item-note">{item.note}</span>
                     </button>
