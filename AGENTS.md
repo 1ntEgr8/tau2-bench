@@ -73,7 +73,15 @@ tau2 run --audio-native --benchmark voice --language ko   # released voice cells
 tau2 run --domain banking_knowledge --retrieval-config qwen_embeddings --agent-llm gpt-4.1 --user-llm gpt-4.1 --num-tasks 5
 ```
 
-Results go to `data/simulations/`. Use `tau2 view` to browse them.
+```bash
+# Released 2.0 benchmarks (see docs/running-the-benchmark.md)
+tau2 run --benchmark text --agent-llm gpt-4.1        # text-v1: 6 languages x 3 domains
+tau2 run --audio-native                              # voice-v2 (default for --audio-native)
+tau2 run --audio-native --benchmark voice-v1         # English voice frame
+```
+
+Results go to `data/simulations/`. Use `tau2 view` to browse them. Terms such as
+pack, cell, frame and pin are defined in `docs/glossary.md`.
 
 ## Architecture
 

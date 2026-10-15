@@ -3,15 +3,20 @@
 τ-bench supports end-to-end voice evaluation using real-time audio APIs. In this mode, a user simulator streams synthesized speech to the agent, and the agent responds with audio — both sides operating simultaneously (full-duplex).
 
 ```bash
+# One frozen retail task in each voice-v2 language (6 calls).
 tau2 run --domain retail --audio-native --num-tasks 1 --verbose-logs
 ```
+
+`--audio-native` runs the released voice-v2 benchmark by default; add
+`--benchmark none` for an ordinary single-domain run. See
+[Running the benchmark](../../../docs/running-the-benchmark.md).
 
 ## Providers
 
 | Provider | Flag | Requirements |
 |----------|------|-------------|
 | OpenAI Realtime | `--audio-native-provider openai` | `OPENAI_API_KEY` |
-| Google Gemini Live | `--audio-native-provider gemini` | `GOOGLE_API_KEY` |
+| Google Gemini Live | `--audio-native-provider gemini` | `GEMINI_API_KEY` (or Vertex AI credentials) |
 | xAI Grok Voice | `--audio-native-provider xai` | `XAI_API_KEY` |
 
 The default provider is `openai`. Use `--audio-native-model` to override the default model for a provider.
@@ -44,10 +49,10 @@ tau2 run --domain retail --audio-native --speech-complexity regular
 | `--audio-native-model` | per-provider | Override model |
 | `--speech-complexity` | `regular` | Speech complexity level |
 | `--tick-duration` | `0.2` | Simulation timestep in seconds |
-| `--max-steps-seconds` | `600` | Maximum conversation duration |
+| `--max-steps-seconds` | `2400` for released benchmarks, `1200` for `--benchmark none`, `240` for intake | Maximum conversation duration in simulated seconds |
 | `--verbose-logs` | — | Save audio files, LLM logs, and tick data |
 
-See `tau2 run --help` or the [CLI Reference](../../docs/cli-reference.md) for the full list including turn-taking thresholds and debugging options.
+See `tau2 run --help` or the [CLI Reference](../../../docs/cli-reference.md) for the full list including turn-taking thresholds and debugging options.
 
 ## Programmatic Usage
 
@@ -69,7 +74,7 @@ config = VoiceRunConfig(
 results = run_domain(config)
 ```
 
-See [Running Simulations](../../docs/running_simulations.md) for more examples and instance-level control.
+See [Running Simulations](../../../docs/running_simulations.md) for more examples and instance-level control.
 
 ## Output Structure
 
@@ -123,15 +128,15 @@ TAU2_VOICE_ID_EN_PRIYA_PATIL=your_voice_id_here
 
 `python -m tau2.voice.scripts.setup_voices` creates the English voices and prints these lines; add `--language all` for every voice-v2 language.
 
-See the [Voice Persona Setup Guide](../../docs/voice-personas.md) for step-by-step instructions on creating matching voices with ElevenLabs Voice Design.
+See the [Voice Persona Setup Guide](../../../docs/voice-personas.md) for step-by-step instructions on creating matching voices with ElevenLabs Voice Design.
 
 ## Environment Variables
 
 | Variable | Used by |
 |----------|---------|
 | `OPENAI_API_KEY` | OpenAI Realtime provider |
-| `GOOGLE_API_KEY` | Gemini Live provider |
+| `GEMINI_API_KEY` | Gemini Live provider, and the speech-fidelity judge |
 | `XAI_API_KEY` | xAI Grok Voice provider |
 | `ELEVENLABS_API_KEY` | User simulator TTS (synthesis) |
 | `DEEPGRAM_API_KEY` | Transcription (Deepgram nova-2, nova-3) |
-| `TAU2_VOICE_ID_<LANG>_<PERSONA>` | Custom voice ID overrides (see [Voice Persona Setup](../../docs/voice-personas.md)) |
+| `TAU2_VOICE_ID_<LANG>_<PERSONA>` | Custom voice ID overrides (see [Voice Persona Setup](../../../docs/voice-personas.md)) |

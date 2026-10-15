@@ -102,10 +102,18 @@ Results are saved in `data/simulations/`.
 > **Prerequisite:** Voice mode requires custom ElevenLabs voices for the user simulator. You must set these up before running voice evaluations. See the [Voice Persona Setup Guide](voice-personas.md) — the automated script takes care of everything in one command.
 
 ```bash
+# One frozen retail task in each of the six voice-v2 languages: 6 calls.
 tau2 run --domain retail --audio-native --num-tasks 1 --verbose-logs
+
+# One English retail call, outside the released benchmark.
+tau2 run --domain retail --audio-native --benchmark none --language en --num-tasks 1 --verbose-logs
 ```
 
-See the [Audio Native Documentation](../src/tau2/voice/audio_native/README.md) for provider configuration and all options.
+`--audio-native` runs the released voice-v2 benchmark by default, so `--domain`
+and `--num-tasks` select a slice of it. `--benchmark none` makes an ordinary
+single-domain run. See [Running the benchmark](running-the-benchmark.md) for
+the full benchmark, and the [voice docs](../src/tau2/voice/README.md) for
+providers and options.
 
 ### Knowledge retrieval evaluation
 
@@ -117,11 +125,15 @@ tau2 run --domain banking_knowledge --retrieval-config bm25 \
 See the [Knowledge Retrieval Documentation](../src/tau2/knowledge/README.md) for retrieval configuration options.
 
 
-> **tip**: for full agent evaluation that matches the original τ-bench methodology, remove `--num-tasks` to evaluate on the complete task set (the `base` split is used by default).
+> **Tip:** these are custom runs. To run the released 2.0 benchmarks, see
+> [Running the benchmark](running-the-benchmark.md).
 
 ## Simulation Output Structure
 
-Results are stored in one of two formats, chosen automatically based on modality:
+A released benchmark run writes one directory per language × domain cell under
+its root; see [where results are saved](running-the-benchmark.md#where-results-are-saved).
+Inside each cell, and for a custom run, results are stored in one of two
+formats, chosen automatically based on modality:
 
 ### Text runs — monolithic JSON
 
@@ -193,6 +205,34 @@ LLM call caching is disabled by default. To enable it:
 3. Update the redis config in `config.py` if necessary
 4. Set `LLM_CACHE_ENABLED` to `True` in `config.py`
 
+## Other ways to run
+
+### Environment CLI (beta)
+
+An interactive CLI for querying a domain's environment and tools directly,
+without starting a full simulation:
+
+```bash
+make env-cli
+```
+
+Commands: `:q` quits, `:d` changes domain, `:n` starts a new session.
+
+### Telecom ablations
+
+The `telecom` domain supports research ablations:
+
+```bash
+# No user: the agent gets all tools and information up front.
+tau2 run --domain telecom --agent llm_agent_solo --agent-llm gpt-4.1 --user dummy_user
+
+# Oracle plan: the agent gets the ground-truth plan.
+tau2 run --domain telecom --agent llm_agent_gt --agent-llm gpt-4.1 --user-llm gpt-4.1
+
+# Workflow-format policy.
+tau2 run --domain telecom-workflow --agent-llm gpt-4.1 --user-llm gpt-4.1
+```
+
 ## Cleanup
 
 To remove all generated files and the virtual environment:
@@ -203,6 +243,9 @@ make clean
 
 ## Next Steps
 
+- [Running the benchmark](running-the-benchmark.md) — the released text and voice benchmarks
+- [Submission guide](leaderboard-submission.md) — submitting results to the leaderboard
+- [Glossary](glossary.md) — terms used across the docs
 - [CLI Reference](cli-reference.md) — all `tau2` commands and options
 - [Agent Developer Guide](../src/tau2/agent/README.md) — build and evaluate your own agent
 - [Domain Documentation](../src/tau2/domains/README.md) — understand the available domains

@@ -51,7 +51,7 @@ The reward components are evaluated by:
 |--------------|-----------|----------------|
 | `DB` | `EnvironmentEvaluator` | After the simulation, does the predicted environment's DB hash match the target DB hash (target = fresh env + replay of `evaluation_criteria.actions`)? Any agent trajectory that produces an equivalent end state passes. |
 | `ENV_ASSERTION` | `EnvironmentEvaluator` | Do all `env_assertions` pass on the predicted environment? |
-| `COMMUNICATE` | `CommunicateEvaluator` | Was every required item communicated? Uses substring matching by default and semantic matching when configured. |
+| `COMMUNICATE` | `CommunicateEvaluator` | Was every required item communicated? Uses the semantic LLM judge by default; substring matching only with `--communicate-scorer substring`. |
 | `NL_ASSERTION` | `NLAssertionsEvaluator` | Does an LLM judge return true for every entry in `nl_assertions`? (WIP) |
 | `ACTION` | `ActionEvaluator` | For every entry in `actions`, did the agent produce a matching tool call (per `Action.compare_with_tool_call`)? Use this only when you are confident `actions` enumerates the only acceptable trajectory. |
 

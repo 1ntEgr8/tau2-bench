@@ -5,6 +5,9 @@ Use the [submission template](language-submission-template.md) for the README be
 the language pack. Judge status belongs to an exact language, measure, model,
 prompt/rubric version and applicability scope; it does not apply to a whole pack.
 
+> Terms such as *pack*, *cell*, *binding revision* and *pin* are defined in the
+> [glossary](glossary.md).
+
 ## Production selection
 
 [`production_judges.json`](../src/tau2/judges/production_judges.json) selects one
@@ -21,11 +24,11 @@ gender-agreement diagnostic.
 | Language diagnostics v15 / rubric v19 | Counting units (es, pt, zh), register (pt), gender agreement (pt, female agent), name/address conventions (hi), honorific agreement (ko), modal particles (zh) |
 | Hindi gender v16 / rubric v26 | Gender agreement with a male agent and recorded caller gender |
 | Tool use v7 / rubric v4 | Combined tool errors, authentication arguments and tool parameters across all six languages |
-| Speech fidelity v5 | Audio fidelity across all six languages |
+| Speech fidelity v6 | Audio fidelity across all six languages |
 
 Naturalness v17 renamed the v16 factor identifier from `natural_word_choice` to
 `naturalness`. Rubric v21 now selects the exact language-specific wording in the
-[reviewed draft](designs/naturalness-language-criteria/draft.json). The v17 wrapper,
+[reviewed candidates](../data/tau2/judge_catalog/README.md). The v17 wrapper,
 model/settings and execution method are unchanged. Its new contract and catalog
 revisions keep earlier v20 verdicts from being reused. The review and candidate
 runs are not held-out accuracy validation; v21 results must be labeled as such.
