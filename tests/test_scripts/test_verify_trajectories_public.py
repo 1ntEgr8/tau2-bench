@@ -4,13 +4,14 @@ from types import SimpleNamespace
 
 import pytest
 
+from tau2.data_model.elicitation import ElicitationConfig, ElicitationStrategy
 from tau2.environment.environment import EnvironmentInfo
 from tau2.multilingual.runtime import TaskSelection, load_language
 from tau2.registry import registry
 from tau2.scripts.leaderboard.verify_trajectories_public import check_tasks
 
 
-def _results(domain, tasks, *, language):
+def _results(domain, tasks, *, language, elicitation=None):
     info = SimpleNamespace(
         environment_info=EnvironmentInfo(domain_name=domain, policy=""),
         language=language,
@@ -18,6 +19,7 @@ def _results(domain, tasks, *, language):
         pack_extension=None,
         benchmark=None,
         audio_native_config=None,
+        elicitation=elicitation,
     )
     return SimpleNamespace(info=info, tasks=tasks)
 
@@ -42,3 +44,26 @@ def test_results_without_language_use_registry_tasks():
         True,
         "",
     )
+
+
+@pytest.mark.parametrize("strategy", list(ElicitationStrategy))
+def test_intake_results_use_recorded_strategy_variant(strategy):
+    def tasks_for(chosen):
+        return load_language(
+            "en",
+            "intake",
+            mode="text",
+            selection=TaskSelection(
+                task_split_name="base", task_kwargs={"strategy": chosen.value}
+            ),
+        ).tasks
+
+    config = ElicitationConfig(strategy=strategy)
+    recorded = _results(
+        "intake", tasks_for(strategy), language="en", elicitation=config
+    )
+    assert check_tasks(recorded) == (True, "")
+
+    other = next(s for s in ElicitationStrategy if s != strategy)
+    swapped = _results("intake", tasks_for(other), language="en", elicitation=config)
+    assert not check_tasks(swapped)[0]

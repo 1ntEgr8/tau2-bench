@@ -43,7 +43,13 @@ def _expected_tasks(results: Results) -> list[Task]:
         localize_db=DEFAULT_LOCALIZE_DB
         if info.localize_db is None
         else info.localize_db,
-        selection=TaskSelection(task_split_name="base"),
+        selection=TaskSelection(
+            task_split_name="base",
+            # Intake strategies select their own task variant (as at run time).
+            task_kwargs={"strategy": info.elicitation.strategy.value}
+            if info.elicitation is not None
+            else {},
+        ),
         pack_extension=info.pack_extension,
         **({"canonical_tasks": True} if canonical_voice_v1 else {}),
     )
