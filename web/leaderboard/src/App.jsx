@@ -244,7 +244,7 @@ function App() {
             </a>
             <span className="notification-divider" aria-hidden="true" />
             <a href="/leaderboard?benchmark=voice" className="notification-link">
-              <strong>τ-i18n</strong><span>Voice agents across six languages →</span>
+              <strong>Multilingual</strong><span>Voice agents across six languages →</span>
             </a>
           </div>
         </div>

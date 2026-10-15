@@ -1,5 +1,5 @@
 // 2.0 (voice-v2) packages listed under manifest.voice_v2_submissions appear as
-// rows of the τ-i18n leaderboard, next to the paper cohort.
+// rows of the multilingual leaderboard, next to the paper cohort.
 // The package is synthetic and served through request interception, so the
 // committed manifest stays untouched.
 import { test, expect } from '@playwright/test'
@@ -45,7 +45,7 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/submissions/fixture_v2/*', route => route.fulfill({ json: files[route.request().url().split('/').pop()] }))
 })
 
-test('τ-i18n leaderboard ranks packages with the paper cohort', async ({ page }) => {
+test('multilingual leaderboard ranks packages with the paper cohort', async ({ page }) => {
   await page.goto('/leaderboard?benchmark=voice')
   const table = page.locator('.mv-leaderboard-table')
   await expect(table.locator('tr.model-row:not(.mv-package-row)')).toHaveCount(5)
@@ -54,11 +54,11 @@ test('τ-i18n leaderboard ranks packages with the paper cohort', async ({ page }
   await expect(row).toContainText('submission')
   await expect(row.locator('td[data-metric="task"]')).toContainText(`${(100 * pkg.submission.summary.score).toFixed(1)}%`)
   await expect(row.locator('td[data-metric="interaction"]')).toHaveText('—')
-  await page.locator('.mv-scope select').selectOption('ko')
-  await expect(row.locator('td[data-metric="task"]')).toContainText('65.0%')
   await row.locator('.mv-model-trigger').click()
   const detail = page.locator('.mv-leaderboard-table .mv-detail')
   await expect(detail.locator('tr[data-factor="telecom"] td[data-language="en"]')).toHaveText('60.0%')
+  await expect(detail.locator('tr[data-factor="all"] td[data-language="ko"]')).toHaveText('65.0%')
+  await expect(detail.locator('tr.mv-extra-row')).toHaveCount(2)
   await expect(detail.locator('tr[data-factor="honorific_agreement"] td[data-language="ko"]')).toHaveText('90.0%')
   await expect(detail.locator('tr[data-factor="honorific_agreement"] td[data-language="en"]')).toHaveText('—')
   await expect(detail).toContainText('Naturalness 897/900')

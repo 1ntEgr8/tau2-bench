@@ -45,7 +45,7 @@ test('multilingual explorer, breakdowns, filters and navigation', async ({ page 
   page.on('pageerror', error => errors.push(error.message))
   await page.goto('/leaderboard?benchmark=voice', { waitUntil: 'networkidle' })
   await page.getByRole('heading', { name: /Three dimensions of a good conversation/ }).waitFor()
-  assert.equal(await page.locator('.mv-scope select').inputValue(), 'all')
+  assert.equal(await page.locator('.mv-scope select').count(), 0)
   assert.equal(await page.locator('.mv-scores .model-row').count(), 5)
   assert.equal(await page.locator('.mv-scores > .metrics-table-container > table > thead th').count(), 8)
   assert.equal(await page.locator('.mv-score-button').count(), 15)
@@ -123,7 +123,8 @@ test('multilingual explorer, breakdowns, filters and navigation', async ({ page 
   }
   await page.locator('.mv-detail').screenshot({ path: testInfo.outputPath('tau-multilingual-interaction.png') })
   await page.locator('.mv-breakdown-tabs').getByRole('button', { name: /Task completion/ }).click()
-  assert.equal(await page.locator('.mv-task-heatmap tbody tr').count(), 4)
+  assert.equal(await page.locator('.mv-task-heatmap tbody tr').count(), 6)
+  assert.equal(await page.locator('.mv-task-heatmap tbody tr.mv-extra-row').count(), 2)
   assert.equal(await page.locator('.mv-task-heatmap thead th').count(), 8)
   const selectedModel = data.models.find(model => model.id === 'openai_xhigh')
   for (const cell of data.cells.filter(cell => cell.model === selectedModel.id)) {
@@ -162,7 +163,7 @@ test('multilingual explorer, breakdowns, filters and navigation', async ({ page 
       assert.equal(await page.locator(`.mv-heatmap [data-model="overall"] [data-language="${language}"]`).innerText(), expected)
     }
   }
-  await page.locator('.mv-main-panel').screenshot({ path: testInfo.outputPath('tau-i18n-language-map.png') })
+  await page.locator('.mv-main-panel').screenshot({ path: testInfo.outputPath('tau-multilingual-language-map.png') })
   for (const text of ['SIX-LANGUAGE COMPARISON', 'Look beyond the leaderboard.', 'LANGUAGE COVERAGE', 'ALL LANGUAGES', 'Metric definitions, coverage & source data', 'Trial 0 · Task & interaction: 6 languages · Experience: 5', 'papers/tau-multilingual/reproduction/audit.json', 'papers/tau-multilingual/reproduction/experience.json']) {
     assert.equal(await page.getByText(text, { exact: true }).count(), 0)
   }
@@ -170,28 +171,23 @@ test('multilingual explorer, breakdowns, filters and navigation', async ({ page 
   assert.equal(await page.locator('.mv-paper-links a[href^="https://arxiv.org/abs/"]').count(), 2)
 
   await page.locator('.mv-map-metrics').getByRole('button', { name: 'Experience', exact: true }).click()
-  assert.equal(await page.locator('.mv-heatmap tbody td button').filter({ hasText: '—' }).count(), 6)
-  await page.locator('.mv-heatmap tbody td button').nth(1).click()
-  assert.equal(await page.locator('.mv-scope select').inputValue(), 'es')
+  assert.equal(await page.locator('.mv-heatmap tbody .mv-heat-cell').filter({ hasText: '—' }).count(), 6)
+  assert.equal(await page.locator('.mv-heatmap tbody button').count(), 0)
   await page.getByRole('button', { name: 'GPT RT 2 · xhigh: Experience breakdown', exact: true }).click()
-  assert.equal(await page.locator('.mv-pass-heatmap thead th').count(), 3)
+  assert.equal(await page.locator('.mv-pass-heatmap thead th').count(), 8)
   assert.equal(await page.locator('.mv-pass-heatmap [data-language="es"]').count(), 3)
-  await page.locator('.mv-scope select').selectOption('en')
-  assert.ok((await page.locator('.mv-cube-empty').innerText()).includes('Experience was not evaluated for English'))
-  assert.ok((await page.locator('.mv-factor-notes').innerText()).includes('were not evaluated for English'))
-  assert.equal(await page.locator('.mv-pass-heatmap .is-missing').count(), 6)
+  assert.equal(await page.locator('.mv-pass-heatmap [data-language="en"] .is-missing').count(), 3)
   await page.locator('.mv-breakdown-tabs').getByRole('button', { name: /Task completion/ }).click()
-  assert.equal(await page.locator('.mv-task-heatmap thead th').count(), 3)
-  for (const factor of ['airline', 'retail', 'telecom', 'overall']) {
-    const row = page.locator(`.mv-task-heatmap [data-factor="${factor}"]`)
-    assert.equal(await row.locator('[data-language="en"]').innerText(), await row.locator('[data-language="overall"]').innerText())
+  assert.equal(await page.locator('.mv-task-heatmap thead th').count(), 8)
+  for (const factor of ['banking_knowledge', 'intake']) {
+    const row = page.locator(`.mv-task-heatmap tr.mv-extra-row[data-factor="${factor}"]`)
+    assert.equal(await row.locator('.is-missing').count(), 7)
   }
-  await page.locator('.mv-scope select').selectOption('all')
   await page.getByRole('button', { name: 'Experience ↑' }).click()
   assert.ok((await page.locator('.mv-scores .model-row').first().innerText()).includes('xhigh'))
   await page.getByRole('button', { name: 'English only', exact: true }).click()
   await page.getByRole('heading', { name: 'τ³-Voice Leaderboard' }).waitFor()
-  await page.getByRole('button', { name: 'τ-i18n (Multilingual)', exact: true }).click()
+  await page.getByRole('button', { name: 'Multilingual', exact: true }).click()
   await page.setViewportSize({ width: 390, height: 844 })
   await page.getByRole('button', { name: 'GPT RT 2 · xhigh: Experience breakdown', exact: true }).click()
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
@@ -203,15 +199,15 @@ test('multilingual explorer, breakdowns, filters and navigation', async ({ page 
 
   await page.goto('/')
   await page.locator('.preview-table-wrapper').filter({ hasText: 'All languages' }).waitFor()
-  await page.locator('.preview-table-wrapper').filter({ hasText: 'τ-i18n' }).click()
+  await page.locator('.preview-table-wrapper').filter({ hasText: 'Multilingual' }).click()
   await page.getByRole('heading', { name: /Three dimensions of a good conversation/ }).waitFor()
   assert.deepEqual(errors, [])
-  console.log('PASS: six-language task/interaction averages, five-language Experience coverage, missing data, three headline metrics, factor-by-language heatmap values and missing data, clickable/tabbed breakdowns, cube gestures/focus, language filters, mobile layout, homepage navigation, browser errors.')
+  console.log('PASS: six-language task/interaction averages, five-language Experience coverage, missing data, three headline metrics, factor-by-language heatmap values and missing data, clickable/tabbed breakdowns, cube gestures/focus, mobile layout, homepage navigation, browser errors.')
 })
 
 test('multilingual submission filters and English progress remain available', async ({ page }) => {
   await page.goto('/leaderboard?benchmark=voice')
-  await expect(page.getByText(/τ-i18n \(formerly τ-Multilingual\)/)).toBeVisible()
+  await expect(page.getByText(/Multilingual voice benchmark within τ³-Voice/)).toBeVisible()
   const filters = page.locator('.mv-leaderboard-heading')
   await expect(filters.getByRole('heading', { name: 'Leaderboard', exact: true })).toBeVisible()
   await expect(page.locator('.mv-scores .model-row')).toHaveCount(5)

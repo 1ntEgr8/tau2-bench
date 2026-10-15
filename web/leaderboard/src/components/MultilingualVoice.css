@@ -298,3 +298,11 @@
 .v2-meta dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 .v2-meta dd a { margin-right: 12px; }
 .v2-command { display: block; padding: 8px 10px; border-radius: 6px; background: var(--mv-surface); border: 1px solid var(--mv-border); white-space: pre-wrap; word-break: break-all; }
+
+/* Intro, core-domain note, and below-Overall reference rows */
+.mv .mv-intro { max-width: 760px; margin: 0 auto 24px; text-align: center; }
+.mv-core-note { color: var(--mv-muted); font-size: 12px; font-weight: 600; padding: 4px 10px; border: 1px solid var(--mv-border); border-radius: 999px; white-space: nowrap; }
+.mv .mv-factor-heatmap .mv-extra-row > :is(th, td) { border-top: 1px dashed #cbd5e0; padding-top: 8px; }
+.mv .mv-factor-heatmap .mv-extra-row > th { color: var(--mv-muted); font-weight: 500; }
+.mv .mv-heatmap td .mv-heat-cell { padding: 18px 14px; color: #1a4731; font-size: 14px; }
+.mv .mv-heatmap .mv-overall-row .mv-heat-cell, .mv .mv-heatmap .mv-overall .mv-heat-cell { font-weight: 700; }
