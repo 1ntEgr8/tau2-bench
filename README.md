@@ -86,11 +86,6 @@ Add `--domain retail --num-tasks 2` for a 12-call smoke test. Full details:
 [Running the benchmark](docs/running-the-benchmark.md) and the
 [submission guide](docs/leaderboard-submission.md).
 
-**Cost and time.** TODO (owner): rough API cost and wall-clock time for a full
-text-v1, voice-v2 and voice-v1 run. Each voice call is capped at 2400 simulated
-seconds, and a benchmark run uses one worker with 3 concurrent calls unless you
-raise `--workers` and `--max-concurrency`.
-
 ### Comparing with v1.0.1
 
 2.0 English runs are **not** input-identical to v1.0.1, so 2.0 scores are not
@@ -145,14 +140,11 @@ Each domain specifies:
 | **Text (half-duplex)** | Turn-based chat with tool use |
 | **Voice (full-duplex)** | End-to-end audio via realtime providers (OpenAI, Gemini, xAI) |
 
-## Benchmark naming
-
-**τ-i18n** was previously called **τ-Multilingual** (or “multilingual”);
-**τ-entity** was previously called **elicitation** (or “τ-elicitation”).
-These are branding changes, not new benchmark implementations. Legacy names
-remain in technical identifiers, historical provenance, and published paper
-titles. The τ-entity domain is still `intake`; CLI flags and result fields are
-unchanged.
+> [!NOTE]
+> τ-i18n was previously called τ-Multilingual, and τ-entity was previously
+> called τ-Elicitation. Only the names changed: the old names remain in
+> technical identifiers, provenance and paper titles, and the τ-entity domain
+> is still `intake`.
 
 ## Installation and a first custom run
 
@@ -288,6 +280,32 @@ If you use a specific component of $\tau^3$-bench, please cite the corresponding
       archivePrefix={arXiv},
       primaryClass={cs.SD},
       url={https://arxiv.org/abs/2603.13686},
+}
+```
+
+### Multilingual Voice Benchmark (τ-i18n)
+
+```bibtex
+@misc{ray2026taumultilingual,
+      title={$\tau$-Multilingual: Benchmarking Voice Agents Across Languages},
+      author={Soham Ray and Edgard dos Santos Paiva and Ruben Valenzuela and Karthik Narasimhan and Keshav Dhandhania and Victor Barres},
+      year={2026},
+      eprint={2609.35820},
+      archivePrefix={arXiv},
+      url={https://arxiv.org/abs/2609.35820},
+}
+```
+
+### Entity Capture Benchmark (τ-entity, `intake`)
+
+```bibtex
+@misc{ray2026tauelicitation,
+      title={$\tau$-Elicitation: Benchmarking Multi-Turn Entity Extraction in Voice Agents},
+      author={Soham Ray and Victor Barres},
+      year={2026},
+      eprint={2609.13602},
+      archivePrefix={arXiv},
+      url={https://arxiv.org/abs/2609.13602},
 }
 ```
 
