@@ -88,11 +88,17 @@ tau2 judges suite data/simulations/voice-run
 tau2 judges summarize data/simulations/voice-run
 
 # 4. Build the package. Refuses, with per-cell counts and fill commands, if incomplete.
-tau2 submit prepare data/simulations/voice-run --output ./voice-submission
+tau2 submit prepare data/simulations/voice-run --output ./submissions \
+  --metadata-file ./submitter.json
 
-# 5. Recompute rewards and judge diagnostics from the saved matrix.
-tau2 submit validate ./voice-submission --results data/simulations/voice-run
+# 5. Recompute rewards, judge diagnostics and agent identity from the saved matrix.
+tau2 submit validate ./submissions/<name> --results data/simulations/voice-run
 ```
+
+`submitter.json` names the submission (see [Package metadata](#package-metadata)).
+`prepare` writes the package to `./submissions/<name>/`, where `<name>` is
+`{model_name}_{model_organization}_{submission_date}` in lowercase letters,
+numbers and hyphens.
 
 `prepare` refuses unless every cell's rewards are complete and every applicable
 judge measure in every cell has a usable saved verdict. It reads saved results
@@ -121,11 +127,16 @@ Only the default production judge catalog is accepted. Verdicts made with
 tau2 run --benchmark text --agent-llm <model> --agent-llm-args '<json>' --save-to text-run
 
 # 2. Build the package (rewards only; no judges needed).
-tau2 submit prepare data/simulations/text-run --output ./text-submission
+tau2 submit prepare data/simulations/text-run --output ./submissions \
+  --metadata-file ./submitter.json
 
 # 3. Recompute rewards from the saved matrix.
-tau2 submit validate ./text-submission --results data/simulations/text-run
+tau2 submit validate ./submissions/<name> --results data/simulations/text-run
 ```
+
+The leaderboard has no 2.0 text tab yet. Text-v1 packages validate the same
+way, but `manifest.json` has no entry for them; open an issue before submitting
+one.
 
 ### What the 2.0 package contains
 
@@ -133,11 +144,36 @@ tau2 submit validate ./text-submission --results data/simulations/text-run
 |---|---|---|
 | `benchmark-submission.json` | text-v1, voice-v2 | The frozen frame, every task/trial observation, the per-cell, per-language and per-domain reward summary, and a SHA-256 of each cell's `results.json`. |
 | `benchmark-diagnostics.json` | voice-v2 only | The judge catalog and transport revisions, each judge contract used, and per cell: the same per-measure summary `tau2 judges summarize` prints, plus a fingerprint for every judged call × measure (`verdict_sha256` is the SHA-256 of the stored verdict). |
+| `benchmark-metadata.json` | text-v1, voice-v2 | Your `submitter.json` fields, plus the agent provider and model recorded in the run conditions. Maintainers add `trajectories` (the S3 prefix) after upload. Schema: [`schema_benchmark_metadata.json`](../web/leaderboard/public/submissions/schema_benchmark_metadata.json). |
+
+The leaderboard reads these three files directly. A package must be complete:
+every cell scored, and, for voice-v2, diagnostics for every cell.
 
 The package does not copy trajectories or audio. Maintainers validate it against
 your saved matrix root, which you upload separately (next step). `validate`
 rejects changed membership, incompatible conditions, duplicate trials, missing
 evidence, and summaries that disagree with the saved results or verdicts.
+
+### Package metadata
+
+```json
+{
+  "model_name": "my-voice-model",
+  "model_organization": "Example Labs",
+  "submitting_organization": "Example Labs",
+  "submission_date": "2026-10-20",
+  "contact_info": {"email": "you@example.org", "name": "Your Name"},
+  "submission_type": "standard",
+  "references": [{"title": "Model card", "url": "https://example.org/model"}],
+  "notes": "How the agent was configured and run."
+}
+```
+
+`model_name`, `model_organization`, `submitting_organization`,
+`submission_date` and `contact_info.email` are required. `submission_type` is
+`"standard"` (default) or `"custom"` (see
+[Standard and custom submissions](#standard-and-custom-submissions)); explain a
+custom setup in `notes` and link it in `references`. Unknown fields are rejected.
 
 ### Submit a 2.0 package
 
@@ -146,24 +182,29 @@ evidence, and summaries that disagree with the saved results or verdicts.
    institutional storage. Upload the whole root: `benchmark-frame.json`,
    `benchmark-plan.json`, `execution.json` and every cell directory with its
    `results.json`, `simulations/`, `artifacts/` (audio) and `diagnostics/`.
-2. **Add the package to the repository** under
-   `web/leaderboard/public/submissions/<name>/`, where `<name>` is
-   `{model_name}_{model_organization}_{submission_date}` in lowercase letters,
-   numbers, hyphens and underscores. Commit only the package files, never the
-   trajectories.
+2. **Add the package to the repository** as
+   `web/leaderboard/public/submissions/<name>/` (the three files `prepare`
+   wrote), and add `<name>` to the `voice_v2_submissions` array in
+   `web/leaderboard/public/submissions/manifest.json`. Commit only the package
+   files, never the trajectories.
 3. **Open a pull request** (see [Pull request](#pull-request)) with the link to
-   the uploaded matrix root. Maintainers run `tau2 submit validate` against it.
+   the uploaded matrix root. Maintainers run `tau2 submit validate` against it,
+   then copy the matrix to
+   `s3://sierra-tau-bench-public/submissions/<name>/trajectories/<language>/<domain>/`.
 
-> **TODO (owner):** name the `manifest.json` entry for 2.0 packages, and confirm
-> how the 2.0 tab ingests them. Today `manifest.json` has only `submissions`,
-> `voice_submissions` and `legacy_submissions`, and the Voice view in
-> `web/leaderboard` is a static paper cohort that does not ingest voice-v2
-> packages
-> ([details](../web/leaderboard/src/data/multilingual/README.md)).
+voice-v2 packages appear as rows of the τ³-Voice **τ-i18n (Multilingual)**
+leaderboard (`/leaderboard?benchmark=voice`), next to the paper cohort and
+marked "submission". They rank on task completion (pass@1, overall or for the
+selected language); Interaction and Experience are paper-cohort measures and
+show "—". A package's breakdown shows pass@1 per language × domain and each
+judge measure per language with its coverage. Judge measures are diagnostics
+and never change the rank. 1.x and voice-v1 submissions keep their own tabs and
+are still accepted.
 
-The frozen 2026-10-02 voice-v2 release was packaged from saved exports with a
-separate adapter, `tau2 submit prepare --historical-voice-v2`. That path is for
-maintainers only; see [Voice V2 publication package](voice-v2-publication.md).
+The frozen 2026-10-02 voice-v2 release calls predate the matrix layout. A
+maintainer-only adapter, `tau2 submit prepare --historical-voice-v2`, reads
+those saved exports and writes the same three-file package; see
+[Voice V2 release packages](voice-v2-publication.md).
 
 ---
 
@@ -190,8 +231,7 @@ tau2 submit validate ./voice-v1-submission/<name>
 ```
 
 Point `prepare` at the cell directories, not the matrix root. Given the root, it
-builds a rewards-only `benchmark-submission.json` instead of the leaderboard
-`submission.json`. Single-domain submissions are allowed; each domain must be
+builds a 2.0-style package instead of the leaderboard `submission.json`. Single-domain submissions are allowed; each domain must be
 complete.
 
 For voice, `prepare`:
@@ -634,7 +674,9 @@ See `web/leaderboard/public/submissions/A_EXAMPLE_voice-model_example-org_2026-0
 ### 2.0 packages (text-v1, voice-v2)
 
 - [ ] PR links the complete uploaded matrix root (`benchmark-frame.json` and every cell)
-- [ ] `tau2 submit validate <package> --results <downloaded-root>` passes
+- [ ] Package directory name equals `{model_name}_{model_organization}_{submission_date}`; `manifest.json` lists it in `voice_v2_submissions`
+- [ ] `benchmark-metadata.json` has a contact email; `submission_type` is right (if custom: `notes` and `references` explain the change)
+- [ ] `review_submission.py <package> <downloaded-root>` passes (it runs `tau2 submit validate`); with `--upload` it copies the matrix to `trajectories/<language>/<domain>/` and sets `trajectories`
 - [ ] voice-v2: `benchmark-diagnostics.json` present and made with the production judge catalog
 - [ ] Spot-check: re-judge a sample of uploaded calls and compare unit outcomes with the matching fingerprints
 - [ ] No duplicate submissions

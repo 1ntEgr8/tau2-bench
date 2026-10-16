@@ -16,7 +16,7 @@ export const HYPER_TAU_URL = 'https://sierra-research.github.io/hyper-tau-bench/
 // carry an app path; the external entry carries an absolute href.
 export const LEADERBOARD_MENU = [
   { key: 'knowledge', label: 'τ³-Banking', note: 'Text · knowledge retrieval', path: '/leaderboard?benchmark=knowledge' },
-  { key: 'voice', label: 'τ³-Voice', note: 'Real-time voice', path: '/leaderboard?benchmark=voice' },
+  { key: 'voice', label: 'τ³-Voice', note: 'Real-time voice', path: '/leaderboard?benchmark=voice', badge: 'New' },
   { key: 'core', label: 'τ²-bench', note: 'Text · retail, airline, telecom', path: '/leaderboard?benchmark=core' },
   { key: 'hyper', label: 'τ^τ-bench', note: 'Agent-building agents', href: HYPER_TAU_URL, badge: 'New' },
 ]

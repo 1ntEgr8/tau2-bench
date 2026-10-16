@@ -514,6 +514,11 @@ class LeaderboardManifest(BaseModelNoExtra):
         default_factory=list,
         description="List of legacy submission folder names (previous benchmark versions)",
     )
+    voice_v2_submissions: list[str] = Field(
+        default_factory=list,
+        description="2.0 voice-v2 package folder names (benchmark-submission.json, "
+        "benchmark-diagnostics.json, benchmark-metadata.json)",
+    )
     last_updated: Optional[str] = Field(
         None, description="ISO timestamp of last update"
     )

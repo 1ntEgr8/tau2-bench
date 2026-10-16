@@ -288,3 +288,27 @@
 .mv-leaderboard-heading h2 { margin: 0; }
 .mv-leaderboard-heading .submission-type-filter { width: auto; }
 .mv-leaderboard-heading + .mv-ranking-meta { margin-top: 16px; }
+
+/* Submitted voice-v2 packages in the τ-i18n leaderboard */
+.mv-package-row .legacy-badge { margin-left: 8px; }
+.mv-package-row .score-bar-fill { display: block; }
+.mv-detail code { font-size: 12px; }
+.v2-meta { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 16px 0 0; font-size: 13px; color: var(--mv-text); }
+.v2-meta dt { color: var(--mv-muted); font-weight: 600; }
+.v2-meta dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.v2-meta dd a { margin-right: 12px; }
+.v2-command { display: block; padding: 8px 10px; border-radius: 6px; background: var(--mv-surface); border: 1px solid var(--mv-border); white-space: pre-wrap; word-break: break-all; }
+
+/* Core-domain note, and below-Overall reference rows */
+.mv-core-note { color: var(--mv-muted); font-size: 12px; font-weight: 600; padding: 4px 10px; border: 1px solid var(--mv-border); border-radius: 999px; white-space: nowrap; }
+.mv .mv-factor-heatmap .mv-extra-row > :is(th, td) { border-top: 1px dashed #cbd5e0; padding-top: 8px; }
+.mv .mv-factor-heatmap .mv-extra-row > th { color: var(--mv-muted); font-weight: 500; }
+.mv .mv-heatmap td .mv-heat-cell { padding: 18px 14px; color: #1a4731; font-size: 14px; }
+.mv .mv-heatmap .mv-overall-row .mv-heat-cell, .mv .mv-heatmap .mv-overall .mv-heat-cell { font-weight: 700; }
+.mv-leaderboard-controls { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; min-width: 0; max-width: 100%; }
+.mv .mv-domain-toggle { display: flex; min-width: 0; max-width: 100%; }
+.mv-pooled-note { display: block; color: var(--mv-muted); font-size: 10px; font-weight: 500; text-transform: none; letter-spacing: 0; }
+@media (max-width: 768px) {
+  .mv .mv-domain-toggle { justify-content: flex-start; overflow-x: auto; max-width: 100%; padding: 4px 0 8px; }
+  .mv .mv-domain-toggle .domain-toggle-option { min-width: 84px; padding: 10px 8px; font-size: 13px; }
+}

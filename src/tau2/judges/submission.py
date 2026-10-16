@@ -6,6 +6,10 @@ every cell to be judged, and records per-measure summaries plus content
 fingerprints of each verdict. Validation recomputes the same export from the
 original saved matrix, so maintainers can re-judge any sample and compare it to
 the fingerprinted identity.
+
+The completeness requirement belongs to preparation, not to the export format:
+the frozen 2026-10-02 release has a few partial verdicts (unit errors), and its
+export reports them as coverage gaps instead of hiding them.
 """
 
 import hashlib
@@ -24,6 +28,7 @@ from tau2.data_model.judges import (
     JudgeCatalog,
     PlanAction,
     StoredVerdict,
+    SuitePlan,
 )
 from tau2.judges.summary import DiagnosticSummary, summarize_suite
 
@@ -81,6 +86,9 @@ class VerdictFingerprint(ContractModel):
     no_opportunity_units: Annotated[
         int, Field(ge=0, description="Units without a judged opportunity.")
     ]
+    error_units: Annotated[
+        int, Field(ge=0, description="Units the judge failed on (partial verdicts).")
+    ] = 0
 
 
 class CellDiagnostics(ContractModel):
@@ -103,7 +111,8 @@ class CellDiagnostics(ContractModel):
         for summary in self.summary:
             rows = [row for row in self.verdicts if row.measure == summary.measure]
             if (
-                len(rows) != summary.judged_calls
+                sum(not row.error_units for row in rows) != summary.judged_calls
+                or sum(bool(row.error_units) for row in rows) != summary.partial_calls
                 or sum(row.pass_units for row in rows) != summary.pass_units
                 or sum(row.fail_units for row in rows) != summary.fail_units
                 or sum(row.no_opportunity_units for row in rows)
@@ -141,15 +150,11 @@ class BenchmarkDiagnostics(ContractModel):
     ]
 
     @model_validator(mode="after")
-    def _complete_and_known(self) -> "BenchmarkDiagnostics":
+    def _known_contracts(self) -> "BenchmarkDiagnostics":
         contracts = {judge.contract_id for judge in self.judges}
         if len(contracts) != len(self.judges):
             raise ValueError("Duplicate judge contract identities")
         for cell in self.cells:
-            if not all(summary.complete for summary in cell.summary):
-                raise ValueError(
-                    f"{cell.language}-{cell.domain}: judge diagnostics are incomplete"
-                )
             if any(row.contract_id not in contracts for row in cell.verdicts):
                 raise ValueError("Verdict references an undeclared judge contract")
         return self
@@ -197,7 +202,8 @@ def _cell_rows(
             or row.identity != item.identity
             or row.error is not None
             or row.verdict is None
-            or row.verdict.unit_errors
+            # A partial verdict without units adds nothing to the summary.
+            or (row.verdict.unit_errors and not row.verdict.units)
         ):
             continue
         units = row.verdict.units
@@ -213,6 +219,7 @@ def _cell_rows(
                 pass_units=sum(u.opportunity and not u.violation for u in units),
                 fail_units=sum(u.opportunity and u.violation for u in units),
                 no_opportunity_units=sum(not u.opportunity for u in units),
+                error_units=len(row.verdict.unit_errors),
             )
         )
         used.append(row)
@@ -231,8 +238,6 @@ def collect_diagnostics(
 
     coverage = []
     cells = []
-    judges: dict[str, JudgeIdentity] = {}
-    transports = set()
     for cell in frame.cells:
         directory = root / f"{cell.language}-{cell.domain}"
         if not (directory / "results.json").exists():
@@ -243,17 +248,32 @@ def collect_diagnostics(
             )
             continue
         result = judge_saved_run(directory, catalog)
-        summary = summarize_suite(result.plan, result.verdicts)
         coverage.append(
             CellJudgeCoverage(
-                language=cell.language, domain=cell.domain, summary=summary
+                language=cell.language,
+                domain=cell.domain,
+                summary=summarize_suite(result.plan, result.verdicts),
             )
         )
-        if not coverage[-1].complete:
-            # Incomplete cells are only reported; partial verdicts (unit errors)
-            # count units in the summary but are never fingerprinted.
-            continue
-        fingerprints, used = _cell_rows(result.plan.items, result.verdicts)
+        # Incomplete cells are only reported: preparation refuses them.
+        if coverage[-1].complete:
+            cells.append((cell.language, cell.domain, result.plan, result.verdicts))
+    if not all(cell.complete for cell in coverage):
+        return coverage, None
+    return coverage, export_diagnostics(frame, catalog.revision, cells)
+
+
+def export_diagnostics(
+    frame: BenchmarkFrame,
+    catalog_revision: str,
+    cells: list[tuple[str, str, SuitePlan, list[StoredVerdict]]],
+) -> BenchmarkDiagnostics:
+    """Summaries, fingerprints and judge identities for each judged cell."""
+    exported = []
+    judges: dict[str, JudgeIdentity] = {}
+    transports = set()
+    for language, domain, plan, stored in cells:
+        fingerprints, used = _cell_rows(plan.items, stored)
         for row in used:
             identity = row.identity
             transports.add(identity.transport_revision)
@@ -269,24 +289,21 @@ def collect_diagnostics(
                     rubric_version=identity.rubric_version,
                 ),
             )
-        cells.append(
+        exported.append(
             CellDiagnostics(
-                language=cell.language,
-                domain=cell.domain,
-                summary=summary,
+                language=language,
+                domain=domain,
+                summary=summarize_suite(plan, stored),
                 verdicts=fingerprints,
             )
         )
-    if not all(cell.complete for cell in coverage):
-        return coverage, None
     if len(transports) > 1:
         raise ValueError("Saved verdicts mix judge transport revisions")
-    diagnostics = BenchmarkDiagnostics(
+    return BenchmarkDiagnostics(
         benchmark_version=frame.benchmark_version,
         frame_revision=frame.revision,
-        catalog_revision=catalog.revision,
+        catalog_revision=catalog_revision,
         transport_revision=next(iter(transports), None),
         judges=sorted(judges.values(), key=lambda judge: judge.contract_id),
-        cells=cells,
+        cells=exported,
     )
-    return coverage, diagnostics

@@ -7,8 +7,10 @@ historical provenance keep their original names.
 
 The Voice leaderboard defaults to this fixed paper cohort. The English-only
 leaderboard and progress view retain the existing submission-backed behavior.
-This view does not ingest Voice V2 submissions; it is a static cohort, not an
-automatically updated submission leaderboard.
+The cohort itself is static. Submitted voice-v2 packages
+(`voice_v2_submissions` in `public/submissions/manifest.json`) join its
+leaderboard table as extra rows scored on task completion
+(`src/data/voiceV2Packages.js`, `src/components/PackageBreakdown.jsx`).
 
 `results.json` contains 30 language/configuration summaries built from the
 reproduction files at commit `4c7d1463bf3efe0fb85f9406fda4d0d00add1df8`. Those

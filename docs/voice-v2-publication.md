@@ -1,112 +1,100 @@
-# Voice V2 publication package
+# Voice V2 release packages
 
-Voice V2 uses a separate, versioned submission contract. The existing flat
-`submission.json` and English Voice V1 leaderboard remain unchanged. A Voice V2
-package has all six languages (`en`, `es`, `hi`, `ko`, `pt`, `zh`) and all three
-domains (`airline`, `retail`, `telecom`), with 50 selected task/trial keys per
-cell. The contract is generated at
-`web/leaderboard/public/submissions/schema_voice_v2.json`.
+The frozen 2026-10-02 voice-v2 release calls ran before the current matrix
+layout (`<language>-<domain>/` cells, `benchmark-frame.json`) and before some
+recorded condition fields existed, so `tau2 submit prepare <matrix-root>` cannot
+read them. A maintainer-only adapter reads the saved release exports and writes
+**the same package** a new submission produces: `benchmark-submission.json`,
+`benchmark-diagnostics.json` and `benchmark-metadata.json` (see
+[What the 2.0 package contains](leaderboard-submission.md#what-the-20-package-contains)).
+The website and the review tooling treat both alike.
 
 > Terms such as *pack*, *cell*, *binding revision* and *pin* are defined in the
 > [glossary](glossary.md).
 
-The preparation command consumes **saved** trajectories, interaction-event
-facts, and judge verdicts. It does not run simulations or judges:
+## Inputs
+
+- The provider's export: `trajectories/<language>/<domain>/` for all 18 cells,
+  each with `results.json`, `simulations/` and audio under `artifacts/`, plus an
+  optional `correction.json` retry-correction manifest.
+- The saved judge verdicts for that provider, one JSON file per scored call at
+  `<language>/<simulation-id>.json`. The release keeps them in two judge suites;
+  pass each suite's provider directory with its own `--judges-root`.
+- A `--metadata-file` with the submitter fields
+  ([Package metadata](leaderboard-submission.md#package-metadata)).
 
 ```bash
-tau2 submit prepare /path/to/18-cell-source \
+R=data/simulations/release_runs/2026-10-02
+tau2 submit prepare $R/leaderboard-v2-corrected-2026-10-09/<provider-export> \
   --historical-voice-v2 \
-  --provider gemini \
-  --interaction-facts /path/to/interaction_call_outcomes.csv \
-  --judges-root /path/to/consolidated/judge-verdicts \
-  --metadata-file /path/to/publication-metadata.json \
-  --output /path/to/new-voice-v2-package
+  --judges-root $R/judges/en-hi-pt/verdicts/<provider> \
+  --judges-root $R/judges/es-ko-zh/verdicts/<provider> \
+  --metadata-file publication-metadata.json \
+  --output ./packages
 
-tau2 submit validate /path/to/new-voice-v2-package
+tau2 submit validate ./packages/<name> --historical-voice-v2 \
+  --results $R/leaderboard-v2-corrected-2026-10-09/<provider-export> \
+  --judges-root $R/judges/en-hi-pt/verdicts/<provider> \
+  --judges-root $R/judges/es-ko-zh/verdicts/<provider>
 ```
 
-The metadata file supplies the publication fields missing from a local draft,
-particularly `submission_date` and `contact_info.email`. It can override draft
-metadata, but it cannot override results: all 18 cells are rederived from the
-saved inputs. For example:
+Nothing is copied or modified: the package cites the export by the SHA-256 of
+each cell's `results.json` and of each judged verdict. The package records
+`"evidence": "historical-voice-v2-2026-10-02"`, so validation and review know
+which reader recomputes it.
 
-```json
-{
-  "submission_date": "2026-10-09",
-  "contact_info": {"email": "submitter@example.com"},
-  "methodology": {"notes": "Describe the evaluated agent and simulator here."}
-}
+## Checks
+
+The adapter reads `results.json` and verdicts as recorded JSON, so historical
+values the current run-config parser rejects (provider `openai_live`, xAI
+reasoning effort `high`) are carried as recorded strings; new runs keep the
+strict parser. For every cell it checks the explicit `language_tasks`
+canonical ID map, the binding revision, the selected 50 tasks and one trial
+against the published frame, the result index against each simulation file,
+and that unscored calls are recorded infrastructure errors. Any
+`correction.json` must still match the corrected files. All 18 cells must
+record one agent model and one caller model; the agent provider and model go
+into `benchmark-metadata.json`. It preserves the recorded condition fingerprint
+and never invents condition fields added after those calls ran. It must never
+be used to qualify an incomplete new run.
+
+Judge diagnostics come from the saved verdicts alone. Each language's measures
+are the measures its verdicts record. Every scored call is planned for each of
+them, so a missing verdict is reported as *not judged*, and a verdict with unit
+errors as an *error call* (its successful units still count, as in
+`tau2 judges summarize`). Coverage gaps stay visible in the summary and on the
+leaderboard; they never become failures. All verdicts must share one judge
+catalog revision. New submissions are stricter: `prepare` refuses unless every
+applicable measure is fully judged.
+
+## Uploading
+
+Upload with the review tool, which validates again first:
+
+```bash
+python -m tau2.scripts.leaderboard.review_submission \
+  web/leaderboard/public/submissions/<name> <provider-export> \
+  --historical-voice-v2 --judges-root ... --judges-root ... [--upload]
 ```
 
-`submission.json` contains the canonical `BenchmarkSubmission` task/trial
-observations and recomputable summary, nested language/domain projections,
-coverage and outcome counts for each measure, and the hash of
-`provenance.json`. The package also contains `trajectories/<language>/<domain>`
-(including results, simulation files, and audio), `judges/<provider>/<language>`
-(the saved per-call verdicts), and `interaction_facts.csv`. The provenance
-manifest hashes every result, simulation, verdict, and fact input used to
-derive the score. If the source contains a retry-correction manifest,
-preparation preserves and hashes it as `source_correction.json`.
-When the fact table comes with an upstream provenance JSON and README,
-preparation preserves and hashes both. The fact table's underlying
-nonresponse, interruption, selectivity, and monologue inputs came from
-`extract_interaction_quality_metrics` and the registered quality checkers;
-tool-misuse inputs came from the saved `tool_use` judge factors. The package
-provenance records this derivation explicitly.
+It copies `trajectories/<language>/<domain>/`, the export's `correction.json`
+(as `source_correction.json`) and the verdicts (as
+`judges/<agent_provider>/<language>/`) under
+`s3://sierra-tau-bench-public/submissions/<name>/`, the layout of the uploaded
+Gemini entry. To re-validate a download of that prefix, rename
+`source_correction.json` to `correction.json` and pass `--results <prefix>
+--judges-root <prefix>/judges/<agent_provider>`. See the
+[maintainer guide](../src/tau2/scripts/leaderboard/MAINTAINER.md).
 
-The `--historical-voice-v2` adapter is only for the frozen 2026-10-02 release
-exports. It checks each saved run's explicit `language_tasks` canonical ID map,
-binding revision, selected tasks/trials, result index, and simulation reward
-against the published Voice V2 frame. It preserves the recorded condition
-fingerprint and hashes each `results.json`; it does not invent condition fields
-that were added after those calls ran. New runs use the strict
-`tau2 submit prepare <matrix-root>` reader (described in the [submission guide](leaderboard-submission.md#20-benchmarks-text-v1-and-voice-v2)), which remains unchanged
-and requires the current complete recorded conditions. The historical adapter
-must never be used to qualify an otherwise incomplete new run.
+## The 2026-10-02 Gemini package
 
-For each cell, `selected = scored + infrastructure` and `scored = pass + fail`.
-Pass@1 is `100 × pass / scored`. Infrastructure calls have no benchmark reward
-and are not counted as task failures. Each call-level measure reports `pass`,
-`fail`, `unscored`, `excluded`, and `pass_rate`; the rate denominator is only
-`pass + fail`. Missing judge input cannot become a failure.
-
-Interaction uses `voice-v2-interaction-call-v1`: the five components are
-nonresponse, interruption, selectivity, monologue, and tool misuse. An
-interruption component fails after **more than three** detected events;
-selectivity fails after **more than three** combined backchannel, vocal-tic,
-or non-directed-speech errors. The other three components retain their saved
-binary results. A call fails Interaction when at least two components fail.
-When missing components could change that decision, the call is unscored.
-The 12 documented Korean unresponsive-period calls are excluded.
-
-Experience uses `voice-v2-experience-call-v1`: pair the naturalness and
-speech-fidelity judgments for each eligible agent utterance. A call fails
-when **more than 25%** of eligible paired utterances have either issue. Calls
-with missing or incomplete judge coverage are unscored. The pairing follows
-the recorded Live segment IDs, or the frozen non-Live grouping of agent
-speech turns and audio tick spans. The two measures are separate from task
-completion.
-
-`tau2 submit validate` rehashes the inputs, verifies the complete benchmark
-frame and unique task/trial keys, checks every simulation against its result
-index, rejects extra or missing verdict IDs, and recomputes all scores. The
-existing maintainer upload tool validates Voice V2 locally but intentionally
-blocks upload through the flat-domain S3 path. Publishing to the Voice V2
-leaderboard requires a separate nested-path uploader and display/ranking work.
-Preparation and local validation do not upload the package or imply that the
-V2 leaderboard UI is ready.
-
-The 2026-10-02 release's Gemini local draft export has a versioned correction
-at `data/simulations/release_runs/2026-10-02/leaderboard-v2-corrected-2026-10-09`.
-It replaces two omitted scored retries in the new copy; the original draft is
-preserved. Its `correction.json` records old and new simulation IDs, selected
-task/trial keys, rewards, and source/output hashes. Across all three providers,
-the corrected release has 2,700 selected calls, 2,689 scored calls, and 11
-infrastructure calls. Golden recomputation matched every saved call-level
-Interaction and Experience outcome: Interaction has 912 passes, 1,743 fails,
-22 unscored, and 12 excluded; Experience has 1,019 passes, 1,500 fails, and
-170 unscored. The adapter was exercised offline across all three 900-call
-exports. A self-contained, copy-on-write Gemini package also passed the full
-rehash and rederivation validator with 900 scored calls and 1,822 hashed input
-files. The historical release adapter verifies recorded fingerprints but does
-not claim that pre-release calls recorded later-added condition fields.
+The corrected Gemini export at
+`data/simulations/release_runs/2026-10-02/leaderboard-v2-corrected-2026-10-09`
+replaces two infrastructure attempts (hi-airline, zh-telecom) with their
+completed retries; `correction.json` records old and new simulation IDs,
+rewards and hashes, and the original draft is preserved. The package built from
+it has 900/900 scored calls; its judge diagnostics cover every measure and
+record the few partial verdicts as coverage gaps. Its evidence is already at
+`s3://sierra-tau-bench-public/submissions/gemini-3-8-live-extended-thinking_google_2026-10-07/`
+in this layout; the package files are added there by the review tool when the
+entry is listed.

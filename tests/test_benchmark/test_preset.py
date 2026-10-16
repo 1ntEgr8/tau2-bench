@@ -13,6 +13,9 @@ from tau2.data_model.simulation import VoiceRunConfig
 from tau2.multilingual.runtime import load_language
 from tau2.runner.presets import binding_revision, resolve_configs
 
+# Package name for the conftest `submitter_file` metadata.
+PACKAGE_NAME = "fixture_test_2026-10-02"
+
 
 @pytest.mark.parametrize("provider", ("openai", "livekit"))
 def test_resolves_ordinary_configs_with_exact_ids_and_approved_defaults(
@@ -276,7 +279,7 @@ def test_saved_submission_and_controller_cli_use_ordinary_configs(
 
 @pytest.mark.parametrize("provider", ("openai", "livekit"))
 def test_complete_saved_matrix_submission_auto_detection(
-    published_frame, tmp_path, monkeypatch, provider
+    published_frame, tmp_path, monkeypatch, provider, submitter_file
 ):
     import argparse
 
@@ -350,11 +353,18 @@ def test_complete_saved_matrix_submission_auto_detection(
     (root / "benchmark-frame.json").write_text(published_frame.model_dump_json())
     submit_parser = argparse.ArgumentParser()
     add_submit_args(submit_parser)
-    exported = tmp_path / "submission"
     prepare = submit_parser.parse_args(
-        ["prepare", str(root), "--output", str(exported)]
+        [
+            "prepare",
+            str(root),
+            "--output",
+            str(tmp_path / "submission"),
+            "--metadata-file",
+            str(submitter_file),
+        ]
     )
     prepare.func(prepare)
+    exported = tmp_path / "submission" / PACKAGE_NAME
     validate = submit_parser.parse_args(
         ["validate", str(exported), "--results", str(root)]
     )

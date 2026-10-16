@@ -1,4 +1,3 @@
-import json
 import math
 import shutil
 from datetime import date
@@ -229,16 +228,6 @@ def validate_submission(
     """
     Validate the submission.
     """
-    submission_path = Path(submission_dir) / SUBMISSION_FILE_NAME
-    if (
-        submission_path.is_file()
-        and json.loads(submission_path.read_text()).get("format") == "voice-v2"
-    ):
-        from tau2.scripts.leaderboard.voice_v2_publication import (
-            validate_voice_v2_package,
-        )
-
-        return validate_voice_v2_package(Path(submission_dir))
     console = Console()
     console.print("🔍 Validating submission...", style="bold blue")
     console.print(f"📂 Submission directory: {submission_dir}", style="bold")
@@ -1103,51 +1092,83 @@ def _benchmark_package(root: Path, preset: str | None):
     return submission, diagnostics
 
 
-def prepare_benchmark_submission(
-    root: Path, output: Path, preset: str | None = None
-) -> None:
-    """Export a complete frozen matrix; retain originals for independent validation.
+def _recorded_agent(root: Path, frame) -> tuple[str | None, str]:
+    """The agent provider (voice only) and model recorded in the run conditions."""
+    for cell in frame.cells:
+        path = root / f"{cell.language}-{cell.domain}" / "results.json"
+        if not path.exists():
+            continue
+        conditions = TrajectoryResults.load_metadata(path).info.benchmark.conditions
+        audio = getattr(conditions, "audio_native_config", None)
+        if audio is not None:
+            return audio.provider, audio.model
+        return None, conditions.llm_agent
+    raise ValueError(f"{root} has no saved cells")
 
-    Judged benchmarks (Voice V2) also require every applicable judge measure in
-    every cell to have a saved verdict from ``tau2 judges suite``.
-    """
-    from tau2.judges.submission import DIAGNOSTICS_FILE_NAME
+
+def _matrix_package(root: Path, preset: str | None, submitter):
+    from tau2.scripts.leaderboard.benchmark_package import (
+        BenchmarkPackage,
+        PackageMetadata,
+    )
 
     submission, diagnostics = _benchmark_package(root, preset)
-    output.mkdir(parents=True, exist_ok=True)
-    destination = output / "benchmark-submission.json"
-    destination.write_text(submission.model_dump_json(indent=2) + "\n")
+    provider, model = _recorded_agent(root, submission.frame)
+    return BenchmarkPackage(
+        metadata=PackageMetadata(
+            **submitter.model_dump(), agent_provider=provider, agent_model=model
+        ),
+        submission=submission,
+        diagnostics=diagnostics,
+    ).check()
+
+
+def prepare_benchmark_submission(
+    root: Path, output: Path, metadata_file: Path, preset: str | None = None
+) -> Path:
+    """Export a complete frozen matrix as ``<output>/<name>/``; nothing is copied.
+
+    Judged benchmarks (Voice V2) also require every applicable judge measure in
+    every cell to have a saved verdict from ``tau2 judges suite``. The saved
+    matrix stays with the submitter for independent validation.
+    """
+    from tau2.scripts.leaderboard.benchmark_package import SubmitterMetadata
+
+    submitter = SubmitterMetadata.model_validate_json(metadata_file.read_text())
+    package = _matrix_package(root, preset, submitter)
+    destination = output / package.name
+    package.write(destination)
     print(f"Saved {destination}")
-    if diagnostics is not None:
-        path = output / DIAGNOSTICS_FILE_NAME
-        path.write_text(diagnostics.model_dump_json(indent=2) + "\n")
-        print(f"Saved {path}")
-    print(f"Check it with: tau2 submit validate {output} --results {root}")
+    print(f"Check it with: tau2 submit validate {destination} --results {root}")
+    return destination
 
 
 def validate_benchmark_submission(
     directory: Path, results: Path, preset: str | None = None
 ):
-    """Recompute rewards and judge diagnostics from the original saved matrix."""
-    from tau2.judges.submission import DIAGNOSTICS_FILE_NAME, BenchmarkDiagnostics
-    from tau2.metrics.benchmark import load_submission
-    from tau2.runner.presets import infer_preset
-
-    submission = load_submission(directory / "benchmark-submission.json")
-    preset = infer_preset(submission.frame, preset)
-    diagnostics_path = directory / DIAGNOSTICS_FILE_NAME
-    diagnostics = (
-        BenchmarkDiagnostics.model_validate_json(diagnostics_path.read_text())
-        if diagnostics_path.is_file()
-        else None
+    """Recompute rewards, judge diagnostics and agent identity from the matrix."""
+    from tau2.scripts.leaderboard.benchmark_package import (
+        SubmitterMetadata,
+        load_package,
     )
-    expected, expected_diagnostics = _benchmark_package(results, preset)
-    if expected.frame != submission.frame:
+
+    package = load_package(directory)
+    if package.metadata.evidence != "matrix":
+        raise ValueError(
+            f"{directory} cites {package.metadata.evidence} evidence; validate it "
+            "with --historical-voice-v2"
+        )
+    submitter = SubmitterMetadata.model_validate(
+        package.metadata.model_dump(include=set(SubmitterMetadata.model_fields))
+    )
+    expected = _matrix_package(results, preset, submitter)
+    expected.metadata.trajectories = package.metadata.trajectories
+    if expected.submission.frame != package.submission.frame:
         raise ValueError("Submission frame differs from the original saved matrix")
-    if expected != submission:
+    if expected.submission != package.submission:
         raise ValueError("Submission differs from original saved result evidence")
-    if expected_diagnostics is not None and diagnostics is None:
-        raise ValueError(f"Submission lacks {DIAGNOSTICS_FILE_NAME}")
-    if expected_diagnostics != diagnostics:
+    if expected.diagnostics != package.diagnostics:
         raise ValueError("Judge diagnostics differ from the original saved verdicts")
-    return expected
+    if expected.metadata != package.metadata:
+        raise ValueError("Recorded agent identity differs from the saved matrix")
+    return package

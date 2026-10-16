@@ -1547,10 +1547,8 @@ options:
 
 ```text
 usage: tau2 submit prepare [-h] --output OUTPUT [--no-verify] [--voice]
-                           [--benchmark BENCHMARK] [--historical-voice-v2]
-                           [--provider {gemini,gpt_live,grok}]
-                           [--interaction-facts INTERACTION_FACTS]
-                           [--judges-root JUDGES_ROOT] [--metadata-file METADATA_FILE]
+                           [--benchmark BENCHMARK] [--metadata-file METADATA_FILE]
+                           [--historical-voice-v2] [--judges-root JUDGES_ROOT]
                            input_paths [input_paths ...]
 
 positional arguments:
@@ -1566,19 +1564,24 @@ options:
   --benchmark BENCHMARK
                         Verify this published preset; otherwise infer from matrix
                         metadata
-  --historical-voice-v2
-                        Prepare the frozen 2026-10-02 Voice V2 release from saved
-                        exports
-  --provider {gemini,gpt_live,grok}
-  --interaction-facts INTERACTION_FACTS
-  --judges-root JUDGES_ROOT
   --metadata-file METADATA_FILE
+                        2.0 packages: JSON with model_name, model_organization,
+                        submitting_organization, submission_date and
+                        contact_info.email
+  --historical-voice-v2
+                        Maintainers only: read the frozen 2026-10-02 Voice V2 release
+                        export
+  --judges-root JUDGES_ROOT
+                        With --historical-voice-v2: a provider's saved verdict
+                        directory (<language>/<simulation-id>.json); repeat for each
+                        judge suite
 ```
 
 ### `tau2 submit validate`
 
 ```text
 usage: tau2 submit validate [-h] [--benchmark BENCHMARK] [--results RESULTS]
+                            [--historical-voice-v2] [--judges-root JUDGES_ROOT]
                             submission_dir
 
 positional arguments:
@@ -1589,7 +1592,16 @@ options:
   --benchmark BENCHMARK
                         Verify this published preset; otherwise infer from submission
                         metadata
-  --results RESULTS     Original saved benchmark matrix for independent validation
+  --results RESULTS     Original saved benchmark matrix (or, with --historical-
+                        voice-v2, the frozen release export) for independent
+                        validation
+  --historical-voice-v2
+                        Maintainers only: read the frozen 2026-10-02 Voice V2 release
+                        export
+  --judges-root JUDGES_ROOT
+                        With --historical-voice-v2: a provider's saved verdict
+                        directory (<language>/<simulation-id>.json); repeat for each
+                        judge suite
 ```
 
 ### `tau2 submit verify-trajs`

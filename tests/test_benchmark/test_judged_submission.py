@@ -5,6 +5,7 @@ A synthetic complete matrix with fake saved verdicts; no model is ever called.
 
 import argparse
 import json
+import shutil
 
 import pytest
 
@@ -29,6 +30,9 @@ from tau2.data_model.simulation import (
 from tau2.multilingual.runtime import load_language
 from tau2.runner.helpers import get_info
 from tau2.runner.presets import resolve_configs
+
+# Package name for the conftest `submitter_file` metadata.
+PACKAGE_NAME = "fixture_test_2026-10-02"
 
 
 def _write_verdicts(cell, catalog):
@@ -118,11 +122,23 @@ def _submit(*argv):
     args.func(args)
 
 
-def test_prepare_and_validate_recompute_rewards_and_judges(judged_matrix, tmp_path):
+def test_prepare_and_validate_recompute_rewards_and_judges(
+    judged_matrix, tmp_path, submitter_file
+):
     from tau2.judges.submission import BenchmarkDiagnostics
+    from tau2.scripts.leaderboard.benchmark_package import load_package
 
-    package = tmp_path / "package"
-    _submit("prepare", judged_matrix, "--output", package)
+    _submit(
+        "prepare",
+        judged_matrix,
+        "--output",
+        tmp_path / "out",
+        "--metadata-file",
+        submitter_file,
+    )
+    package = tmp_path / "out" / PACKAGE_NAME
+    metadata = load_package(package).metadata
+    assert (metadata.agent_provider, metadata.evidence) == ("openai", "matrix")
     diagnostics = BenchmarkDiagnostics.model_validate_json(
         (package / "benchmark-diagnostics.json").read_text()
     )
@@ -151,10 +167,7 @@ def test_prepare_and_validate_recompute_rewards_and_judges(judged_matrix, tmp_pa
     forged = json.loads((package / "benchmark-diagnostics.json").read_text())
     forged["cells"][0]["summary"][0]["fail_units"] += 1
     forged_package = tmp_path / "forged"
-    forged_package.mkdir()
-    (forged_package / "benchmark-submission.json").write_text(
-        (package / "benchmark-submission.json").read_text()
-    )
+    shutil.copytree(package, forged_package)
     (forged_package / "benchmark-diagnostics.json").write_text(json.dumps(forged))
     with pytest.raises(ValueError, match="does not match verdict fingerprints"):
         _submit("validate", forged_package, "--results", judged_matrix)
@@ -176,16 +189,41 @@ def test_prepare_and_validate_recompute_rewards_and_judges(judged_matrix, tmp_pa
         _submit("validate", package, "--results", judged_matrix)
 
 
-def test_prepare_refuses_missing_rewards_with_counts_and_commands(
-    judged_matrix, tmp_path
+def test_validate_rejects_changed_agent_identity(
+    judged_matrix, tmp_path, submitter_file
 ):
-    import shutil
+    _submit(
+        "prepare",
+        judged_matrix,
+        "--output",
+        tmp_path,
+        "--metadata-file",
+        submitter_file,
+    )
+    package = tmp_path / PACKAGE_NAME
+    path = package / "benchmark-metadata.json"
+    metadata = json.loads(path.read_text())
+    metadata["agent_model"] = "someone-else"
+    path.write_text(json.dumps(metadata))
+    with pytest.raises(ValueError, match="Recorded agent identity differs"):
+        _submit("validate", package, "--results", judged_matrix)
 
+
+def test_prepare_refuses_missing_rewards_with_counts_and_commands(
+    judged_matrix, tmp_path, submitter_file
+):
     shutil.rmtree(judged_matrix / "ko-telecom")
     for index in range(10):
         (judged_matrix / "pt-retail" / "simulations" / f"sim-{index}.json").unlink()
     with pytest.raises(SystemExit) as raised:
-        _submit("prepare", judged_matrix, "--output", tmp_path / "package")
+        _submit(
+            "prepare",
+            judged_matrix,
+            "--output",
+            tmp_path / "package",
+            "--metadata-file",
+            submitter_file,
+        )
     message = str(raised.value.code)
     assert "Traceback" not in message
     assert "60/900 calls lack a scored reward (60 missing" in message
@@ -196,7 +234,9 @@ def test_prepare_refuses_missing_rewards_with_counts_and_commands(
     assert not (tmp_path / "package").exists()
 
 
-def test_prepare_refuses_missing_judges_per_cell_and_measure(judged_matrix, tmp_path):
+def test_prepare_refuses_missing_judges_per_cell_and_measure(
+    judged_matrix, tmp_path, submitter_file
+):
     verdicts_path = judged_matrix / "zh-airline" / "diagnostics" / "verdicts.json"
     rows = json.loads(verdicts_path.read_text())
     kept = [
@@ -209,7 +249,14 @@ def test_prepare_refuses_missing_judges_per_cell_and_measure(judged_matrix, tmp_
     ]
     verdicts_path.write_text(json.dumps(kept))
     with pytest.raises(SystemExit) as raised:
-        _submit("prepare", judged_matrix, "--output", tmp_path / "package")
+        _submit(
+            "prepare",
+            judged_matrix,
+            "--output",
+            tmp_path / "package",
+            "--metadata-file",
+            submitter_file,
+        )
     message = str(raised.value.code)
     assert "Rewards:" not in message
     assert "Judges: 1/18 cells" in message
@@ -219,7 +266,9 @@ def test_prepare_refuses_missing_judges_per_cell_and_measure(judged_matrix, tmp_
     assert not (tmp_path / "package").exists()
 
 
-def test_prepare_refuses_partial_judge_errors_cleanly(judged_matrix, tmp_path):
+def test_prepare_refuses_partial_judge_errors_cleanly(
+    judged_matrix, tmp_path, submitter_file
+):
     """A verdict with unit errors but some units is incomplete, never a crash."""
     verdicts_path = judged_matrix / "es-retail" / "diagnostics" / "verdicts.json"
     rows = json.loads(verdicts_path.read_text())
@@ -229,7 +278,14 @@ def test_prepare_refuses_partial_judge_errors_cleanly(judged_matrix, tmp_path):
     ]
     verdicts_path.write_text(json.dumps(rows))
     with pytest.raises(SystemExit) as raised:
-        _submit("prepare", judged_matrix, "--output", tmp_path / "package")
+        _submit(
+            "prepare",
+            judged_matrix,
+            "--output",
+            tmp_path / "package",
+            "--metadata-file",
+            submitter_file,
+        )
     message = str(raised.value.code)
     assert "es-retail: naturalness 49/50 judged (1 judge errors)" in message
     assert f"Run `tau2 judges suite {judged_matrix}`" in message

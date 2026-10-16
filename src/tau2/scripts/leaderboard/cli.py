@@ -41,16 +41,12 @@ def add_submit_args(parser: argparse.ArgumentParser) -> None:
         help="Verify this published preset; otherwise infer from matrix metadata",
     )
     submit_prepare_parser.add_argument(
-        "--historical-voice-v2",
-        action="store_true",
-        help="Prepare the frozen 2026-10-02 Voice V2 release from saved exports",
+        "--metadata-file",
+        type=Path,
+        help="2.0 packages: JSON with model_name, model_organization, "
+        "submitting_organization, submission_date and contact_info.email",
     )
-    submit_prepare_parser.add_argument(
-        "--provider", choices=("gemini", "gpt_live", "grok")
-    )
-    submit_prepare_parser.add_argument("--interaction-facts", type=Path)
-    submit_prepare_parser.add_argument("--judges-root", type=Path)
-    submit_prepare_parser.add_argument("--metadata-file", type=Path)
+    _add_historical_args(submit_prepare_parser)
     submit_prepare_parser.set_defaults(func=lambda args: run_prepare_submission(args))
 
     # Submit validate subcommand
@@ -68,8 +64,10 @@ def add_submit_args(parser: argparse.ArgumentParser) -> None:
     submit_validate_parser.add_argument(
         "--results",
         type=Path,
-        help="Original saved benchmark matrix for independent validation",
+        help="Original saved benchmark matrix (or, with --historical-voice-v2, "
+        "the frozen release export) for independent validation",
     )
+    _add_historical_args(submit_validate_parser)
     submit_validate_parser.set_defaults(func=lambda args: run_validate_submission(args))
 
     # Submit verify-trajs subcommand
@@ -104,6 +102,37 @@ def add_submit_args(parser: argparse.ArgumentParser) -> None:
     submit_im_parser.set_defaults(func=lambda args: run_interaction_metrics(args))
 
 
+def _add_historical_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--historical-voice-v2",
+        action="store_true",
+        help="Maintainers only: read the frozen 2026-10-02 Voice V2 release export",
+    )
+    parser.add_argument(
+        "--judges-root",
+        type=Path,
+        action="append",
+        help="With --historical-voice-v2: a provider's saved verdict directory "
+        "(<language>/<simulation-id>.json); repeat for each judge suite",
+    )
+
+
+def _check_historical_args(args, *, needs: tuple[str, ...]) -> bool:
+    """True for a historical invocation; reject historical inputs elsewhere."""
+    if not args.historical_voice_v2:
+        if args.judges_root:
+            raise ValueError("--judges-root requires --historical-voice-v2")
+        return False
+    missing = [name for name in needs if not getattr(args, name)]
+    if args.benchmark or missing:
+        raise ValueError(
+            "--historical-voice-v2 requires "
+            + ", ".join("--" + name.replace("_", "-") for name in needs)
+            + " and no --benchmark"
+        )
+    return True
+
+
 def run_verify_trajectories(args):
     import sys
 
@@ -121,35 +150,24 @@ def run_verify_trajectories(args):
 
 def run_prepare_submission(args):
     """Run the prepare submission command."""
-    if args.historical_voice_v2:
-        if args.benchmark or args.no_verify or len(args.input_paths) != 1:
+    from tau2.metrics.benchmark import IncompleteSubmissionError
+
+    if _check_historical_args(args, needs=("judges_root", "metadata_file")):
+        if args.no_verify or len(args.input_paths) != 1:
             raise ValueError(
                 "Historical Voice V2 requires one saved export and full verification"
             )
-        required = ("provider", "interaction_facts", "judges_root", "metadata_file")
-        missing = [
-            name.replace("_", "-") for name in required if getattr(args, name) is None
-        ]
-        if missing:
-            raise ValueError("Historical Voice V2 requires: " + ", ".join(missing))
         from tau2.scripts.leaderboard.voice_v2_publication import (
-            prepare_voice_v2_package,
+            prepare_historical_package,
         )
 
-        prepare_voice_v2_package(
+        prepare_historical_package(
             Path(args.input_paths[0]),
-            Path(args.output),
-            args.provider,
-            args.interaction_facts,
             args.judges_root,
             args.metadata_file,
+            Path(args.output),
         )
         return
-    if any(
-        getattr(args, name) is not None
-        for name in ("provider", "interaction_facts", "judges_root", "metadata_file")
-    ):
-        raise ValueError("Saved judge inputs require --historical-voice-v2")
     from tau2.scripts.leaderboard.prepare_submission import prepare_submission
 
     has_matrix = any(
@@ -160,19 +178,28 @@ def run_prepare_submission(args):
             raise ValueError(
                 "Benchmark submissions require one matrix root and full verification"
             )
-        from tau2.metrics.benchmark import IncompleteSubmissionError
+        if args.metadata_file is None:
+            raise SystemExit(
+                "Error: 2.0 packages require --metadata-file (see "
+                "docs/leaderboard-submission.md#20-benchmarks-text-v1-and-voice-v2)"
+            )
         from tau2.scripts.leaderboard.prepare_submission import (
             prepare_benchmark_submission,
         )
 
         try:
             prepare_benchmark_submission(
-                Path(args.input_paths[0]), Path(args.output), args.benchmark
+                Path(args.input_paths[0]),
+                Path(args.output),
+                args.metadata_file,
+                args.benchmark,
             )
         except IncompleteSubmissionError as error:
             # An expected outcome of an unfinished run, not a crash.
             raise SystemExit(f"Error: {error}") from None
         return
+    if args.metadata_file is not None:
+        raise ValueError("--metadata-file is only used for 2.0 packages")
     prepare_submission(
         input_paths=args.input_paths,
         output_dir=args.output,
@@ -183,42 +210,35 @@ def run_prepare_submission(args):
 
 def run_validate_submission(args):
     """Run the validate submission command."""
+    from tau2.metrics.benchmark import IncompleteSubmissionError
+    from tau2.scripts.leaderboard.benchmark_package import is_package
     from tau2.scripts.leaderboard.prepare_submission import validate_submission
 
     directory = Path(args.submission_dir)
-    submission_path = directory / "submission.json"
-    if submission_path.is_file():
-        import json
+    if _check_historical_args(args, needs=("judges_root", "results")):
+        from tau2.scripts.leaderboard.voice_v2_publication import (
+            validate_historical_package,
+        )
 
-        if json.loads(submission_path.read_text()).get("format") == "voice-v2":
-            from tau2.scripts.leaderboard.voice_v2_publication import (
-                validate_voice_v2_package,
-            )
-
-            if args.benchmark or args.results:
-                raise ValueError(
-                    "Voice V2 package validation reads its saved source manifest"
-                )
-            submission = validate_voice_v2_package(directory)
-            print(submission.benchmark_submission.summary.model_dump_json(indent=2))
-            return
-    if args.benchmark or (directory / "benchmark-submission.json").exists():
+        package = validate_historical_package(directory, args.results, args.judges_root)
+        print(package.submission.summary.model_dump_json(indent=2))
+        return
+    if args.benchmark or is_package(directory):
         if args.results is None:
             raise ValueError(
                 "Benchmark validation requires --results with the original saved matrix"
             )
-        from tau2.metrics.benchmark import IncompleteSubmissionError
         from tau2.scripts.leaderboard.prepare_submission import (
             validate_benchmark_submission,
         )
 
         try:
-            submission = validate_benchmark_submission(
+            package = validate_benchmark_submission(
                 directory, args.results, args.benchmark
             )
         except IncompleteSubmissionError as error:
             raise SystemExit(f"Error: {error}") from None
-        print(submission.summary.model_dump_json(indent=2))
+        print(package.submission.summary.model_dump_json(indent=2))
         return
     if args.results is not None:
         raise ValueError("--results is only used for benchmark matrix submissions")
