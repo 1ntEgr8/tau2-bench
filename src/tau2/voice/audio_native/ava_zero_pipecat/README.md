@@ -42,9 +42,11 @@ tau2 run --domain retail --audio-native \
 3. It registers the domain tools as self-contained MCP tool definitions
    (`inputSchema`) under the versioned `avartha-harness-tools/1` protocol and
    waits for the server to acknowledge them.
-4. Each tick converts τ-bench's 8 kHz μ-law audio to 16 kHz PCM16, sends it,
-   and converts the returned PCM16 frames from their declared sample rate back
-   to telephony audio. `tool_call` messages become τ-bench tool calls and their
+4. Each tick converts τ-bench's 8 kHz μ-law audio to 16 kHz PCM16 with a
+   windowed-sinc filter (`caller_audio.py`; the shared linear-interpolation
+   converter leaves a mirror image of the voice above 4 kHz), sends it, and
+   converts the returned PCM16 frames from their declared sample rate back to
+   telephony audio. `tool_call` messages become τ-bench tool calls and their
    results are returned as MCP `CallToolResult` payloads.
 5. On disconnect it requests the server's `cost_report`.
 

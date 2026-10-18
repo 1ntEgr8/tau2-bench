@@ -22,6 +22,7 @@ from tau2.environment.tool import Tool
 from tau2.voice.audio_native.adapter import DiscreteTimeAdapter
 from tau2.voice.audio_native.async_loop import BackgroundAsyncLoop
 from tau2.voice.audio_native.audio_converter import StreamingTelephonyConverter
+from tau2.voice.audio_native.ava_zero_pipecat.caller_audio import CallerAudioUpsampler
 from tau2.voice.audio_native.ava_zero_pipecat.config import AvaZeroPipecatConfig
 from tau2.voice.audio_native.ava_zero_pipecat.provider import (
     AgentAudioEvent,
@@ -286,9 +287,7 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
         self.reasoning_effort = reasoning_effort
         self.ava_zero_config = config
 
-        self._input_converter = StreamingTelephonyConverter(
-            input_sample_rate=DEFAULT_AVA_ZERO_INPUT_SAMPLE_RATE,
-        )
+        self._input_converter = CallerAudioUpsampler(DEFAULT_AVA_ZERO_INPUT_SAMPLE_RATE)
         self._output_converters: dict[int, StreamingTelephonyConverter] = {}
         self._chunk_size = int(
             DEFAULT_AVA_ZERO_INPUT_SAMPLE_RATE * 2 * self._voip_interval_ms / 1000
