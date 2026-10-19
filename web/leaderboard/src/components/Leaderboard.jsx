@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import './Leaderboard.css'
 import ProgressView from './ProgressView'
+import MultilingualVoice from './MultilingualVoice'
 
 // The leaderboard is split into three buckets, one per benchmark track:
 // τ³-Banking (published as τ-knowledge), τ³-Voice (published as τ-voice:
@@ -288,6 +289,7 @@ const Leaderboard = () => {
   const [showFilterInfo, setShowFilterInfo] = useState(false)
   // Voice ranking mode: 'passk' (default) or 'interaction' (τ-voice panel)
   const [rankBy, setRankBy] = useState('passk')
+  const [voiceEdition, setVoiceEdition] = useState(() => window.location.pathname.replace(/\/$/, '') === '/progress' ? 'english' : 'multilingual')
   // null = keep the pass^1 ordering; set by clicking a metric column header
   const [interactionMetric, setInteractionMetric] = useState(null)
   // Expanded rows state (set of model names)
@@ -661,64 +663,7 @@ const Leaderboard = () => {
   // shown as its own column but excluded so older submissions stay comparable
   const voiceDomains = ['retail', 'airline', 'telecom']
 
-  return (
-    <div className="leaderboard-wrapper">
-    <div className="leaderboard-container">
-      {/* Benchmark Selector */}
-      <div className="benchmark-selector">
-        <div className="benchmark-toggle-container" style={{ '--benchmark-count': benchmarkKeys.length }}>
-          {benchmarkKeys.map((key) => (
-            <button
-              key={key}
-              className={`benchmark-toggle-option ${benchmark === key ? 'active' : ''}`}
-              onClick={() => handleBenchmarkChange(key)}
-              title={BENCHMARK_CONFIG[key].hoverNote}
-            >
-              <span className="benchmark-icon">{BENCHMARK_CONFIG[key].icon}</span> {BENCHMARK_CONFIG[key].label}
-            </button>
-          ))}
-          <div
-            className="benchmark-toggle-slider"
-            style={{
-              width: `calc((100% - 8px) / ${benchmarkKeys.length})`,
-              transform: `translateX(${benchmarkKeys.indexOf(benchmark) * 100}%)`
-            }}
-          />
-        </div>
-      </div>
-
-      <div className="leaderboard-title-row">
-        <h2 className="leaderboard-title">{benchConfig.title}</h2>
-      </div>
-      <p className="leaderboard-subtitle">{benchConfig.description}</p>
-
-      {/* Combined Controls Row — applies to both ranking and progress views */}
-      <div className="leaderboard-controls">
-        {/* Domain Toggle Switch (hidden when the bucket has a single domain) */}
-        {availableDomains.length > 1 && (
-        <div className="domain-toggle-switch">
-          <div className="toggle-container domain-toggle-container" style={{ '--domain-count': availableDomains.length }}>
-            {availableDomains.map(d => (
-              <button
-                key={d.key}
-                className={`toggle-option domain-toggle-option ${domain === d.key ? 'active' : ''}`}
-                onClick={() => setDomain(d.key)}
-              >
-                {d.label}
-              </button>
-            ))}
-            <div 
-              className="toggle-slider domain-toggle-slider"
-              style={{
-                width: `calc((100% - 8px) / ${availableDomains.length})`,
-                transform: `translateX(${availableDomains.findIndex(d => d.key === domain) * 100}%)`
-              }}
-            />
-          </div>
-        </div>
-        )}
-
-        {/* Submission Type Filter */}
+  const submissionTypeFilters = (
         <div className="submission-type-filter">
           <label className="checkbox-container">
             <input 
@@ -779,6 +724,73 @@ const Leaderboard = () => {
             )}
           </div>
         </div>
+  )
+
+  return (
+    <div className="leaderboard-wrapper">
+    <div className="leaderboard-container">
+      {/* Benchmark Selector */}
+      <div className="benchmark-selector">
+        <div className="benchmark-toggle-container" style={{ '--benchmark-count': benchmarkKeys.length }}>
+          {benchmarkKeys.map((key) => (
+            <button
+              key={key}
+              className={`benchmark-toggle-option ${benchmark === key ? 'active' : ''}`}
+              onClick={() => handleBenchmarkChange(key)}
+              title={BENCHMARK_CONFIG[key].hoverNote}
+            >
+              <span className="benchmark-icon">{BENCHMARK_CONFIG[key].icon}</span> {BENCHMARK_CONFIG[key].label}
+            </button>
+          ))}
+          <div
+            className="benchmark-toggle-slider"
+            style={{
+              width: `calc((100% - 8px) / ${benchmarkKeys.length})`,
+              transform: `translateX(${benchmarkKeys.indexOf(benchmark) * 100}%)`
+            }}
+          />
+        </div>
+      </div>
+
+      <div className="leaderboard-title-row">
+        <h2 className="leaderboard-title">{benchConfig.title}</h2>
+      </div>
+      <p className="leaderboard-subtitle">{benchConfig.description}</p>
+
+      {isVoice && <div className="voice-edition" aria-label="Voice edition">
+        <button className={voiceEdition === 'multilingual' ? 'active' : ''} aria-pressed={voiceEdition === 'multilingual'} onClick={() => setVoiceEdition('multilingual')}>Multilingual</button>
+        <button className={voiceEdition === 'english' ? 'active' : ''} aria-pressed={voiceEdition === 'english'} onClick={() => setVoiceEdition('english')}>English only</button>
+      </div>}
+      {isVoice && voiceEdition === 'multilingual' ? <MultilingualVoice submissionTypeFilters={submissionTypeFilters} showStandard={showStandard} showCustom={showCustom} /> : <>
+
+      {/* Combined Controls Row — applies to both ranking and progress views */}
+      <div className="leaderboard-controls">
+        {/* Domain Toggle Switch (hidden when the bucket has a single domain) */}
+        {availableDomains.length > 1 && (
+        <div className="domain-toggle-switch">
+          <div className="toggle-container domain-toggle-container" style={{ '--domain-count': availableDomains.length }}>
+            {availableDomains.map(d => (
+              <button
+                key={d.key}
+                className={`toggle-option domain-toggle-option ${domain === d.key ? 'active' : ''}`}
+                onClick={() => setDomain(d.key)}
+              >
+                {d.label}
+              </button>
+            ))}
+            <div
+              className="toggle-slider domain-toggle-slider"
+              style={{
+                width: `calc((100% - 8px) / ${availableDomains.length})`,
+                transform: `translateX(${availableDomains.findIndex(d => d.key === domain) * 100}%)`
+              }}
+            />
+          </div>
+        </div>
+        )}
+
+        {/* Submission Type Filter */}
+        {submissionTypeFilters}
       </div>
 
       {/* Voice Overall scope note */}
@@ -1587,6 +1599,7 @@ const Leaderboard = () => {
           </div>
         </div>
       )}
+      </>}
     </div>
     </div>
   )

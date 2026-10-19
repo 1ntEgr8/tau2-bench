@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import './LeaderboardPreview.css'
+import multilingualData from '../data/multilingual/results.json'
+import { summarize } from '../data/multilingual/metrics'
 
 const MEDAL_EMOJI = ['🥇', '🥈', '🥉']
 
@@ -39,7 +41,6 @@ function LeaderboardPreview({ onViewFullLeaderboard, onNavigate }) {
       const manifest = await manifestResponse.json()
 
       const textDirs = [...(manifest.submissions || []), ...(manifest.legacy_submissions || [])]
-      const voiceDirs = manifest.voice_submissions || []
 
       // Load text submissions once; they feed both the Core and Knowledge cards.
       const coreModels = []
@@ -78,29 +79,10 @@ function LeaderboardPreview({ onViewFullLeaderboard, onNavigate }) {
       knowledgeModels.sort((a, b) => b.score - a.score)
       setKnowledgeTop3(knowledgeModels.slice(0, 3))
 
-      // Load voice submissions and compute overall pass^1.
-      const voiceModels = []
-      for (const dir of voiceDirs) {
-        try {
-          const res = await fetch(`${SUBMISSIONS_BASE}/${dir}/submission.json`, NO_CACHE)
-          if (!res.ok) continue
-          const sub = await res.json()
-
-          if (sub.submission_type && sub.submission_type !== 'standard') continue
-
-          const values = CORE_DOMAINS
-            .map(d => sub.results[d]?.pass_1)
-            .filter(v => v != null)
-
-          if (values.length > 0) {
-            voiceModels.push({
-              name: sub.model_name,
-              org: sub.voice_config?.provider || sub.model_organization,
-              score: values.reduce((s, v) => s + v, 0) / values.length,
-            })
-          }
-        } catch { /* skip */ }
-      }
+      const voiceModels = multilingualData.models.map(model => {
+        const summary = summarize(model)
+        return { name: model.name, org: model.effort, score: summary.task }
+      })
 
       voiceModels.sort((a, b) => b.score - a.score)
       setVoiceTop3(voiceModels.slice(0, 3))
@@ -124,7 +106,7 @@ function LeaderboardPreview({ onViewFullLeaderboard, onNavigate }) {
   // under the τ³-Voice badge).
   const cards = [
     { badge: 'τ³-Banking', badgeClass: 'knowledge', mode: 'Text', domains: 'Knowledge retrieval', href: '/leaderboard?benchmark=knowledge', hoverNote: 'τ³-Banking was published as τ-knowledge', models: knowledgeTop3 },
-    { badge: 'τ³-Voice', badgeClass: 'voice', domains: 'Retail · Airline · Telecom · Banking', href: '/leaderboard?benchmark=voice', hoverNote: 'τ³-Voice was published as τ-voice', models: voiceTop3 },
+    { badge: 'τ³-Voice', badgeClass: 'voice', mode: 'Multilingual', domains: 'All languages · 3 domains', href: '/leaderboard?benchmark=voice', hoverNote: 'Multilingual: task completion, interaction, and experience', models: voiceTop3 },
     { badge: 'τ²-bench', badgeClass: 'core', mode: 'Text', domains: 'Retail · Airline · Telecom', href: '/leaderboard?benchmark=core', models: coreTop3 },
   ]
 
@@ -162,7 +144,7 @@ function LeaderboardPreview({ onViewFullLeaderboard, onNavigate }) {
                 <tr>
                   <th className="preview-rank-col">#</th>
                   <th className="preview-model-col">Model</th>
-                  <th className="preview-score-col">Pass^1</th>
+                  <th className="preview-score-col">{card.badgeClass === 'voice' ? 'Task completion' : 'Pass^1'}</th>
                 </tr>
               </thead>
               <tbody>
