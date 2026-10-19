@@ -45,18 +45,19 @@ const agentKey = ({ metadata }) => [metadata.model_name, metadata.model_organiza
 // `extras` maps a domain to its separately scored package.
 export function groupPackages(cores, domainPackages) {
   const errors = []
-  const rows = cores.map(pkg => ({ ...pkg, extras: {} }))
+  // One row per agent: the first listed voice-v2 package wins.
   const byAgent = new Map()
-  for (const row of rows) byAgent.set(agentKey(row), byAgent.has(agentKey(row)) ? null : row)
+  for (const pkg of cores) {
+    const key = agentKey(pkg)
+    if (byAgent.has(key)) errors.push(`${pkg.dir}: duplicate voice-v2 package for ${byAgent.get(key).dir}`)
+    else byAgent.set(key, { ...pkg, extras: {} })
+  }
+  const rows = [...byAgent.values()]
   const standalone = new Map()
   for (const pkg of domainPackages) {
     const domain = DOMAIN_BENCHMARKS[pkg.submission.frame.benchmark_version]
     const key = agentKey(pkg)
     const core = byAgent.get(key)
-    if (core === null) {
-      errors.push(`${pkg.dir}: several voice-v2 packages match its agent`)
-      continue
-    }
     const row = core || standalone.get(key) || { dir: pkg.dir, metadata: pkg.metadata, submission: null, diagnostics: null, extras: {} }
     if (row.extras[domain]) {
       errors.push(`${pkg.dir}: duplicate ${domain} package for ${row.dir}`)

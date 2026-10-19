@@ -28,6 +28,8 @@ const submission = (version, domains, score) => {
 const core = submission('voice-v2', ['airline', 'retail', 'telecom'], (l, d) => (40 + 5 * l + 10 * d) / 100)
 const packages = {
   fixture_core: { 'benchmark-metadata.json': metadata('fixture-live', 'gemini'), 'benchmark-submission.json': core },
+  // A second voice-v2 package for the same agent is dropped, not a second row.
+  fixture_core_duplicate: { 'benchmark-metadata.json': metadata('fixture-live', 'gemini'), 'benchmark-submission.json': submission('voice-v2', ['airline', 'retail', 'telecom'], () => 0.99) },
   // Same agent as fixture_core: fills its Banking row.
   fixture_banking: { 'benchmark-metadata.json': metadata('fixture-live', 'gemini'), 'benchmark-submission.json': submission('voice-v2-banking', ['banking_knowledge'], l => (10 + l) / 100) },
   // No voice-v2 package for this agent: shown only under Intake.
@@ -38,7 +40,7 @@ const percent = value => `${(100 * value).toFixed(1)}%`
 test.beforeEach(async ({ page }) => {
   await page.route('**/submissions/manifest.json', async route => {
     const manifest = await (await route.fetch()).json()
-    await route.fulfill({ json: { ...manifest, voice_v2_submissions: ['fixture_core'], voice_v2_domain_submissions: ['fixture_banking', 'fixture_entity'] } })
+    await route.fulfill({ json: { ...manifest, voice_v2_submissions: ['fixture_core', 'fixture_core_duplicate'], voice_v2_domain_submissions: ['fixture_banking', 'fixture_entity'] } })
   })
   await page.route('**/submissions/fixture_*/*', route => {
     const [dir, file] = route.request().url().split('/').slice(-2)
@@ -49,7 +51,7 @@ test.beforeEach(async ({ page }) => {
 
 const selectDomain = (page, name) => page.locator('.mv-domain-toggle button', { hasText: name }).click()
 
-test('domain packages never change Overall or add Overall rows', async ({ page }) => {
+test('domain and duplicate packages never change Overall or add Overall rows', async ({ page }) => {
   await page.goto('/leaderboard?benchmark=voice')
   const table = page.locator('.mv-leaderboard-table')
   await expect(table.locator('tr.mv-package-row')).toHaveCount(1)
@@ -84,4 +86,16 @@ test('an entity package without voice-v2 appears only under Intake', async ({ pa
   await expect(detail.locator('tr[data-factor="all"] td[data-language="all"]')).toHaveText('—')
   await selectDomain(page, 'Airline')
   await expect(row).toHaveCount(0)
+})
+
+test('moving to /progress shows the English progress view', async ({ page }) => {
+  await page.goto('/leaderboard?benchmark=voice')
+  await expect(page.locator('.mv-leaderboard-table')).toBeVisible()
+  await page.evaluate(() => {
+    window.history.pushState(null, '', '/progress?benchmark=voice')
+    window.dispatchEvent(new PopStateEvent('popstate'))
+  })
+  await expect(page.locator('#progress')).toBeAttached()
+  await page.goBack()
+  await expect(page.locator('.mv-leaderboard-table')).toBeVisible()
 })

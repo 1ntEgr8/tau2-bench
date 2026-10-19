@@ -236,6 +236,9 @@ const formatInteractionValue = (value, unit) => {
   return unit === 's' ? `${value.toFixed(2)}s` : `${(value * 100).toFixed(1)}%`
 }
 
+// /progress deep-links the English-only voice view (its progress chart).
+const editionForPath = () => window.location.pathname.replace(/\/$/, '') === '/progress' ? 'english' : 'multilingual'
+
 const Leaderboard = () => {
   // Benchmark selector: 'core' (τ²-bench), 'knowledge' (τ-knowledge), or
   // 'voice' (τ-voice)
@@ -289,7 +292,7 @@ const Leaderboard = () => {
   const [showFilterInfo, setShowFilterInfo] = useState(false)
   // Voice ranking mode: 'passk' (default) or 'interaction' (τ-voice panel)
   const [rankBy, setRankBy] = useState('passk')
-  const [voiceEdition, setVoiceEdition] = useState(() => window.location.pathname.replace(/\/$/, '') === '/progress' ? 'english' : 'multilingual')
+  const [voiceEdition, setVoiceEdition] = useState(editionForPath)
   // null = keep the pass^1 ordering; set by clicking a metric column header
   const [interactionMetric, setInteractionMetric] = useState(null)
   // Expanded rows state (set of model names)
@@ -508,6 +511,9 @@ const Leaderboard = () => {
       if (benchmarkFromUrl) {
         setBenchmark(prev => (prev === benchmarkFromUrl ? prev : benchmarkFromUrl))
       }
+      // /progress is the English voice view; the component stays mounted
+      // across /leaderboard ↔ /progress, so re-derive it on each move.
+      setVoiceEdition(editionForPath())
     }
 
     window.addEventListener('popstate', syncFromUrl)
