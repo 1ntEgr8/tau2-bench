@@ -22,14 +22,14 @@ Task and domain scores came from `audit.json`; the other measurements came from
 
 - Task completion and Interaction macro-average six languages: 900 calls per
   configuration, 4,500 total, with 50 calls per domain/language/configuration.
-- Experience, Naturalness, and aligned Speech fidelity macro-average the five
+- Generation quality, Naturalness, and aligned Speech fidelity macro-average the five
   evaluated localized languages. English is missing, never zero.
-- Experience is the share of aligned utterances passing both checks, not the
+- Generation quality is the share of aligned utterances passing both checks, not the
   average of Naturalness and Speech fidelity.
 - Interaction is 100 minus the equal-weight mean of five call-level failure
   rates. These differ from legacy English event-level rates.
 - Latency is shown separately in seconds and does not enter Interaction.
-- The 3D frontier compares Task completion, Interaction, and Experience with
+- The 3D frontier compares Task completion, Interaction, and Generation quality with
   higher being better; missing measurements cannot compete.
 
 The homepage Voice card uses the same six-language task averages. Supplemental

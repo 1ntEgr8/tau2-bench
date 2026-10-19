@@ -5,7 +5,7 @@ import PackageBreakdown from './PackageBreakdown'
 import { domainScore, packageLogo, packageScore, useVoiceV2Packages } from '../data/voiceV2Packages'
 import './MultilingualVoice.css'
 
-const metrics = [['task', 'Task completion'], ['interaction', 'Interaction'], ['experience', 'Experience']]
+const metrics = [['task', 'Task completion'], ['interaction', 'Interaction'], ['experience', 'Generation quality']]
 const componentNames = { nonresponse: 'Non-response', interruption: 'Interruptions', selectivity: 'Selectivity errors', monologue: 'Monologues', tool_use: 'Tool-use errors' }
 const providers = { openai: ['OpenAI', 'openai.svg'], gemini: ['Google', 'Google__G__logo.svg.png'], xai: ['xAI', 'xai-logo.svg'] }
 const shortName = row => `${row.name.replace('Gemini 3.1 Flash Live', 'Gemini 3.1').replace('GPT Realtime 2', 'GPT RT 2')} · ${row.effort}`
@@ -17,7 +17,7 @@ function Space({ rows, onSelect, selected, focused, onClearFocus }) {
   const drag = useRef(null)
   const axes = [
     { key: 'task', label: 'Task completion' },
-    { key: 'experience', label: 'Experience' },
+    { key: 'experience', label: 'Generation quality' },
     { key: 'interaction', label: 'Interaction' },
   ]
   const eligible = rows.filter(row => axes.every(axis => row[axis.key] != null))
@@ -57,7 +57,7 @@ function Space({ rows, onSelect, selected, focused, onClearFocus }) {
           drag.current = { x: event.clientX, y: event.clientY, yaw, tilt }
           event.currentTarget.setPointerCapture(event.pointerId)
         }} onPointerMove={move} onPointerUp={() => { drag.current = null }} onPointerCancel={() => { drag.current = null }} onLostPointerCapture={() => { drag.current = null }}>
-          <title>Task completion, experience, and interaction. Drag left or right to rotate, and up or down to tilt.</title>
+          <title>Task completion, generation quality, and interaction. Drag left or right to rotate, and up or down to tilt.</title>
           <polygon points={polygon([[0, 0, 0], [1, 0, 0], [1, 0, 1], [0, 0, 1]])} fill="#eeeeee" fillOpacity=".85" />
           <polygon points={polygon([[0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]])} fill="#f5f5f5" fillOpacity=".9" />
           <polygon points={polygon([[0, 0, 0], [0, 0, 1], [0, 1, 1], [0, 1, 0]])} fill="#f8f8f8" fillOpacity=".8" />
@@ -98,21 +98,21 @@ function Space({ rows, onSelect, selected, focused, onClearFocus }) {
             const isBest = best.some(item => item.id === row.id)
             const muted = focused && selected !== row.id
             const pointColor = muted ? '#c5c9c7' : row.color
-            return <g key={row.id} className={`mv-cube-point${muted ? ' is-muted' : ''}${focused && selected === row.id ? ' is-focused' : ''}`} role="button" tabIndex="0" aria-pressed={focused && selected === row.id} aria-label={`${shortName(row)}, task ${percent(row.task)}, experience ${percent(row.experience)}, interaction ${percent(row.interaction)}`} onClick={() => onSelect(row.id)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(row.id) } }}>
-              <title>{shortName(row)} · task {percent(row.task)} · experience {percent(row.experience)} · interaction {percent(row.interaction)}{isBest ? ' · Pareto frontier' : ''}</title>
+            return <g key={row.id} className={`mv-cube-point${muted ? ' is-muted' : ''}${focused && selected === row.id ? ' is-focused' : ''}`} role="button" tabIndex="0" aria-pressed={focused && selected === row.id} aria-label={`${shortName(row)}, task ${percent(row.task)}, generation quality ${percent(row.experience)}, interaction ${percent(row.interaction)}`} onClick={() => onSelect(row.id)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onSelect(row.id) } }}>
+              <title>{shortName(row)} · task {percent(row.task)} · generation quality {percent(row.experience)} · interaction {percent(row.interaction)}{isBest ? ' · Pareto frontier' : ''}</title>
               <circle cx={x} cy={y} r={focused && selected === row.id ? 22 : 19} fill="none" stroke={pointColor} strokeWidth="1.5" opacity=".65" />
               <circle cx={x} cy={y} r={focused && selected === row.id ? 16 : 13} fill={pointColor} stroke="white" strokeWidth="2.5" />
               <text x={x} y={y + 4.5} textAnchor="middle" fill={muted ? '#6e7671' : row.effort === 'minimal' ? '#18333d' : 'white'} fontSize="12" fontWeight="700">{index + 1}</text>
             </g>
           })}
         </svg>
-      </> : <div className="mv-cube-empty"><span>3D comparison unavailable</span><h3>Experience was not evaluated for English.</h3><p>Explore its measured task completion and interaction scores below, or choose a localized language to see all three dimensions.</p></div>}
+      </> : <div className="mv-cube-empty"><span>3D comparison unavailable</span><h3>Generation quality was not evaluated for English.</h3><p>Explore its measured task completion and interaction scores below, or choose a localized language to see all three dimensions.</p></div>}
     </div>
     <aside className="mv-cube-sidebar"><span className="mv-kicker">SELECT A MODEL</span><div className="mv-cube-models">{rows.map((row, index) => <button key={row.id} className={focused && selected !== row.id ? 'is-muted' : ''} aria-pressed={focused && selected === row.id} onClick={() => onSelect(row.id)}><span className="mv-model-number" style={{ background: focused && selected !== row.id ? '#c5c9c7' : row.color, color: row.effort === 'minimal' ? '#18333d' : 'white' }}>{index + 1}</span><span>{row.name}<small>{row.effort}</small></span>{best.some(item => item.id === row.id) && <span className="mv-frontier-tag" title="On the observed 3D Pareto frontier">Pareto</span>}</button>)}</div><div className="mv-selected-metrics"><span className="mv-kicker">{shortName(active)}</span>{axes.map(axis => <div key={axis.key}><span>{axis.label}</span><strong>{percent(active[axis.key])}</strong></div>)}</div></aside>
   </div>
 }
 
-// Only task completion is split by domain; Interaction and Experience are pooled
+// Only task completion is split by domain; Interaction and Generation quality are pooled
 // over the three core domains in the paper export.
 const domainOptions = [
   { key: 'all', label: '📊 Overall' },
@@ -206,7 +206,7 @@ function MetricBreakdown({ active, language, metric, onMetricChange, onClose }) 
     <div className="mv-factor-notes">
       {metric === 'task' && <p className="mv-footnote">Overall averages Airline, Retail, and Telecom equally. Each domain–language pair contains 50 calls. Banking and Intake are not part of the multilingual cohort and are not included in Overall.</p>}
       {metric === 'interaction' && <p className="mv-footnote">Overall is the Interaction pass score: 100 minus the equal-weight mean of the five failure rates. Darker green indicates fewer factor failures and a higher Overall score.</p>}
-      {metric === 'experience' && <p className="mv-footnote">Overall is the share of aligned utterances passing both the naturalness and speech-fidelity checks, not their average. {language === 'all' && 'Scores cover five languages; English is not evaluated.'}{language === 'en' && 'Experience, naturalness, and aligned speech fidelity were not evaluated for English in this cohort.'}</p>}
+      {metric === 'experience' && <p className="mv-footnote">Overall is the share of aligned utterances passing both the naturalness and speech-fidelity checks, not their average. {language === 'all' && 'Scores cover five languages; English is not evaluated.'}{language === 'en' && 'Generation quality, naturalness, and aligned speech fidelity were not evaluated for English in this cohort.'}</p>}
       <p className="mv-footnote">The Overall column averages evaluated languages in the selected scope equally. The intersection of the Overall row and column matches the headline {metrics.find(([key]) => key === metric)[1]} score.</p>
     </div>
 
@@ -256,7 +256,7 @@ export default function MultilingualVoice({ submissionTypeFilters, showStandard 
   }
   const rows = data.models.map(model => forDomain(summarize(model, language), domain))
   // Submitted voice-v2 packages join the paper cohort as rows scored on task
-  // completion only; Interaction and Experience are paper-cohort measures.
+  // completion only; Interaction and Generation quality are paper-cohort measures.
   // Banking and entity packages fill their domain on the same agent's row; one
   // without a voice-v2 package appears only under its own domain.
   const { packages, errors: packageErrors } = useVoiceV2Packages()
@@ -279,7 +279,7 @@ export default function MultilingualVoice({ submissionTypeFilters, showStandard 
         <table className="reliability-table mv-leaderboard-table">
           <thead><tr>
             <th>Rank</th><th>Model</th><th>Provider</th><th>Reasoning</th>
-            {metrics.map(([key, label]) => <th key={key} className="mv-metric-header" aria-sort={sort === key ? 'descending' : 'none'}><button onClick={() => setSort(key)}>{label} ↑{sort === key && <span className="mv-sort-dot"> •</span>}</button>{domain !== 'all' && key !== 'task' && <small className="mv-pooled-note" title="Interaction and Experience are not split by domain">all domains</small>}</th>)}
+            {metrics.map(([key, label]) => <th key={key} className="mv-metric-header" aria-sort={sort === key ? 'descending' : 'none'}><button onClick={() => setSort(key)}>{label} ↑{sort === key && <span className="mv-sort-dot"> •</span>}</button>{domain !== 'all' && key !== 'task' && <small className="mv-pooled-note" title="Interaction and Generation quality are not split by domain">all domains</small>}</th>)}
             <th className="expand-header"><span className="mv-visually-hidden">Breakdown</span></th>
           </tr></thead>
           <tbody>{[...leaderboardRows].sort((a, b) => a[sort] == null ? b[sort] == null ? 0 : 1 : b[sort] == null ? -1 : b[sort] - a[sort]).map((row, index) => {

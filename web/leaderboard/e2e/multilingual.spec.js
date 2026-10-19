@@ -88,7 +88,7 @@ test('multilingual explorer, breakdowns, filters and navigation', async ({ page 
   await page.getByRole('button', { name: 'Show all models', exact: true }).click()
   assert.equal(await page.locator('.mv-cube-point.is-muted').count(), 0)
 
-  await page.getByRole('button', { name: 'GPT RT 2 · xhigh: Experience breakdown', exact: true }).click()
+  await page.getByRole('button', { name: 'GPT RT 2 · xhigh: Generation quality breakdown', exact: true }).click()
   await page.locator('.mv-pass-heatmap').waitFor()
   assert.equal(await page.locator('.mv-breakdown-tabs button').count(), 3)
   assert.equal(await page.locator('.model-row.expanded + .domain-detail-row .mv-detail').count(), 1)
@@ -148,7 +148,7 @@ test('multilingual explorer, breakdowns, filters and navigation', async ({ page 
   assert.equal(await page.locator('.mv-heatmap tbody td').count(), 42)
   assert.equal(await page.locator('.mv-heatmap thead th').count(), 8)
   const metricButtons = page.locator('.mv-map-metrics')
-  for (const [key, label] of [['interaction', 'Interaction'], ['experience', 'Experience'], ['task', 'Task completion'], ['experience', 'Experience']]) {
+  for (const [key, label] of [['interaction', 'Interaction'], ['experience', 'Generation quality'], ['task', 'Task completion'], ['experience', 'Generation quality']]) {
     await metricButtons.getByRole('button', { name: label, exact: true }).click()
     assert.equal(await metricButtons.getByRole('button', { name: label, exact: true }).getAttribute('aria-pressed'), 'true')
     for (const model of data.models) {
@@ -170,10 +170,10 @@ test('multilingual explorer, breakdowns, filters and navigation', async ({ page 
   assert.equal(await page.locator('.mv-methodology').count(), 0)
   assert.deepEqual(await page.locator('.mv-paper-links a[href^="https://arxiv.org/abs/"]').allInnerTexts(), ['τ-Multilingual ↗', 'τ-Elicitation ↗', 'τ-Voice ↗'])
 
-  await page.locator('.mv-map-metrics').getByRole('button', { name: 'Experience', exact: true }).click()
+  await page.locator('.mv-map-metrics').getByRole('button', { name: 'Generation quality', exact: true }).click()
   assert.equal(await page.locator('.mv-heatmap tbody .mv-heat-cell').filter({ hasText: '—' }).count(), 6)
   assert.equal(await page.locator('.mv-heatmap tbody button').count(), 0)
-  await page.getByRole('button', { name: 'GPT RT 2 · xhigh: Experience breakdown', exact: true }).click()
+  await page.getByRole('button', { name: 'GPT RT 2 · xhigh: Generation quality breakdown', exact: true }).click()
   assert.equal(await page.locator('.mv-pass-heatmap thead th').count(), 8)
   assert.equal(await page.locator('.mv-pass-heatmap [data-language="es"]').count(), 3)
   assert.equal(await page.locator('.mv-pass-heatmap [data-language="en"] .is-missing').count(), 3)
@@ -191,13 +191,13 @@ test('multilingual explorer, breakdowns, filters and navigation', async ({ page 
   assert.ok((await page.locator('.mv-main-panel .mv-cube-empty').innerText()).includes('No multilingual Banking results yet'))
   await page.locator('.mv-domain-toggle').getByRole('button', { name: /Overall/ }).click()
   assert.equal(await page.locator('.mv-pooled-note').count(), 0)
-  await page.getByRole('button', { name: 'Experience ↑' }).click()
+  await page.getByRole('button', { name: 'Generation quality ↑' }).click()
   assert.ok((await page.locator('.mv-scores .model-row').first().innerText()).includes('xhigh'))
   await page.getByRole('button', { name: 'English only', exact: true }).click()
   await page.getByRole('heading', { name: 'τ³-Voice Leaderboard' }).waitFor()
   await page.getByRole('button', { name: 'Multilingual', exact: true }).click()
   await page.setViewportSize({ width: 390, height: 844 })
-  await page.getByRole('button', { name: 'GPT RT 2 · xhigh: Experience breakdown', exact: true }).click()
+  await page.getByRole('button', { name: 'GPT RT 2 · xhigh: Generation quality breakdown', exact: true }).click()
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
   await page.locator('.mv-detail').screenshot({ path: testInfo.outputPath('tau-multilingual-mobile.png') })
   await page.locator('.mv-breakdown-tabs').getByRole('button', { name: /Task completion/ }).click()
@@ -210,7 +210,7 @@ test('multilingual explorer, breakdowns, filters and navigation', async ({ page 
   await page.locator('.preview-table-wrapper').filter({ hasText: 'Multilingual' }).click()
   await page.getByRole('heading', { name: /Three dimensions of a good conversation/ }).waitFor()
   assert.deepEqual(errors, [])
-  console.log('PASS: six-language task/interaction averages, five-language Experience coverage, missing data, three headline metrics, factor-by-language heatmap values and missing data, clickable/tabbed breakdowns, cube gestures/focus, mobile layout, homepage navigation, browser errors.')
+  console.log('PASS: six-language task/interaction averages, five-language Generation quality coverage, missing data, three headline metrics, factor-by-language heatmap values and missing data, clickable/tabbed breakdowns, cube gestures/focus, mobile layout, homepage navigation, browser errors.')
 })
 
 test('multilingual submission filters and English progress remain available', async ({ page }) => {

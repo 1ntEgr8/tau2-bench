@@ -106,7 +106,7 @@ function LeaderboardPreview({ onViewFullLeaderboard, onNavigate }) {
   // under the τ³-Voice badge).
   const cards = [
     { badge: 'τ³-Banking', badgeClass: 'knowledge', mode: 'Text', domains: 'Knowledge retrieval', href: '/leaderboard?benchmark=knowledge', hoverNote: 'τ³-Banking was published as τ-knowledge', models: knowledgeTop3 },
-    { badge: 'τ³-Voice', badgeClass: 'voice', mode: 'Multilingual', domains: 'All languages · 3 domains', href: '/leaderboard?benchmark=voice', hoverNote: 'Multilingual: task completion, interaction, and experience', models: voiceTop3 },
+    { badge: 'τ³-Voice', badgeClass: 'voice', mode: 'Multilingual', domains: 'All languages · 3 domains', href: '/leaderboard?benchmark=voice', hoverNote: 'Multilingual: task completion, interaction, and generation quality', models: voiceTop3 },
     { badge: 'τ²-bench', badgeClass: 'core', mode: 'Text', domains: 'Retail · Airline · Telecom', href: '/leaderboard?benchmark=core', models: coreTop3 },
   ]
 
