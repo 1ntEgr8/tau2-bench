@@ -506,14 +506,19 @@ const Leaderboard = () => {
 
   // React to browser navigation events (back/forward).
   useEffect(() => {
+    let lastPath = window.location.pathname
     const syncFromUrl = () => {
       const benchmarkFromUrl = getBenchmarkFromUrl()
       if (benchmarkFromUrl) {
         setBenchmark(prev => (prev === benchmarkFromUrl ? prev : benchmarkFromUrl))
       }
       // /progress is the English voice view; the component stays mounted
-      // across /leaderboard ↔ /progress, so re-derive it on each move.
-      setVoiceEdition(editionForPath())
+      // across /leaderboard ↔ /progress, so re-derive it when the path
+      // changes. A same-path popstate keeps the reader's toggle.
+      if (window.location.pathname !== lastPath) {
+        lastPath = window.location.pathname
+        setVoiceEdition(editionForPath())
+      }
     }
 
     window.addEventListener('popstate', syncFromUrl)

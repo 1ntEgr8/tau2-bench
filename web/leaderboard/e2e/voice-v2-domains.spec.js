@@ -49,6 +49,12 @@ test.beforeEach(async ({ page }) => {
   })
 })
 
+// Views that refetch the manifest can leave an intercepted fetch in flight
+// when a test ends; drop those instead of failing on the closed page.
+test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: 'ignoreErrors' })
+})
+
 const selectDomain = (page, name) => page.locator('.mv-domain-toggle button', { hasText: name }).click()
 
 test('domain and duplicate packages never change Overall or add Overall rows', async ({ page }) => {
@@ -98,4 +104,14 @@ test('moving to /progress shows the English progress view', async ({ page }) => 
   await expect(page.locator('#progress')).toBeAttached()
   await page.goBack()
   await expect(page.locator('.mv-leaderboard-table')).toBeVisible()
+})
+
+test('a same-path popstate keeps the English only toggle', async ({ page }) => {
+  await page.goto('/leaderboard?benchmark=voice')
+  await page.getByRole('button', { name: 'English only' }).click()
+  await page.evaluate(() => {
+    window.history.pushState(null, '', '/leaderboard?benchmark=voice')
+    window.dispatchEvent(new PopStateEvent('popstate'))
+  })
+  await expect(page.getByRole('button', { name: 'English only' })).toHaveAttribute('aria-pressed', 'true')
 })
