@@ -35,6 +35,9 @@ PACKAGE_FILE_NAMES = (SUBMISSION_FILE_NAME, DIAGNOSTICS_FILE_NAME, METADATA_FILE
 # "historical-voice-v2-2026-10-02": the frozen release export
 # (`trajectories/<lang>/<domain>/`) plus its saved judge verdicts.
 Evidence = Literal["matrix", "historical-voice-v2-2026-10-02"]
+# Release-export directories of frame domains whose names differ there; entity
+# scores the export's regular condition, the other intake conditions are extras.
+HISTORICAL_EXPORT_DIRS = {"banking_knowledge": "banking", "intake": "intake/regular"}
 
 
 class PackageContact(BaseModel):
@@ -196,7 +199,10 @@ def evidence_cells(
         f"{language}/{domain}": (
             evidence_root / f"{language}-{domain}"
             if evidence == "matrix"
-            else evidence_root / "trajectories" / language / domain
+            else evidence_root
+            / "trajectories"
+            / language
+            / HISTORICAL_EXPORT_DIRS.get(domain, domain)
         )
         for language, domain in cells
     }

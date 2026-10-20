@@ -106,29 +106,41 @@ def _add_historical_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--historical-voice-v2",
         action="store_true",
-        help="Maintainers only: read the frozen 2026-10-02 Voice V2 release export",
+        help="Maintainers only: read the frozen 2026-10-02 Voice V2 release export; "
+        "--benchmark voice (default), banking or entity selects the frame",
     )
     parser.add_argument(
         "--judges-root",
         type=Path,
         action="append",
-        help="With --historical-voice-v2: a provider's saved verdict directory "
-        "(<language>/<simulation-id>.json); repeat for each judge suite",
+        help="With --historical-voice-v2 (voice frame only): a provider's saved "
+        "verdict directory (<language>/<simulation-id>.json); repeat for each "
+        "judge suite",
     )
 
 
 def _check_historical_args(args, *, needs: tuple[str, ...]) -> bool:
-    """True for a historical invocation; reject historical inputs elsewhere."""
+    """True for a historical invocation; reject historical inputs elsewhere.
+
+    The voice frame is judged and needs ``--judges-root``; banking and entity
+    carry no judge diagnostics and take none.
+    """
     if not args.historical_voice_v2:
         if args.judges_root:
             raise ValueError("--judges-root requires --historical-voice-v2")
         return False
+    from tau2.scripts.leaderboard.voice_v2_publication import HISTORICAL_BENCHMARKS
+
+    if args.benchmark not in (None, *HISTORICAL_BENCHMARKS):
+        raise ValueError(
+            "--historical-voice-v2 packages --benchmark "
+            + ", ".join(HISTORICAL_BENCHMARKS)
+        )
     missing = [name for name in needs if not getattr(args, name)]
-    if args.benchmark or missing:
+    if missing:
         raise ValueError(
             "--historical-voice-v2 requires "
             + ", ".join("--" + name.replace("_", "-") for name in needs)
-            + " and no --benchmark"
         )
     return True
 
@@ -152,7 +164,7 @@ def run_prepare_submission(args):
     """Run the prepare submission command."""
     from tau2.metrics.benchmark import IncompleteSubmissionError
 
-    if _check_historical_args(args, needs=("judges_root", "metadata_file")):
+    if _check_historical_args(args, needs=("metadata_file",)):
         if args.no_verify or len(args.input_paths) != 1:
             raise ValueError(
                 "Historical Voice V2 requires one saved export and full verification"
@@ -166,6 +178,7 @@ def run_prepare_submission(args):
             args.judges_root,
             args.metadata_file,
             Path(args.output),
+            args.benchmark or "voice",
         )
         return
     from tau2.scripts.leaderboard.prepare_submission import prepare_submission
@@ -215,12 +228,14 @@ def run_validate_submission(args):
     from tau2.scripts.leaderboard.prepare_submission import validate_submission
 
     directory = Path(args.submission_dir)
-    if _check_historical_args(args, needs=("judges_root", "results")):
+    if _check_historical_args(args, needs=("results",)):
         from tau2.scripts.leaderboard.voice_v2_publication import (
             validate_historical_package,
         )
 
-        package = validate_historical_package(directory, args.results, args.judges_root)
+        package = validate_historical_package(
+            directory, args.results, args.judges_root, args.benchmark
+        )
         print(package.submission.summary.model_dump_json(indent=2))
         return
     if args.benchmark or is_package(directory):

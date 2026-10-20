@@ -133,6 +133,14 @@ upload also copies the export's `correction.json` to `source_correction.json`
 and the verdicts to `judges/<agent_provider>/<language>/`, matching the
 uploaded Gemini entry.
 
+The same export's banking and entity calls package as `voice-v2-banking` and
+`voice-v2-entity` with `--historical-voice-v2 --benchmark banking|entity` and
+no `--judges-root`. These frames are not judged. Their cells predate the
+manifests, so the adapter checks the recorded bindings against the release and
+accepts only the verified `runtime_rules_sha256` digests in
+`ACCEPTED_RUNTIME_RULES` (`voice_v2_publication.py`). Never extend that
+allowlist without verifying the source diff it covers.
+
 ## Manual S3 Commands
 
 If you need to do things manually:

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- The maintainer-only historical adapter (`tau2 submit prepare/validate
+  --historical-voice-v2`) also packages the frozen 2026-10-02 release export's
+  banking and entity (intake) calls: `--benchmark banking` builds a
+  `voice-v2-banking` package and `--benchmark entity` a `voice-v2-entity` one
+  (default: `voice`). Those calls predate their manifests, so the adapter
+  checks each recorded binding against the released cell and accepts only
+  three verified `runtime_rules_sha256` digests. Neither frame is judged, so
+  neither takes `--judges-root`. Validation reads the frame from the package.
+  See [docs/voice-v2-publication.md](docs/voice-v2-publication.md).
+
 ## [2.0.0] - 2026-10-19
 
 > **⚠️ Scoring change — scores are not comparable with 1.x.** Communication checks,
