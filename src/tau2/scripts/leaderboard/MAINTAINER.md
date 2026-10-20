@@ -80,11 +80,12 @@ The GitHub Actions workflow will sync `submission.json` and `manifest.json` to S
 
 ## Handling a 2.0 package PR
 
-A 2.0 package is three files in `web/leaderboard/public/submissions/<name>/`:
-`benchmark-submission.json`, `benchmark-diagnostics.json` (voice-v2) and
-`benchmark-metadata.json`. voice-v2 packages are listed in the manifest's
-`voice_v2_submissions` array and shown as rows of the τ³-Voice **τ-i18n
-(Multilingual)** leaderboard, ranked with the paper cohort on task completion.
+A 2.0 package is up to four files in `web/leaderboard/public/submissions/<name>/`:
+`benchmark-submission.json`, `benchmark-diagnostics.json` and
+`benchmark-quality.json` (both voice-v2) and `benchmark-metadata.json`.
+voice-v2 packages are listed in the manifest's `voice_v2_submissions` array and
+are the rows of the τ³-Voice **τ-i18n (Multilingual)** leaderboard; the quality
+file supplies their Interaction and Generation quality.
 voice-v2-banking and voice-v2-entity packages (`benchmark-submission.json` and
 `benchmark-metadata.json` only) go in `voice_v2_domain_submissions`. Each fills
 the Banking or Intake row of the voice-v2 package with the same model name,

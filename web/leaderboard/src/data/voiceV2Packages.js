@@ -12,7 +12,17 @@ const FILES = {
   metadata: 'benchmark-metadata.json',
   submission: 'benchmark-submission.json',
   diagnostics: 'benchmark-diagnostics.json',
+  quality: 'benchmark-quality.json',
 }
+// Files a package may omit. A missing one loads as null; some static servers
+// answer a missing file with the HTML index, which is treated the same way.
+const OPTIONAL = new Set(['diagnostics', 'quality'])
+
+export const LANGUAGES = [
+  { id: 'en', name: 'English' }, { id: 'es', name: 'Spanish' }, { id: 'pt', name: 'Portuguese' },
+  { id: 'hi', name: 'Hindi' }, { id: 'ko', name: 'Korean' }, { id: 'zh', name: 'Mandarin' },
+]
+export const CORE_DOMAINS = ['airline', 'retail', 'telecom']
 
 // Domain benchmarks score domains outside the voice-v2 Overall. Their packages
 // attach to the same agent's voice-v2 row; they never change its Overall.
@@ -25,10 +35,11 @@ async function loadPackage(dir, accepts) {
   const entries = await Promise.all(Object.entries(FILES).map(async ([key, file]) => {
     const response = await fetch(`${SUBMISSIONS_BASE}/${dir}/${file}`, NO_CACHE)
     if (!response.ok) {
-      if (key === 'diagnostics') return [key, null]
+      if (OPTIONAL.has(key)) return [key, null]
       throw new Error(`${dir}/${file}: HTTP ${response.status}`)
     }
-    return [key, await response.json()]
+    if (!OPTIONAL.has(key)) return [key, await response.json()]
+    try { return [key, await response.json()] } catch { return [key, null] }
   }))
   const pkg = Object.fromEntries(entries)
   const { summary, frame } = pkg.submission
@@ -107,6 +118,36 @@ export function domainScore(pkg, domain, language = 'all') {
   if (!summary) return null
   if (language === 'all') return toPercent(summary.by_domain[domain]?.score)
   return toPercent(summary.cells.find(cell => cell.language === language && cell.domain === domain)?.score)
+}
+
+// Interaction or Generation quality (`experience`) pass rate, in percent,
+// pooled over the scored calls of the voice-v2 package's quality file:
+// passed / (passed + failed). Unscored and excluded calls are left out. Scope
+// is one language or 'all', and one core domain or 'all'; null if the package
+// has no quality file or no scored call in scope.
+const qualityCells = (pkg, language, domain) => (pkg.quality?.cells || [])
+  .filter(cell => (language === 'all' || cell.language === language) && (domain === 'all' || cell.domain === domain))
+export function packageQuality(pkg, measure, language = 'all', domain = 'all') {
+  const cells = qualityCells(pkg, language, domain)
+  const passed = cells.reduce((sum, cell) => sum + (cell[measure]?.passed || 0), 0)
+  const failed = cells.reduce((sum, cell) => sum + (cell[measure]?.failed || 0), 0)
+  return passed + failed ? 100 * passed / (passed + failed) : null
+}
+
+// Share of calls (percent) with one Interaction flag raised, over the calls
+// where that flag is known.
+export function interactionComponent(pkg, component, language = 'all', domain = 'all') {
+  const cells = qualityCells(pkg, language, domain)
+  const flagged = cells.reduce((sum, cell) => sum + (cell.interaction_components?.[component]?.flagged || 0), 0)
+  const known = cells.reduce((sum, cell) => sum + (cell.interaction_components?.[component]?.known || 0), 0)
+  return known ? 100 * flagged / known : null
+}
+
+// Calls counted toward a quality measure: scored, unscored and excluded.
+export function qualityCounts(pkg, measure, language = 'all', domain = 'all') {
+  const counts = { passed: 0, failed: 0, unscored: 0, excluded: 0 }
+  for (const cell of qualityCells(pkg, language, domain)) for (const key of Object.keys(counts)) counts[key] += cell[measure]?.[key] || 0
+  return counts
 }
 
 export const packageLogo = pkg => providerLogo[pkg.metadata.agent_provider]

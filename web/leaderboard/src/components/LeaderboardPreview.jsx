@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import './LeaderboardPreview.css'
-import multilingualData from '../data/multilingual/results.json'
-import { summarize } from '../data/multilingual/metrics'
+import { packageScore, useVoiceV2Packages } from '../data/voiceV2Packages'
 
 const MEDAL_EMOJI = ['🥇', '🥈', '🥉']
 
@@ -27,8 +26,14 @@ const corePass1 = (results) => {
 function LeaderboardPreview({ onViewFullLeaderboard, onNavigate }) {
   const [coreTop3, setCoreTop3] = useState([])
   const [knowledgeTop3, setKnowledgeTop3] = useState([])
-  const [voiceTop3, setVoiceTop3] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  // τ³-Voice card: standard voice-v2 packages ranked on task completion.
+  const { packages } = useVoiceV2Packages()
+  const voiceTop3 = (packages || [])
+    .filter(pkg => pkg.submission && (pkg.metadata.submission_type || 'standard') === 'standard')
+    .map(pkg => ({ name: pkg.metadata.model_name, org: pkg.metadata.model_organization, score: packageScore(pkg, 'all') }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3)
 
   useEffect(() => {
     loadPreviewData()
@@ -78,14 +83,6 @@ function LeaderboardPreview({ onViewFullLeaderboard, onNavigate }) {
       setCoreTop3(coreModels.slice(0, 3))
       knowledgeModels.sort((a, b) => b.score - a.score)
       setKnowledgeTop3(knowledgeModels.slice(0, 3))
-
-      const voiceModels = multilingualData.models.map(model => {
-        const summary = summarize(model)
-        return { name: model.name, org: model.effort, score: summary.task }
-      })
-
-      voiceModels.sort((a, b) => b.score - a.score)
-      setVoiceTop3(voiceModels.slice(0, 3))
     } catch (err) {
       console.warn('Failed to load leaderboard preview:', err)
     } finally {
@@ -93,7 +90,7 @@ function LeaderboardPreview({ onViewFullLeaderboard, onNavigate }) {
     }
   }
 
-  if (isLoading) {
+  if (isLoading || packages == null) {
     return (
       <div className="leaderboard-preview">
         <div className="preview-loading">Loading leaderboard...</div>

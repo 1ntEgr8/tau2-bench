@@ -223,11 +223,13 @@ custom setup in `notes` and link it in `references`. Unknown fields are rejected
    then copy the matrix to
    `s3://sierra-tau-bench-public/submissions/<name>/trajectories/<language>/<domain>/`.
 
-voice-v2 packages appear as rows of the τ³-Voice **τ-i18n (Multilingual)**
-leaderboard (`/leaderboard?benchmark=voice`), next to the paper cohort and
-marked "submission". They rank on task completion (pass@1, overall or for the
-selected language); Interaction and Generation quality are paper-cohort
-measures and show "—". A package's breakdown shows pass@1 per language × domain and each
+voice-v2 packages are the rows of the τ³-Voice **τ-i18n (Multilingual)**
+leaderboard (`/leaderboard?benchmark=voice`). Each row shows Task completion
+(pass@1, overall or for the selected domain) and, from the package's
+`benchmark-quality.json`, Interaction and Generation quality: the share of
+scored calls that pass, pooled over the scope shown. A package without that
+file shows "—" for both and stays out of the 3D explorer. A package's breakdown
+shows each score per language × domain, the five Interaction failures, and each
 judge measure per language with its coverage. Judge measures are diagnostics
 and never change the rank. 1.x and voice-v1 submissions keep their own tabs and
 are still accepted.

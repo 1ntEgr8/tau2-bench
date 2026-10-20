@@ -293,13 +293,6 @@
 .mv-package-row .legacy-badge { margin-left: 8px; }
 .mv-package-row .score-bar-fill { display: block; }
 .mv-detail code { font-size: 12px; }
-.v2-meta { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 16px 0 0; font-size: 13px; color: var(--mv-text); }
-.v2-meta dt { color: var(--mv-muted); font-weight: 600; }
-.v2-meta dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
-.v2-meta dd a { margin-right: 12px; }
-.v2-command { display: block; padding: 8px 10px; border-radius: 6px; background: var(--mv-surface); border: 1px solid var(--mv-border); white-space: pre-wrap; word-break: break-all; }
-.v2-command + .v2-command { margin-top: 6px; }
-.v2-benchmark { display: block; }
 
 /* Core-domain note, and below-Overall reference rows */
 .mv-core-note { color: var(--mv-muted); font-size: 12px; font-weight: 600; padding: 4px 10px; border: 1px solid var(--mv-border); border-radius: 999px; white-space: nowrap; }

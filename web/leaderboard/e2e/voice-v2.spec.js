@@ -1,5 +1,5 @@
 // 2.0 (voice-v2) packages listed under manifest.voice_v2_submissions appear as
-// rows of the multilingual leaderboard, next to the paper cohort.
+// rows of the multilingual leaderboard, its only rows.
 // The package is synthetic and served through request interception, so the
 // committed manifest stays untouched.
 import { test, expect } from '@playwright/test'
@@ -45,13 +45,12 @@ test.beforeEach(async ({ page }) => {
   await page.route('**/submissions/fixture_v2/*', route => route.fulfill({ json: files[route.request().url().split('/').pop()] }))
 })
 
-test('multilingual leaderboard ranks packages with the paper cohort', async ({ page }) => {
+test('multilingual leaderboard ranks submitted packages', async ({ page }) => {
   await page.goto('/leaderboard?benchmark=voice')
   const table = page.locator('.mv-leaderboard-table')
-  await expect(table.locator('tr.model-row:not(.mv-package-row)')).toHaveCount(5)
+  await expect(table.locator('tr.model-row')).toHaveCount(1)
   const row = table.locator('tr[data-package="fixture_v2"]')
   await expect(row.locator('.model-name')).toHaveText('fixture-live')
-  await expect(row).toContainText('submission')
   await expect(row.locator('td[data-metric="task"]')).toContainText(`${(100 * pkg.submission.summary.score).toFixed(1)}%`)
   await expect(row.locator('td[data-metric="interaction"]')).toHaveText('—')
   await row.locator('.mv-model-trigger').click()
@@ -59,10 +58,14 @@ test('multilingual leaderboard ranks packages with the paper cohort', async ({ p
   await expect(detail.locator('tr[data-factor="telecom"] td[data-language="en"]')).toHaveText('60.0%')
   await expect(detail.locator('tr[data-factor="all"] td[data-language="ko"]')).toHaveText('65.0%')
   await expect(detail.locator('tr.mv-extra-row')).toHaveCount(2)
-  await expect(detail.locator('tr[data-factor="honorific_agreement"] td[data-language="ko"]')).toHaveText('90.0%')
-  await expect(detail.locator('tr[data-factor="honorific_agreement"] td[data-language="en"]')).toHaveText('—')
-  await expect(detail).toContainText('Naturalness 897/900')
-  await expect(detail).toContainText('aws s3 sync s3://sierra-tau-bench-public/submissions/fixture/trajectories/')
+  await expect(detail.locator('.v2-meta')).toHaveCount(0)
+  // Judge diagnostics sit under Generation quality; this package has no quality file.
+  await detail.locator('.mv-breakdown-tabs').getByRole('button', { name: /Generation quality/ }).click()
+  await expect(detail).toContainText('does not include Generation quality scores')
+  // Only the judges Generation quality is built from are shown.
+  await expect(detail.locator('tr[data-factor="naturalness"]')).toHaveCount(1)
+  await expect(detail.locator('tr[data-factor="honorific_agreement"]')).toHaveCount(0)
+  await expect(detail).not.toContainText('Judge coverage gaps')
 })
 
 test('1.x English voice tab is unchanged by 2.0 packages', async ({ page }) => {

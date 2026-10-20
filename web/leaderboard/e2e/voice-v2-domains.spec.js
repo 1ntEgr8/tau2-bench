@@ -74,7 +74,6 @@ test('banking fills the matching voice-v2 row', async ({ page }) => {
   await expect(detail.locator('tr[data-factor="banking_knowledge"] td[data-language="ko"]')).toHaveText('13.0%')
   await expect(detail.locator('tr[data-factor="intake"] td[data-language="ko"]')).toHaveText('—')
   await expect(detail.locator('tr[data-factor="all"] td[data-language="all"]')).toHaveText(percent(core.summary.score))
-  await expect(detail).toContainText('voice-v2-banking · frame')
   await expect(detail).toContainText('Submitted 2 packages')
 })
 

@@ -1,216 +1,176 @@
-// Frozen multilingual cohort and browser regression checks.
+// τ-i18n view built from submitted voice-v2 packages: the 3D explorer, the
+// language map, the leaderboard table and its breakdowns, filters and the
+// homepage card. Packages are synthetic and served through request
+// interception, so the committed manifest stays untouched.
 import assert from 'node:assert/strict'
 import { test, expect } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
-// Use a data URL to test the pure module without Node's JSON import-attribute requirements.
-const source = await readFile(new URL('../src/data/multilingual/metrics.js', import.meta.url), 'utf8')
-const data = JSON.parse(await readFile(new URL('../src/data/multilingual/results.json', import.meta.url), 'utf8'))
-const { summarize, frontier } = await import(`data:text/javascript;base64,${Buffer.from(source.replace("import data from './results.json'", `const data = ${JSON.stringify(data)}`)).toString('base64')}`)
-test('multilingual cohort aggregates and Pareto frontier', () => {
-assert.equal(data.cells.length, 30)
-assert.equal(summarize({ id: 'missing-model' }).interaction, null)
-for (const model of data.models) {
-  const row = summarize(model)
-  for (const scope of ['all', 'multi', ...data.languages.map(language => language.id)]) {
-    const scoped = summarize(model, scope)
-    if (scope === 'en') {
-      assert.ok(Object.values(scoped.naturalnessParts).every(value => value === null))
-    } else {
-      assert.ok(Object.values(scoped.naturalnessParts).every(value => value >= 0 && value <= 100))
-      assert.ok(Math.abs(Object.values(scoped.naturalnessParts).reduce((a, b) => a + b) - 100) < 1e-8)
-      assert.ok(Math.abs(scoped.naturalnessParts.fluentAndFaithful + scoped.naturalnessParts.fidelityOnly - scoped.naturalness) < 1e-8)
-    }
-  }
-  assert.equal(row.calls, 900)
-  assert.equal(row.languages, 6)
-  assert.equal(row.experienceLanguages, 5)
-  assert.equal(summarize(model, 'multi').calls, 750)
-  assert.equal(row.experience, summarize(model, 'multi').experience)
-  const sixLanguageTask = data.languages.reduce((sum, language) => sum + summarize(model, language.id).task, 0) / 6
-  assert.ok(Math.abs(row.task - sixLanguageTask) < 1e-8)
-  assert.equal(summarize(model, 'en').naturalness, null)
-  assert.equal(summarize(model, 'en').experience, null)
-  assert.ok(Math.abs(row.task - Object.values(row.domains).reduce((a, b) => a + b) / 3) < 1e-8)
-}
-const points = [{ id: 'a', x: 1, y: 3, z: 1 }, { id: 'b', x: 2, y: 4, z: 0 }, { id: 'c', x: null, y: 5, z: 5 }, { id: 'tie', x: 2, y: 4, z: 0 }]
-assert.deepEqual(frontier(points, ['x', 'y']).map(p => p.id), ['b', 'tie'])
-assert.deepEqual(frontier(points, ['x', 'y', 'z']).map(p => p.id), ['a', 'b', 'tie'])
 
+const source = await readFile(new URL('../src/data/multilingual/metrics.js', import.meta.url), 'utf8')
+const { frontier } = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`)
+
+const languages = ['en', 'es', 'hi', 'ko', 'pt', 'zh']
+const domains = ['airline', 'retail', 'telecom']
+const components = ['nonresponse', 'interruption', 'selectivity', 'monologue', 'tool_misuse']
+const mean = values => values.reduce((a, b) => a + b, 0) / values.length
+const percent = value => `${value.toFixed(1)}%`
+
+const metadata = (model, organization, provider, submission_type = 'standard') => ({
+  schema_version: 'benchmark-metadata-v1', model_name: model, model_organization: organization, submitting_organization: organization,
+  submission_date: '2026-10-20', contact_info: { email: 'a@example.org' }, submission_type, references: [], notes: null,
+  agent_provider: provider, agent_model: model, evidence: 'matrix', trajectories: null,
+})
+const coverage = group => ({ expected_trials: group.length, scored_trials: group.length, error_trials: 0, unscored_trials: 0, missing_trials: 0, complete: true, score: mean(group.map(cell => cell.score)), observed_score: mean(group.map(cell => cell.score)) })
+const submission = score => {
+  const cells = languages.flatMap((language, l) => domains.map((domain, d) => ({ language, domain, score: score(l, d) })))
+  return {
+    frame: { benchmark_version: 'voice-v2', revision: 'voice-v2-rev', cells: cells.map(({ language, domain }) => ({ language, domain })) },
+    summary: {
+      benchmark_version: 'voice-v2', frame_revision: 'voice-v2-rev', complete: true, scored_trials: 50 * cells.length, score: mean(cells.map(cell => cell.score)),
+      cells: cells.map(cell => ({ ...cell, complete: true })),
+      by_language: Object.fromEntries(languages.map(language => [language, coverage(cells.filter(cell => cell.language === language))])),
+      by_domain: Object.fromEntries(domains.map(domain => [domain, coverage(cells.filter(cell => cell.domain === domain))])),
+    },
+  }
+}
+// Each cell has 50 calls; `pass(l, d)` scored calls pass, two are unscored.
+const quality = (interactionPass, experiencePass) => ({
+  schema_version: 'benchmark-quality-v1', benchmark_version: 'voice-v2', frame_revision: 'voice-v2-rev',
+  interaction_version: 'voice-v2-interaction-call-v1', experience_version: 'voice-v2-experience-call-v1',
+  cells: languages.flatMap((language, l) => domains.map((domain, d) => ({
+    language, domain,
+    interaction: { passed: interactionPass(l, d), failed: 48 - interactionPass(l, d), unscored: 2, excluded: 0 },
+    experience: { passed: experiencePass(l, d), failed: 48 - experiencePass(l, d), unscored: 2, excluded: 0 },
+    interaction_components: Object.fromEntries(components.map((key, c) => [key, { flagged: c + l, known: 50 }])),
+    calls: [],
+  }))),
+})
+const packages = {
+  fixture_a: { metadata: metadata('alpha-live', 'Alpha Labs', 'openai'), submission: submission((l, d) => (60 + 2 * l + 5 * d) / 100), quality: quality((l, d) => 30 + l + d, (l, d) => 40 - l) },
+  fixture_b: { metadata: metadata('beta-live', 'Beta AI', 'gemini'), submission: submission((l, d) => (50 + l + d) / 100), quality: quality(() => 44, (l, d) => 20 + d) },
+  fixture_c: { metadata: metadata('gamma-live', 'Gamma Inc', 'xai'), submission: submission(() => 0.4), quality: null },
+  fixture_custom: { metadata: metadata('delta-live', 'Delta', 'xai', 'custom'), submission: submission(() => 0.9), quality: null },
+}
+const files = { 'benchmark-metadata.json': 'metadata', 'benchmark-submission.json': 'submission', 'benchmark-quality.json': 'quality' }
+const pooled = (pkg, measure, keep = () => true) => {
+  const cells = pkg.quality.cells.filter(keep)
+  const passed = cells.reduce((sum, cell) => sum + cell[measure].passed, 0)
+  return 100 * passed / cells.reduce((sum, cell) => sum + cell[measure].passed + cell[measure].failed, 0)
+}
+
+test.beforeEach(async ({ page }) => {
+  await page.route('**/submissions/manifest.json', async route => {
+    const manifest = await (await route.fetch()).json()
+    await route.fulfill({ json: { ...manifest, voice_v2_submissions: Object.keys(packages), voice_v2_domain_submissions: [] } })
+  })
+  await page.route('**/submissions/fixture_*/*', route => {
+    const [dir, file] = route.request().url().split('/').slice(-2)
+    const json = files[file] && packages[dir][files[file]]
+    return json ? route.fulfill({ json }) : route.fulfill({ status: 404, body: '' })
+  })
+})
+test.afterEach(async ({ page }) => {
+  await page.unrouteAll({ behavior: 'ignoreErrors' })
 })
 
-test('multilingual explorer, breakdowns, filters and navigation', async ({ page }, testInfo) => {
+test('Pareto frontier', () => {
+  const points = [{ id: 'a', x: 1, y: 3, z: 1 }, { id: 'b', x: 2, y: 4, z: 0 }, { id: 'c', x: null, y: 5, z: 5 }, { id: 'tie', x: 2, y: 4, z: 0 }]
+  assert.deepEqual(frontier(points, ['x', 'y']).map(p => p.id), ['b', 'tie'])
+  assert.deepEqual(frontier(points, ['x', 'y', 'z']).map(p => p.id), ['a', 'b', 'tie'])
+})
+
+test('package-driven explorer, breakdowns, language map and homepage', async ({ page }, testInfo) => {
   test.setTimeout(90000)
   await page.setViewportSize({ width: 1440, height: 1100 })
   const errors = []
   page.on('pageerror', error => errors.push(error.message))
   await page.goto('/leaderboard?benchmark=voice', { waitUntil: 'networkidle' })
   await page.getByRole('heading', { name: /Three dimensions of a good conversation/ }).waitFor()
-  assert.equal(await page.locator('.mv-scope select').count(), 0)
-  assert.equal(await page.locator('.mv-scores .model-row').count(), 5)
-  assert.equal(await page.locator('.mv-scores > .metrics-table-container > table > thead th').count(), 8)
-  assert.equal(await page.locator('.mv-score-button').count(), 15)
-  assert.equal(await page.locator('.mv-detail').count(), 0)
-  assert.equal(await page.getByText('THE FULL PICTURE', { exact: true }).count(), 0)
-  assert.equal(await page.locator('.mv-diagnostics').count(), 0)
-  assert.equal(await page.locator('.mv-view-tabs button').count(), 2)
-  assert.equal(await page.locator('.mv-view-tabs button').first().getAttribute('aria-pressed'), 'true')
-  assert.equal(await page.locator('.mv-cube-point circle[fill="none"]').count(), 5)
-  assert.equal(await page.locator('.mv-pareto-edge').count(), 0)
-  await page.locator('.mv-main-panel').screenshot({ path: testInfo.outputPath('tau-multilingual-cube.png') })
-  await page.locator('.mv-scores').screenshot({ path: testInfo.outputPath('tau-multilingual-scores.png') })
-  await page.getByRole('button', { name: 'Full scale · 0–100' }).click()
-  assert.equal(await page.getByRole('button', { name: 'Full scale · 0–100' }).getAttribute('aria-pressed'), 'true')
-  await page.getByRole('button', { name: 'Fit results', exact: true }).click()
-  assert.equal(await page.getByRole('slider').count(), 0)
+  const rows = page.locator('.mv-scores .model-row')
+  await expect(rows).toHaveCount(3)
+  assert.equal(await page.locator('.mv-scores > .metrics-table-container > table > thead th').count(), 7)
+  assert.equal(await page.locator('.mv-score-button').count(), 9)
+  // Only packages with all three scores enter the cube.
+  assert.equal(await page.locator('.mv-cube-point').count(), 2)
+  await page.locator('.mv-main-panel').screenshot({ path: testInfo.outputPath('tau-i18n-cube.png') })
+
+  const a = packages.fixture_a
+  const rowA = page.locator('tr[data-package="fixture_a"]')
+  await expect(rowA.locator('td[data-metric="task"]')).toContainText(percent(100 * a.submission.summary.score))
+  await expect(rowA.locator('td[data-metric="interaction"]')).toContainText(percent(pooled(a, 'interaction')))
+  await expect(rowA.locator('td[data-metric="experience"]')).toContainText(percent(pooled(a, 'experience')))
+  await expect(page.locator('tr[data-package="fixture_c"] td[data-metric="interaction"]')).toHaveText('—')
+
+  // Cube gestures and focus.
   const cube = await page.locator('.mv-cube').boundingBox()
   const geometry = () => page.locator('.mv-cube polygon').first().getAttribute('points')
   const initialGeometry = await geometry()
-  const dragCube = async (dx, dy) => {
-    await page.mouse.move(cube.x + 30, cube.y + 30)
-    await page.mouse.down()
-    await page.mouse.move(cube.x + 30 + dx, cube.y + 30 + dy, { steps: 5 })
-    await page.mouse.up()
-  }
-  await dragCube(70, 0)
+  await page.mouse.move(cube.x + 30, cube.y + 30)
+  await page.mouse.down()
+  await page.mouse.move(cube.x + 100, cube.y + 30, { steps: 5 })
+  await page.mouse.up()
   assert.notEqual(await geometry(), initialGeometry)
   await page.getByRole('button', { name: 'Reset view' }).click()
   assert.equal(await geometry(), initialGeometry)
-  await dragCube(0, 60)
-  assert.notEqual(await geometry(), initialGeometry)
-  await page.getByRole('button', { name: 'Reset view' }).click()
-  assert.equal(await geometry(), initialGeometry)
-  await page.getByRole('button', { name: /^GPT RT 2 · xhigh, task/ }).click()
-  assert.equal(await page.locator('.mv-cube-point.is-muted').count(), 4)
-  assert.equal(await page.locator('.mv-cube-point.is-focused').count(), 1)
-  await page.getByRole('button', { name: /^GPT RT 2 · xhigh, task/ }).click()
-  assert.equal(await page.locator('.mv-cube-point.is-muted').count(), 0)
-  await page.getByRole('button', { name: /^GPT RT 2 · xhigh, task/ }).press('Enter')
+  await page.getByRole('button', { name: /^alpha-live, task/ }).click()
+  assert.equal(await page.locator('.mv-cube-point.is-muted').count(), 1)
   await page.getByRole('button', { name: 'Show all models', exact: true }).click()
   assert.equal(await page.locator('.mv-cube-point.is-muted').count(), 0)
 
-  await page.getByRole('button', { name: 'GPT RT 2 · xhigh: Generation quality breakdown', exact: true }).click()
-  await page.locator('.mv-pass-heatmap').waitFor()
-  assert.equal(await page.locator('.mv-breakdown-tabs button').count(), 3)
-  assert.equal(await page.locator('.model-row.expanded + .domain-detail-row .mv-detail').count(), 1)
-  assert.equal(await page.locator('.mv-pass-heatmap tbody tr').count(), 3)
-  assert.equal(await page.locator('.mv-pass-heatmap thead th').count(), 8)
-  assert.equal(await page.locator('.mv-pass-heatmap .is-missing').count(), 3)
-  for (const cell of data.cells.filter(cell => cell.model === 'openai_xhigh')) {
-    const expected = { naturalness: cell.fluency_failure == null ? null : 100 - cell.fluency_failure, fidelity: cell.speech_fidelity_failure == null ? null : 100 - cell.speech_fidelity_failure, overall: cell.experience }
-    for (const [factor, value] of Object.entries(expected)) {
-      assert.equal(await page.locator(`.mv-pass-heatmap [data-factor="${factor}"] [data-language="${cell.language}"]`).innerText(), value == null ? '—' : `${value.toFixed(1)}%`)
-    }
-  }
-  const experienceTotals = summarize(data.models.find(model => model.id === 'openai_xhigh'))
-  for (const [factor, value] of Object.entries({ naturalness: experienceTotals.naturalness, fidelity: experienceTotals.fidelity, overall: experienceTotals.experience })) {
-    assert.equal(await page.locator(`.mv-pass-heatmap [data-factor="${factor}"] [data-language="overall"]`).innerText(), `${value.toFixed(1)}%`)
-  }
-  assert.equal(await page.locator('.mv-pass-heatmap .mv-overall-row th').innerText(), 'Overall')
-  await page.locator('.mv-detail').screenshot({ path: testInfo.outputPath('tau-multilingual-experience.png') })
-  await page.locator('.mv-breakdown-tabs').getByRole('button', { name: /Interaction/ }).click()
-  assert.equal(await page.locator('.mv-failure-heatmap tbody tr').count(), 7)
-  assert.equal(await page.locator('.mv-failure-heatmap tbody td').count(), 49)
-  for (const cell of data.cells.filter(cell => cell.model === 'openai_xhigh')) {
-    for (const [factor, value] of Object.entries({ ...cell.interaction_components, overall: 100 - cell.interaction_failure })) {
-      assert.equal(await page.locator(`.mv-failure-heatmap [data-factor="${factor}"] [data-language="${cell.language}"]`).innerText(), `${value.toFixed(1)}%`)
-    }
-    assert.equal(await page.locator(`.mv-latency-row [data-language="${cell.language}"]`).innerText(), `${cell.latency_seconds.toFixed(2)} s`)
-  }
-  const interactionTotals = summarize(data.models.find(model => model.id === 'openai_xhigh'))
-  assert.equal(await page.locator('.mv-latency-row [data-language="overall"]').innerText(), `${interactionTotals.latency.toFixed(2)} s`)
-  for (const [factor, value] of Object.entries({ ...interactionTotals.components, overall: interactionTotals.interaction })) {
-    assert.equal(await page.locator(`.mv-failure-heatmap [data-factor="${factor}"] [data-language="overall"]`).innerText(), `${value.toFixed(1)}%`)
-  }
-  await page.locator('.mv-detail').screenshot({ path: testInfo.outputPath('tau-multilingual-interaction.png') })
-  await page.locator('.mv-breakdown-tabs').getByRole('button', { name: /Task completion/ }).click()
-  assert.equal(await page.locator('.mv-task-heatmap tbody tr').count(), 6)
-  assert.equal(await page.locator('.mv-task-heatmap tbody tr.mv-extra-row').count(), 2)
-  assert.equal(await page.locator('.mv-task-heatmap thead th').count(), 8)
-  const selectedModel = data.models.find(model => model.id === 'openai_xhigh')
-  for (const cell of data.cells.filter(cell => cell.model === selectedModel.id)) {
-    for (const [factor, value] of Object.entries({ ...cell.domains, overall: cell.task })) {
-      assert.equal(await page.locator(`.mv-task-heatmap [data-factor="${factor}"] [data-language="${cell.language}"]`).innerText(), `${value.toFixed(1)}%`)
-    }
-  }
-  const totals = summarize(selectedModel)
-  for (const [factor, value] of Object.entries({ ...totals.domains, overall: totals.task })) {
-    assert.equal(await page.locator(`.mv-task-heatmap [data-factor="${factor}"] [data-language="overall"]`).innerText(), `${value.toFixed(1)}%`)
-  }
-  await page.locator('.mv-detail').screenshot({ path: testInfo.outputPath('tau-multilingual-task.png') })
-  assert.equal(await page.locator('.mv-supplemental-row').count(), 0)
+  // Breakdown tabs.
+  await page.getByRole('button', { name: 'alpha-live: Interaction breakdown', exact: true }).click()
+  const detail = page.locator('.mv-detail')
+  await expect(detail.locator('.mv-breakdown-tabs button')).toHaveCount(3)
+  const overall = detail.locator('.mv-pass-heatmap tr[data-factor="all"]')
+  await expect(overall.locator('td[data-language="all"]')).toHaveText(percent(pooled(a, 'interaction')))
+  await expect(overall.locator('td[data-language="ko"]')).toHaveText(percent(pooled(a, 'interaction', cell => cell.language === 'ko')))
+  await expect(detail.locator('.mv-pass-heatmap tr[data-factor="retail"] td[data-language="all"]')).toHaveText(percent(pooled(a, 'interaction', cell => cell.domain === 'retail')))
+  await expect(detail.locator('.mv-failure-heatmap tr[data-factor="monologue"] td[data-language="hi"]')).toHaveText(percent(100 * (3 + 2) / 50))
+  await detail.screenshot({ path: testInfo.outputPath('tau-i18n-interaction.png') })
+  await detail.locator('.mv-breakdown-tabs').getByRole('button', { name: /Generation quality/ }).click()
+  await expect(detail.locator('.mv-pass-heatmap tr[data-factor="all"] td[data-language="all"]')).toHaveText(percent(pooled(a, 'experience')))
+  await detail.locator('.mv-breakdown-tabs').getByRole('button', { name: /Task completion/ }).click()
+  await expect(detail.locator('.mv-task-heatmap tr[data-factor="all"] td[data-language="all"]')).toHaveText(percent(100 * a.submission.summary.score))
   await page.getByRole('button', { name: 'Close breakdown', exact: true }).click()
-  assert.equal(await page.locator('.mv-detail').count(), 0)
-  await page.getByRole('button', { name: 'Grok Voice · default: Interaction breakdown', exact: true }).click()
-  assert.ok((await page.locator('.mv-detail-heading').innerText()).includes('Grok Voice'))
-  await page.getByRole('button', { name: 'Close breakdown', exact: true }).click()
+  await expect(page.locator('.mv-detail')).toHaveCount(0)
 
-  await page.getByRole('button', { name: 'Language map', exact: true }).click()
-  assert.equal(await page.locator('.mv-heatmap tbody td').count(), 42)
-  assert.equal(await page.locator('.mv-heatmap thead th').count(), 8)
-  const metricButtons = page.locator('.mv-map-metrics')
-  for (const [key, label] of [['interaction', 'Interaction'], ['experience', 'Generation quality'], ['task', 'Task completion'], ['experience', 'Generation quality']]) {
-    await metricButtons.getByRole('button', { name: label, exact: true }).click()
-    assert.equal(await metricButtons.getByRole('button', { name: label, exact: true }).getAttribute('aria-pressed'), 'true')
-    for (const model of data.models) {
-      for (const language of [...data.languages.map(l => l.id), 'all']) {
-        const value = summarize(model, language)[key]
-        assert.equal(await page.locator(`.mv-heatmap [data-model="${model.id}"] [data-language="${language}"]`).innerText(), value == null ? '—' : `${value.toFixed(1)}%`)
-      }
-    }
-    for (const language of [...data.languages.map(l => l.id), 'all']) {
-      const values = data.models.map(model => summarize(model, language)[key]).filter(value => value != null)
-      const expected = values.length ? `${(values.reduce((a,b) => a+b,0) / values.length).toFixed(1)}%` : '—'
-      assert.equal(await page.locator(`.mv-heatmap [data-model="overall"] [data-language="${language}"]`).innerText(), expected)
-    }
-  }
-  await page.locator('.mv-main-panel').screenshot({ path: testInfo.outputPath('tau-multilingual-language-map.png') })
-  for (const text of ['SIX-LANGUAGE COMPARISON', 'Look beyond the leaderboard.', 'LANGUAGE COVERAGE', 'ALL LANGUAGES', 'Metric definitions, coverage & source data', 'Trial 0 · Task & interaction: 6 languages · Experience: 5', 'papers/tau-multilingual/reproduction/audit.json', 'papers/tau-multilingual/reproduction/experience.json']) {
-    assert.equal(await page.getByText(text, { exact: true }).count(), 0)
-  }
-  assert.equal(await page.locator('.mv-methodology').count(), 0)
-  assert.deepEqual(await page.locator('.mv-paper-links a[href^="https://arxiv.org/abs/"]').allInnerTexts(), ['τ-Multilingual ↗', 'τ-Elicitation ↗', 'τ-Voice ↗'])
-
-  await page.locator('.mv-map-metrics').getByRole('button', { name: 'Generation quality', exact: true }).click()
-  assert.equal(await page.locator('.mv-heatmap tbody .mv-heat-cell').filter({ hasText: '—' }).count(), 6)
-  assert.equal(await page.locator('.mv-heatmap tbody button').count(), 0)
-  await page.getByRole('button', { name: 'GPT RT 2 · xhigh: Generation quality breakdown', exact: true }).click()
-  assert.equal(await page.locator('.mv-pass-heatmap thead th').count(), 8)
-  assert.equal(await page.locator('.mv-pass-heatmap [data-language="es"]').count(), 3)
-  assert.equal(await page.locator('.mv-pass-heatmap [data-language="en"] .is-missing').count(), 3)
-  await page.locator('.mv-breakdown-tabs').getByRole('button', { name: /Task completion/ }).click()
-  assert.equal(await page.locator('.mv-task-heatmap thead th').count(), 8)
-  for (const factor of ['banking_knowledge', 'intake']) {
-    const row = page.locator(`.mv-task-heatmap tr.mv-extra-row[data-factor="${factor}"]`)
-    assert.equal(await row.locator('.is-missing').count(), 7)
-  }
+  // A domain scopes all three scores.
   await page.locator('.mv-domain-toggle').getByRole('button', { name: /Airline/ }).click()
-  const airlineScores = await page.locator('.mv-scores .model-row td.score-cell:nth-of-type(5) .score-bar-value').allInnerTexts()
-  assert.deepEqual(airlineScores, data.models.map(model => summarize(model).domains.airline).sort((x, y) => y - x).map(value => `${value.toFixed(1)}%`))
-  assert.equal(await page.locator('.mv-pooled-note').count(), 2)
+  await expect(rowA.locator('td[data-metric="interaction"]')).toContainText(percent(pooled(a, 'interaction', cell => cell.domain === 'airline')))
   await page.locator('.mv-domain-toggle').getByRole('button', { name: /Banking/ }).click()
-  assert.ok((await page.locator('.mv-main-panel .mv-cube-empty').innerText()).includes('No multilingual Banking results yet'))
+  await expect(page.locator('.mv-main-panel .mv-cube-empty')).toContainText('No Banking results yet')
+  // Banking is scored on task completion only: its other columns are hidden.
+  await expect(page.locator('.mv-scores > .metrics-table-container > table > thead th')).toHaveCount(5)
+  await expect(rowA.locator('td[data-metric]')).toHaveCount(1)
   await page.locator('.mv-domain-toggle').getByRole('button', { name: /Overall/ }).click()
-  assert.equal(await page.locator('.mv-pooled-note').count(), 0)
+  await expect(page.locator('.mv-scores > .metrics-table-container > table > thead th')).toHaveCount(7)
   await page.getByRole('button', { name: 'Generation quality ↑' }).click()
-  assert.ok((await page.locator('.mv-scores .model-row').first().innerText()).includes('xhigh'))
-  await page.getByRole('button', { name: 'English only', exact: true }).click()
-  await page.getByRole('heading', { name: 'τ³-Voice Leaderboard' }).waitFor()
-  await page.getByRole('button', { name: 'Multilingual', exact: true }).click()
-  await page.setViewportSize({ width: 390, height: 844 })
-  await page.getByRole('button', { name: 'GPT RT 2 · xhigh: Generation quality breakdown', exact: true }).click()
-  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
-  await page.locator('.mv-detail').screenshot({ path: testInfo.outputPath('tau-multilingual-mobile.png') })
-  await page.locator('.mv-breakdown-tabs').getByRole('button', { name: /Task completion/ }).click()
-  assert.equal(await page.locator('.mv-supplemental-row').count(), 0)
-  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
-  await page.locator('.mv-detail').screenshot({ path: testInfo.outputPath('tau-multilingual-task-mobile.png') })
+  await expect(rows.first()).toContainText('alpha-live')
 
+  // Language map.
+  await page.getByRole('button', { name: 'Language map', exact: true }).click()
+  await expect(page.locator('.mv-heatmap tbody tr')).toHaveCount(4)
+  assert.equal(await page.locator('.mv-heatmap thead th').count(), 8)
+  await page.locator('.mv-map-metrics').getByRole('button', { name: 'Interaction', exact: true }).click()
+  await expect(page.locator('.mv-heatmap [data-model="fixture_b"] [data-language="es"]')).toHaveText(percent(100 * 44 / 48))
+  await expect(page.locator('.mv-heatmap [data-model="fixture_c"] [data-language="all"]')).toHaveText('—')
+  await page.locator('.mv-main-panel').screenshot({ path: testInfo.outputPath('tau-i18n-language-map.png') })
+  assert.deepEqual(await page.locator('.mv-paper-links a[href^="https://arxiv.org/abs/"]').allInnerTexts(), ['τ-i18n ↗', 'τ-entity ↗', 'τ-Voice ↗'])
+
+  // Mobile.
+  await page.getByRole('button', { name: '3D explorer', exact: true }).click()
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.getByRole('button', { name: 'alpha-live: Generation quality breakdown', exact: true }).click()
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))
+
+  // Homepage card: standard packages by task completion.
+  await page.setViewportSize({ width: 1440, height: 1100 })
   await page.goto('/')
-  await page.locator('.preview-table-wrapper').filter({ hasText: 'All languages' }).waitFor()
-  await page.locator('.preview-table-wrapper').filter({ hasText: 'Multilingual' }).click()
+  const card = page.locator('.preview-table-wrapper').filter({ hasText: 'All languages' })
+  await expect(card.locator('.preview-model-name')).toHaveText(['alpha-live', 'beta-live', 'gamma-live'])
+  await card.click()
   await page.getByRole('heading', { name: /Three dimensions of a good conversation/ }).waitFor()
   assert.deepEqual(errors, [])
-  console.log('PASS: six-language task/interaction averages, five-language Generation quality coverage, missing data, three headline metrics, factor-by-language heatmap values and missing data, clickable/tabbed breakdowns, cube gestures/focus, mobile layout, homepage navigation, browser errors.')
 })
 
 test('multilingual submission filters and English progress remain available', async ({ page }) => {
@@ -218,15 +178,16 @@ test('multilingual submission filters and English progress remain available', as
   await expect(page.getByRole('heading', { name: /Three dimensions of a good conversation/ })).toBeVisible()
   const filters = page.locator('.mv-leaderboard-heading')
   await expect(filters.getByRole('heading', { name: 'Leaderboard', exact: true })).toBeVisible()
-  await expect(page.locator('.mv-scores .model-row')).toHaveCount(5)
+  await expect(page.locator('.mv-scores .model-row')).toHaveCount(3)
   const toggle = name => filters.locator('.checkbox-container').filter({ hasText: new RegExp(`^${name}$`) }).click()
   await toggle('Standard')
   await expect(page.locator('.mv-scores .model-row')).toHaveCount(0)
   await expect(page.getByText('Select Standard or Custom to view results.')).toBeVisible()
   await toggle('Custom')
-  await expect(page.getByText('No custom multilingual submissions yet.')).toBeVisible()
+  await expect(page.locator('.mv-scores .model-row')).toHaveCount(1)
+  await expect(page.locator('tr[data-package="fixture_custom"]')).toContainText('custom submission')
   await toggle('Standard')
-  await expect(page.locator('.mv-scores .model-row')).toHaveCount(5)
+  await expect(page.locator('.mv-scores .model-row')).toHaveCount(4)
   await page.getByRole('button', { name: 'English only', exact: true }).click()
   await expect(page.locator('.mv')).toHaveCount(0)
   await expect(page.locator('.domain-toggle-switch')).toBeVisible()
