@@ -38,6 +38,7 @@ but is actually an install-time failure).
 
 import getpass
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -129,6 +130,64 @@ def _check_sandbox_dependencies(force: bool = False) -> None:
     _DEPS_VERIFIED = True
 
 
+# Environment variables passed through to ``srt`` and the sandboxed command.
+#
+# The sandboxed command must NOT inherit the parent environment: tau2 loads
+# provider API keys from ``.env`` into ``os.environ``, and an agent calling the
+# shell tool with ``env`` would otherwise receive every key in its tool result
+# (which is then saved to trajectories and logs). Only what ``srt`` (a node
+# script) and the read-only search tools (cat, ls, grep, rg, find, python3, ...)
+# need is kept:
+# - PATH: to resolve ``node`` (srt's shebang), the shell, and the search tools.
+# - LANG / LC_*: so tools handle non-ASCII document text consistently.
+# - TERM, TZ: harmless formatting hints for tools.
+# - TMPDIR: srt on macOS derives its allowed per-user temp dirs from it.
+# HOME is not inherited; it is set to the sandbox directory (see
+# ``SandboxManager.run_command``). Anything whose name looks secret-like is
+# dropped even if it appears here.
+_SANDBOX_ENV_ALLOWLIST: tuple[str, ...] = ("PATH", "LANG", "TERM", "TZ", "TMPDIR")
+_SANDBOX_ENV_ALLOWED_PREFIXES: tuple[str, ...] = ("LC_",)
+
+# Env var names that are treated as secrets: never passed into the sandbox, and
+# their values are redacted from command output as defense in depth.
+_SECRET_ENV_NAME_RE = re.compile(
+    r"KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL|PRIVATE|AUTH", re.IGNORECASE
+)
+# Shorter values are too likely to collide with ordinary output text.
+_MIN_REDACT_LEN = 8
+_REDACTED = "[REDACTED]"
+
+
+def _build_sandbox_env(home: str) -> Dict[str, str]:
+    """Return the minimal allow-listed environment for a sandboxed command."""
+    env = {
+        name: value
+        for name, value in os.environ.items()
+        if (
+            name in _SANDBOX_ENV_ALLOWLIST
+            or name.startswith(_SANDBOX_ENV_ALLOWED_PREFIXES)
+        )
+        and not _SECRET_ENV_NAME_RE.search(name)
+    }
+    env["HOME"] = home
+    return env
+
+
+def _redact_secret_env_values(text: str) -> str:
+    """Replace values of secret-like parent env vars in ``text`` with a marker."""
+    if not text:
+        return text
+    secrets = {
+        value
+        for name, value in os.environ.items()
+        if _SECRET_ENV_NAME_RE.search(name) and len(value) >= _MIN_REDACT_LEN
+    }
+    # Longest first so a secret containing another is replaced whole.
+    for value in sorted(secrets, key=len, reverse=True):
+        text = text.replace(value, _REDACTED)
+    return text
+
+
 # Static metadata for sanitized output
 _SANDBOX_USER = "kb_user"
 _SANDBOX_GROUP = "kb_group"
@@ -215,11 +274,13 @@ class SandboxManager:
             },
             "filesystem": {
                 # Best-effort: block some sensitive paths (but agent may still read elsewhere)
+                # "~" is expanded here rather than by srt: srt resolves it via
+                # HOME, which the sandboxed process sets to the sandbox dir.
                 "denyRead": [
-                    "~/.ssh",
-                    "~/.aws",
-                    "~/.config",
-                    "~/.gnupg",
+                    str(Path.home() / ".ssh"),
+                    str(Path.home() / ".aws"),
+                    str(Path.home() / ".config"),
+                    str(Path.home() / ".gnupg"),
                     "/etc/passwd",
                     "/etc/shadow",
                 ],
@@ -270,6 +331,8 @@ class SandboxManager:
         - Real username/group with generic values in ls output
         - Real timestamps with static date in ls output
         - Real username in paths (e.g., /Users/username/...)
+        - Values of secret-like parent env vars (API keys, tokens) with
+          "[REDACTED]" (defense in depth; the sandbox env excludes them)
 
         Args:
             output: The raw command output
@@ -281,7 +344,7 @@ class SandboxManager:
         if not output:
             return output
 
-        result = output
+        result = _redact_secret_env_values(output)
 
         # Get the real username to replace
         try:
@@ -434,6 +497,8 @@ class SandboxManager:
                 text=True,
                 timeout=timeout,
                 cwd=str(self.kb_dir),
+                # Never inherit os.environ: it holds provider API keys.
+                env=_build_sandbox_env(home=str(self.sandbox_dir)),
             )
             # Sanitize output to remove real user metadata
             sanitized_stdout = self._sanitize_output(result.stdout, command)
