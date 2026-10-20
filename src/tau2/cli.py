@@ -46,6 +46,7 @@ from tau2.data_model.simulation import TextRunConfig, VoiceRunConfig
 from tau2.domains.banking_knowledge.retrieval import get_all_variant_names
 from tau2.run import get_options, run_domain
 from tau2.runner.work import parse_provider_limits
+from tau2.voice.audio_native.ava_zero_pipecat.config import AvaZeroPipecatConfig
 
 
 def get_all_retrieval_config_names():
@@ -276,6 +277,7 @@ def add_run_args(parser):
             "xai",
             "nova",
             "qwen",
+            "ava_zero_pipecat",
             "livekit",
             "launa",
         ],
@@ -294,7 +296,19 @@ def add_run_args(parser):
         "--audio-native-model",
         type=str,
         default=None,
-        help="Audio native model to use. If not specified, uses the default model for the selected provider.",
+        help="Audio native model to use. If not specified, uses the default model for the selected provider. "
+        "For ava_zero_pipecat, it is only a label, since --ava-zero-base-url "
+        "selects the agent.",
+    )
+    parser.add_argument(
+        "--ava-zero-base-url",
+        default=None,
+        help=(
+            "URL of the hosted Ava Zero agent the ava_zero_pipecat provider calls, "
+            "https://<host>/inference/serverless/pipecat/v1/public/<agent_id>. "
+            "Required for that provider, which also needs the live extra and "
+            "AVARTHA_API_KEY."
+        ),
     )
     parser.add_argument(
         "--live-config",
@@ -307,7 +321,8 @@ def add_run_args(parser):
         action=argparse.BooleanOptionalAction,
         default=None,
         help="Run user LLM/TTS generation without blocking audio ticks. "
-        "Defaults to enabled for openai_live and disabled for other providers. "
+        "Defaults to enabled for openai_live and ava_zero_pipecat and disabled for "
+        "other providers. "
         "Use --no-realtime-generation to disable.",
     )
     parser.add_argument(
@@ -726,6 +741,20 @@ def main():
                     args.audio_native_provider
                 ]
 
+            ava_zero_config = None
+            if args.audio_native_provider == "ava_zero_pipecat":
+                if not args.ava_zero_base_url:
+                    run_parser.error(
+                        "--ava-zero-base-url is required when "
+                        "--audio-native-provider ava_zero_pipecat"
+                    )
+                try:
+                    ava_zero_config = AvaZeroPipecatConfig(
+                        base_url=args.ava_zero_base_url
+                    )
+                except ValueError as exc:
+                    run_parser.error(f"invalid Ava Zero configuration: {exc}")
+
             # Determine use_xml_prompt: defaults to False (plain text)
             use_xml_prompt = False
             if args.xml_prompt:
@@ -735,6 +764,7 @@ def main():
                 # Provider
                 provider=args.audio_native_provider,
                 model=audio_native_model,
+                ava_zero_config=ava_zero_config,
                 cascaded_request=(
                     CascadedConfigRequest(preset=args.cascaded_config)
                     if args.cascaded_config is not None
