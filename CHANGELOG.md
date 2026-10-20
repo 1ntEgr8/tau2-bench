@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- voice-v2 packages carry `benchmark-quality.json` (schema
+  `schema_benchmark_quality.json`): call-level Interaction
+  (`voice-v2-interaction-call-v1`) and Experience, shown as Generation quality
+  (`voice-v2-experience-call-v1`), for every scored call. Each record has the
+  five Interaction flags (nonresponse, interruption over 3 events, selectivity
+  over 3 errors, monologue, tool misuse) and the Experience utterance and issue
+  counts. Each cell sums its pass/fail/unscored counts. `tau2 submit prepare`
+  and the historical adapter write it from the saved ticks and judge verdicts
+  without model calls. `tau2 submit validate` recomputes it and rejects any
+  difference. Calls that cannot be decided are unscored, never failed. Banking
+  and entity packages carry none. The deterministic turn-taking measurements
+  are in `tau2.metrics.interaction_quality` and the rules in
+  `tau2.metrics.call_quality`. See [docs/glossary.md](docs/glossary.md).
 - The maintainer-only historical adapter (`tau2 submit prepare/validate
   --historical-voice-v2`) also packages the frozen 2026-10-02 release export's
   banking and entity (intake) calls: `--benchmark banking` builds a

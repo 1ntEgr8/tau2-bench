@@ -7,7 +7,7 @@ benchmark generation:
 | You ran | Package | Leaderboard tab | Section |
 |---|---|---|---|
 | `text-v1` (2.0 text, 18 cells) | `benchmark-submission.json` | 2.0 | [2.0 benchmarks](#20-benchmarks-text-v1-voice-v2-banking-and-entity) |
-| `voice-v2` (2.0 voice, τ-i18n, 18 cells) | `benchmark-submission.json` + `benchmark-diagnostics.json` | 2.0 | [2.0 benchmarks](#20-benchmarks-text-v1-voice-v2-banking-and-entity) |
+| `voice-v2` (2.0 voice, τ-i18n, 18 cells) | `benchmark-submission.json` + `benchmark-diagnostics.json` + `benchmark-quality.json` | 2.0 | [2.0 benchmarks](#20-benchmarks-text-v1-voice-v2-banking-and-entity) |
 | `voice-v2-banking` / `voice-v2-entity` (6 languages) | `benchmark-submission.json` | 2.0 (Banking, Intake) | [Banking and τ-entity](#banking-and-τ-entity-voice) |
 | `voice-v1` (English voice, 3 domains) | `submission.json` | English voice | [voice-v1](#voice-v1-english-voice) |
 | 1.x text or voice (v1.0.1) | `submission.json` | 1.x | [1.x submissions](#1x-submissions) |
@@ -204,10 +204,14 @@ is shown only when its domain is selected.
 |---|---|---|
 | `benchmark-submission.json` | text-v1, voice-v2 | The frozen frame, every task/trial observation, the per-cell, per-language and per-domain reward summary, and a SHA-256 of each cell's `results.json`. |
 | `benchmark-diagnostics.json` | voice-v2 only | The judge catalog and transport revisions, each judge contract used, and per cell: the same per-measure summary `tau2 judges summarize` prints, plus a fingerprint for every judged call × measure (`verdict_sha256` is the SHA-256 of the stored verdict). |
+| `benchmark-quality.json` | voice-v2 only | Call-level [Interaction](glossary.md#interaction) and [Generation quality](glossary.md#generation-quality) (`experience` in the file) for every scored call: the five Interaction flags, both outcomes, and per-cell pass/fail/unscored counts. `prepare` computes it from the saved calls and verdicts with no model calls; `validate` recomputes it and rejects any difference. Schema: [`schema_benchmark_quality.json`](../web/leaderboard/public/submissions/schema_benchmark_quality.json). |
 | `benchmark-metadata.json` | text-v1, voice-v2 | Your `submitter.json` fields, plus the agent provider and model recorded in the run conditions. Maintainers add `trajectories` (the S3 prefix) after upload. Schema: [`schema_benchmark_metadata.json`](../web/leaderboard/public/submissions/schema_benchmark_metadata.json). |
 
-The leaderboard reads these three files directly. A package must be complete:
-every cell scored, and, for voice-v2, diagnostics for every cell.
+The leaderboard reads these files directly. A package must be complete:
+every cell scored, and, for voice-v2, diagnostics and call quality for every
+cell. Call quality never blocks a package: a call whose verdicts or ticks
+cannot decide a measure is counted as unscored, not failed, and left out of
+that measure's rate.
 
 The package does not copy trajectories or audio. Maintainers validate it against
 your saved matrix root, which you upload separately (next step). `validate`
@@ -243,8 +247,7 @@ custom setup in `notes` and link it in `references`. Unknown fields are rejected
    `benchmark-plan.json`, `execution.json` and every cell directory with its
    `results.json`, `simulations/`, `artifacts/` (audio) and `diagnostics/`.
 2. **Add the package to the repository** as
-   `web/leaderboard/public/submissions/<name>/` (the three files `prepare`
-   wrote), and add `<name>` to the `voice_v2_submissions` array in
+   `web/leaderboard/public/submissions/<name>/` (the files `prepare` wrote), and add `<name>` to the `voice_v2_submissions` array in
    `web/leaderboard/public/submissions/manifest.json`. Commit only the package
    files, never the trajectories.
 3. **Open a pull request** (see [Pull request](#pull-request)) with the link to
@@ -255,15 +258,16 @@ custom setup in `notes` and link it in `references`. Unknown fields are rejected
 voice-v2 packages appear as rows of the τ³-Voice **τ-i18n (Multilingual)**
 leaderboard (`/leaderboard?benchmark=voice`), next to the paper cohort and
 marked "submission". They rank on task completion (pass@1, overall or for the
-selected language); Interaction and Generation quality are paper-cohort
-measures and show "—". A package's breakdown shows pass@1 per language × domain and each
+selected language). Their Interaction and Generation quality come from the
+package's `benchmark-quality.json` and are diagnostics, like the judge
+measures. A package's breakdown shows pass@1 per language × domain and each
 judge measure per language with its coverage. Judge measures are diagnostics
 and never change the rank. 1.x and voice-v1 submissions keep their own tabs and
 are still accepted.
 
 The frozen 2026-10-02 voice-v2 release calls predate the matrix layout. A
 maintainer-only adapter, `tau2 submit prepare --historical-voice-v2`, reads
-those saved exports and writes the same three-file package; see
+those saved exports and writes the same package; see
 [Voice V2 release packages](voice-v2-publication.md).
 
 ---
@@ -738,6 +742,7 @@ See `web/leaderboard/public/submissions/A_EXAMPLE_voice-model_example-org_2026-0
 - [ ] `benchmark-metadata.json` has a contact email; `submission_type` is right (if custom: `notes` and `references` explain the change)
 - [ ] `review_submission.py <package> <downloaded-root>` passes (it runs `tau2 submit validate`); with `--upload` it copies the matrix to `trajectories/<language>/<domain>/` and sets `trajectories`
 - [ ] voice-v2: `benchmark-diagnostics.json` present and made with the production judge catalog
+- [ ] voice-v2: `benchmark-quality.json` present (validation recomputes it from the uploaded calls and verdicts)
 - [ ] Spot-check: re-judge a sample of uploaded calls and compare unit outcomes with the matching fingerprints
 - [ ] No duplicate submissions
 

@@ -1,11 +1,14 @@
 """The 2.0 leaderboard package: rewards, judge diagnostics and display metadata.
 
-A package is three files in one directory:
+A package is three or four files in one directory:
 
 - ``benchmark-submission.json``: the frozen frame, every task/trial reward and
   the recomputable summary (``tau2.data_model.benchmark.BenchmarkSubmission``).
 - ``benchmark-diagnostics.json``: voice-v2 only; per-cell judge summaries and
   verdict fingerprints (``tau2.judges.submission.BenchmarkDiagnostics``).
+- ``benchmark-quality.json``: voice-v2 only; call-level Interaction and
+  Experience (Generation quality) per scored call
+  (``tau2.scripts.leaderboard.benchmark_quality.BenchmarkQuality``).
 - ``benchmark-metadata.json``: who submitted what (``PackageMetadata``).
 
 ``tau2 submit prepare`` writes a package from a saved matrix; the maintainer-only
@@ -24,11 +27,22 @@ from tau2.data_model.benchmark import BenchmarkSubmission
 from tau2.judges import submission as judge_submission
 from tau2.judges.submission import DIAGNOSTICS_FILE_NAME, BenchmarkDiagnostics
 from tau2.metrics.benchmark import validate_submission
+from tau2.scripts.leaderboard.benchmark_quality import (
+    QUALITY_BENCHMARKS,
+    QUALITY_FILE_NAME,
+    BenchmarkQuality,
+    check_quality,
+)
 from tau2.scripts.leaderboard.submission import Reference
 
 SUBMISSION_FILE_NAME = "benchmark-submission.json"
 METADATA_FILE_NAME = "benchmark-metadata.json"
-PACKAGE_FILE_NAMES = (SUBMISSION_FILE_NAME, DIAGNOSTICS_FILE_NAME, METADATA_FILE_NAME)
+PACKAGE_FILE_NAMES = (
+    SUBMISSION_FILE_NAME,
+    DIAGNOSTICS_FILE_NAME,
+    QUALITY_FILE_NAME,
+    METADATA_FILE_NAME,
+)
 
 # How the package's evidence root is laid out, and which reader recomputes it.
 # "matrix": a `tau2 run --benchmark ... --save-to` root (`<lang>-<domain>/` cells).
@@ -106,9 +120,10 @@ class BenchmarkPackage(BaseModel):
     metadata: PackageMetadata
     submission: BenchmarkSubmission
     diagnostics: BenchmarkDiagnostics | None
+    quality: BenchmarkQuality | None = None
 
     def check(self) -> "BenchmarkPackage":
-        """Recompute the reward summary and cross-check the three files."""
+        """Recompute the reward summary and cross-check the package files."""
         validate_submission(self.submission)
         if not self.submission.summary.complete:
             raise ValueError("A leaderboard package requires a complete matrix")
@@ -130,6 +145,14 @@ class BenchmarkPackage(BaseModel):
             ]
             if len(judged_cells) != len(cells) or set(judged_cells) != cells:
                 raise ValueError("Diagnostics must cover every frame cell once")
+        # Call quality reads judge verdicts, so only judged frames carry it.
+        rated = judged and frame.benchmark_version in QUALITY_BENCHMARKS
+        if rated and self.quality is None:
+            raise ValueError(f"Package lacks {QUALITY_FILE_NAME}")
+        if not rated and self.quality is not None:
+            raise ValueError(f"{frame.benchmark_version} carries no call quality")
+        if self.quality is not None:
+            check_quality(self.quality, frame)
         voice = frame.benchmark_version.startswith("voice")
         if voice != (self.metadata.agent_provider is not None):
             raise ValueError("agent_provider is required for voice and only for voice")
@@ -147,6 +170,10 @@ class BenchmarkPackage(BaseModel):
         if self.diagnostics is not None:
             (directory / DIAGNOSTICS_FILE_NAME).write_text(
                 self.diagnostics.model_dump_json(indent=2) + "\n"
+            )
+        if self.quality is not None:
+            (directory / QUALITY_FILE_NAME).write_text(
+                self.quality.model_dump_json(indent=2) + "\n"
             )
         (directory / METADATA_FILE_NAME).write_text(
             self.metadata.model_dump_json(indent=2) + "\n"
@@ -182,6 +209,7 @@ def load_package(directory: Path) -> BenchmarkPackage:
         if not (directory / name).is_file():
             raise ValueError(f"Package {directory} lacks {name}")
     diagnostics_path = directory / DIAGNOSTICS_FILE_NAME
+    quality_path = directory / QUALITY_FILE_NAME
     return BenchmarkPackage(
         metadata=PackageMetadata.model_validate_json(
             (directory / METADATA_FILE_NAME).read_text()
@@ -193,6 +221,9 @@ def load_package(directory: Path) -> BenchmarkPackage:
             diagnostics_path.read_text()
         )
         if diagnostics_path.is_file()
+        else None,
+        quality=BenchmarkQuality.model_validate_json(quality_path.read_text())
+        if quality_path.is_file()
         else None,
     ).check()
 
