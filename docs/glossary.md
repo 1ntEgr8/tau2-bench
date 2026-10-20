@@ -36,7 +36,9 @@ averaged over tasks within a cell, then over cells with equal weight.
 The full, fixed population a benchmark is scored over: every cell, every
 frozen task ID, and the trial indices. A run that covers only part of the
 frame (a slice or a `--num-tasks` sample) has no official score; the frame is the
-denominator. A saved run records its frame in `benchmark-frame.json` at the root.
+denominator. Calls that ended in an infrastructure error are the exception: they
+are harness faults, so they are excluded from the denominator and reported as
+`error_trials`. A saved run records its frame in `benchmark-frame.json` at the root.
 
 ## Generation quality
 
@@ -58,7 +60,10 @@ must be run before `tau2 submit prepare`.
 One named quantity a judge reports, such as `naturalness`, `speech_fidelity`
 or `tool_use`. A measure applies to some languages and not
 others; `tau2 judges summarize` lists, for each cell and measure, how many calls
-it applies to, how many were judged, and the pass and fail counts.
+it applies to, how many were judged, and the pass and fail counts. Calls a
+measure cannot judge because recorded Live speech has no transcript are
+excluded from it and counted as `input_excluded_calls`; they do not block a
+submission.
 
 ## Pack
 

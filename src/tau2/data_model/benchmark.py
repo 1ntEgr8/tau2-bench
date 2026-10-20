@@ -161,7 +161,10 @@ class BenchmarkSelection(BenchmarkModel):
 
 
 class TrialStatus(str, Enum):
-    """Infrastructure/evaluation gaps are separate from ordinary task failure."""
+    """Infrastructure errors are separate from ordinary task failure.
+
+    ``ERROR`` trials leave the score's denominator; ``UNSCORED`` ones block it.
+    """
 
     SCORED = "scored"
     ERROR = "error"
@@ -222,7 +225,8 @@ class CellSummary(BenchmarkModel):
         int, Field(description="Observed trials with usable ordinary task reward.")
     ]
     error_trials: Annotated[
-        int, Field(description="Explicit infrastructure/evaluator errors.")
+        int,
+        Field(description="Explicit infrastructure errors, excluded from the score."),
     ]
     unscored_trials: Annotated[
         int, Field(description="Stored trials without an evaluated reward.")
@@ -231,11 +235,16 @@ class CellSummary(BenchmarkModel):
         int, Field(description="Expected trials absent from input.")
     ]
     complete: Annotated[
-        bool, Field(description="Every expected task/trial has a usable reward.")
+        bool,
+        Field(
+            description="Every expected task/trial is scored or errored, and at least one is scored."
+        ),
     ]
     score: Annotated[
         float | None,
-        Field(description="Equal-task mean only when this cell is complete."),
+        Field(
+            description="Equal-task mean over scored trials, only when this cell is complete."
+        ),
     ]
     observed_score: Annotated[
         float | None,
@@ -250,10 +259,12 @@ class ScoreCoverage(BenchmarkModel):
 
     expected_trials: int = Field(description="Task/trial units owed by this group.")
     scored_trials: int = Field(description="Units with usable task rewards.")
-    error_trials: int = Field(description="Recorded infrastructure/evaluation errors.")
+    error_trials: int = Field(
+        description="Recorded infrastructure errors, excluded from the score."
+    )
     unscored_trials: int = Field(description="Stored units without task rewards.")
     missing_trials: int = Field(description="Units absent from saved results.")
-    complete: bool = Field(description="Every expected unit has a usable reward.")
+    complete: bool = Field(description="Every cell in the group is complete.")
     score: float | None = Field(
         description="Equal-cell score only when the group is complete."
     )
@@ -263,7 +274,7 @@ class ScoreCoverage(BenchmarkModel):
 
 
 class BenchmarkSummary(BenchmarkModel):
-    """Full benchmark score cannot be reported for partial or erroneous coverage."""
+    """Full benchmark score cannot be reported for partial coverage."""
 
     benchmark_version: Annotated[
         str,
@@ -285,7 +296,10 @@ class BenchmarkSummary(BenchmarkModel):
     scored_trials: Annotated[
         int, Field(description="Trials with usable ordinary rewards.")
     ]
-    error_trials: Annotated[int, Field(description="Explicit errors across cells.")]
+    error_trials: Annotated[
+        int,
+        Field(description="Explicit infrastructure errors, excluded from scores."),
+    ]
     unscored_trials: Annotated[int, Field(description="Stored but unscored trials.")]
     missing_trials: Annotated[
         int, Field(description="Absent expected task/trial units.")

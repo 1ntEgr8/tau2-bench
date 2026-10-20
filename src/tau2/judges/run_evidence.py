@@ -81,6 +81,17 @@ def _find_audio(results: Path, simulation: SimulationRun) -> Path | None:
     return None
 
 
+# A call-level measure cannot judge a call with an unresolved Live group; the
+# suite stores the raised ``ValueError`` as ``"ValueError: <this>: <reasons>"``.
+# Saved error rows keep only that string, so this prefix is their identity.
+LIVE_INPUT_CALL_ERROR = "Call-level judgment requires complete Live input"
+
+
+def is_live_input_call_error(error: str) -> bool:
+    """Whether a saved whole-call judge error is the Live-input check above."""
+    return error.startswith(f"ValueError: {LIVE_INPUT_CALL_ERROR}: ")
+
+
 def live_input_errors(simulation: SimulationRun) -> list[UnitError]:
     """Identify only the Live groups whose audio/reference association is unresolved."""
     errors = []

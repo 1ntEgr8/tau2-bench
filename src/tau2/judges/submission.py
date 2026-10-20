@@ -89,6 +89,13 @@ class VerdictFingerprint(ContractModel):
     error_units: Annotated[
         int, Field(ge=0, description="Units the judge failed on (partial verdicts).")
     ] = 0
+    input_error_units: Annotated[
+        int,
+        Field(
+            ge=0,
+            description="Units (within error_units) blocked by missing Live input.",
+        ),
+    ] = 0
 
 
 class CellDiagnostics(ContractModel):
@@ -111,7 +118,9 @@ class CellDiagnostics(ContractModel):
         for summary in self.summary:
             rows = [row for row in self.verdicts if row.measure == summary.measure]
             if (
-                sum(not row.error_units for row in rows) != summary.judged_calls
+                # Only missing Live input may leave a judged call's units unjudged.
+                sum(row.error_units == row.input_error_units for row in rows)
+                != summary.judged_calls
                 or sum(bool(row.error_units) for row in rows) != summary.partial_calls
                 or sum(row.pass_units for row in rows) != summary.pass_units
                 or sum(row.fail_units for row in rows) != summary.fail_units
@@ -220,6 +229,9 @@ def _cell_rows(
                 fail_units=sum(u.opportunity and u.violation for u in units),
                 no_opportunity_units=sum(not u.opportunity for u in units),
                 error_units=len(row.verdict.unit_errors),
+                input_error_units=sum(
+                    error.kind == "input" for error in row.verdict.unit_errors
+                ),
             )
         )
         used.append(row)

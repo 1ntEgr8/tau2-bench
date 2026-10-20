@@ -79,7 +79,7 @@ is optional; pass it only to assert which benchmark you expect. See
 
 ```bash
 # 1. Run the released voice benchmark. Repeat the same command (it resumes) to
-#    fill missing calls and retry infrastructure errors.
+#    fill missing calls; it also retries infrastructure errors.
 tau2 run --audio-native --audio-native-model <model> --save-to voice-run
 
 # 2. Judge every cell. Resumable: it judges only missing, stale and errored verdicts.
@@ -108,8 +108,9 @@ and a message like this:
 
 ```
 Error: Submission is incomplete for voice-v2 (data/simulations/voice-run).
-Rewards: 60/900 calls lack a scored reward (60 missing, 0 errored, 0 unscored).
-  pt-retail: 10 missing
+Rewards: 60/900 calls lack a scored reward (60 missing, 0 unscored).
+Rewards: 6 infrastructure-errored calls are excluded from the score, not counted as gaps.
+  pt-retail: 10 missing, 2 errored (excluded)
   ko-telecom: 50 missing
 Judges: 1/18 cells have applicable measures without a usable saved verdict.
   zh-airline: naturalness 48/50 judged (2 not judged)
@@ -117,6 +118,27 @@ To fill the gaps:
   - Rerun the original `tau2 run ... --save-to <root>` command with --auto-resume: ...
   - Then run `tau2 judges suite data/simulations/voice-run`: it judges only missing, stale and errored verdicts.
 ```
+
+Calls that ended in an infrastructure error (`termination_reason:
+infrastructure_error`) do not block a package. They are harness faults, not
+model failures, so they are excluded from the score's denominator: a cell is
+scored over its scored calls only, and a task whose calls all errored drops out
+of its cell's mean. The package reports them as `error_trials` per cell, per
+language, per domain and overall, and `prepare` prints the total. A cell is
+complete once every call is scored or errored, provided at least one is scored;
+a cell whose calls all errored still blocks. Missing and unscored calls still
+block. Rerunning with `--auto-resume` retries infrastructure errors if you want
+them scored.
+
+Judge verdicts blocked only because recorded Live speech has no transcript
+are recording gaps, not judge failures, so they do not block either. A verdict
+whose only unit errors are missing-Live-input (`kind: "input"`) errors counts
+as judged; its blocked units stay out of the pass fraction and are reported as
+`input_error_units`. A call a measure cannot judge at all for that reason (for
+call-level measures, any missing transcript) is excluded and reported as
+`input_excluded_calls`. Any other judge error (a model or API failure, an
+unparseable reply) still blocks: rerun `tau2 judges suite` to retry it. A
+measure whose applicable calls are all excluded still blocks.
 
 Only the default production judge catalog is accepted. Verdicts made with
 `--registry` bundles have a different catalog revision and will not validate.
