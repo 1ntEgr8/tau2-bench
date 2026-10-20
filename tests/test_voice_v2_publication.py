@@ -368,6 +368,17 @@ def test_historical_flags_are_rejected_without_the_adapter(tmp_path):
 def test_metadata_contract():
     submitter = SubmitterMetadata.model_validate(SUBMITTER)
     assert package_name(submitter) == NAME
+    # One agent's packages share metadata; domain frames get distinct names.
+    names = {
+        version: package_name(submitter, version)
+        for version in ("voice-v2", "text-v1", "voice-v2-banking", "voice-v2-entity")
+    }
+    assert names == {
+        "voice-v2": NAME,
+        "text-v1": NAME,
+        "voice-v2-banking": f"{NAME}_banking",
+        "voice-v2-entity": f"{NAME}_entity",
+    }
     with pytest.raises(ValidationError):
         SubmitterMetadata.model_validate({**SUBMITTER, "contact_info": {}})
     with pytest.raises(ValidationError):

@@ -6,16 +6,24 @@ them. This adapter reads the saved exports (``trajectories/<lang>/<domain>/``)
 and their saved judge verdicts as raw JSON, checks them against the published
 frame, and writes the same package a matrix submission produces. It never runs
 a simulation or a judge, and it must never qualify an incomplete new run.
+
+The same export holds the release's banking and entity (intake) calls, which
+ran before the ``voice-v2-banking`` and ``voice-v2-entity`` manifests existed
+and so record no ``info.benchmark``. For those frames the adapter derives each
+cell's binding from this checkout's released cell and checks the recorded pins
+against it (see ``_check_recorded_binding``).
 """
 
 import json
 from collections import defaultdict
 from hashlib import sha256
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from tau2.data_model.benchmark import (
     BenchmarkFrame,
     BenchmarkSubmission,
+    CellFrame,
     TaskTrial,
     TrialStatus,
 )
@@ -25,18 +33,65 @@ from tau2.data_model.judges import (
     StoredVerdict,
     SuitePlan,
 )
-from tau2.judges.submission import export_diagnostics
+from tau2.judges.submission import JUDGED_BENCHMARKS, export_diagnostics
 from tau2.metrics.benchmark import summarize
-from tau2.runner.presets import load_frame
+from tau2.runner.presets import binding_revision, load_cell_language, load_frame
 from tau2.scripts.leaderboard.benchmark_package import (
+    HISTORICAL_EXPORT_DIRS,
     BenchmarkPackage,
     PackageMetadata,
     SubmitterMetadata,
     load_package,
 )
 
+if TYPE_CHECKING:
+    from tau2.multilingual.runtime import LoadedLanguage
+
 EVIDENCE = "historical-voice-v2-2026-10-02"
 CORRECTION_FORMAT = "voice-v2-gemini-retry-correction-v1"
+# Published presets the release export holds: the 18 core cells, banking, entity.
+HISTORICAL_BENCHMARKS = ("voice", "banking", "entity")
+
+# Recorded ``runtime_rules_sha256`` digests of the release's non-English banking
+# and intake calls. The digest hashes Python sources, and these differ from
+# v2.0.0 only by diffs verified as behavior-neutral for these runs:
+# banking_knowledge/localization_bindings.py (error-message wording),
+# multilingual/agent_guidance.py (an intake-only constant, so neutral for
+# banking), data_model/voice.py (new, unused Voice Design models),
+# intake/cli.py (an argument-group label) and multilingual/runtime.py (a helper
+# refactor, plus a dropped ``config.benchmark is None`` condition that held for
+# every one of these runs). Every other pin must equal the released cell.
+ACCEPTED_RUNTIME_RULES = {
+    "banking_knowledge": frozenset(
+        {
+            # Release-run commit 05dc65d2.
+            "63d28cf8966e0339f629abee87adf664da57acf0145e754d1faaf319586ddef7",
+            # Release-run commit 9aef5bb0.
+            "1958ecab6b2f51eed5d143616a420a9d773df17454c0f3da371f315b7927036b",
+        }
+    ),
+    # Release-run commits 9aef5bb0, 92b344b3 and af13daae.
+    "intake": frozenset(
+        {"357ad3469bb43011116827ade7cb1bcaedbabd915d6d68e0e1e7b53116405f25"}
+    ),
+}
+# Recorded run fields that vary by cell by construction: provenance, the
+# language binding (checked against the release separately) and the
+# language-resolved elicitation contract versions.
+_CELL_FIELDS = frozenset(
+    {
+        "benchmark",
+        "git_commit",
+        "language",
+        "pack_extension",
+        "language_tasks",
+        "language_artifacts",
+        "elicitation_scoring_version",
+        "elicitation_prompt_version",
+        "elicitation_catalog_version",
+        "elicitation_spell_detection_version",
+    }
+)
 
 
 def file_sha256(path: Path) -> str:
@@ -49,7 +104,7 @@ def file_sha256(path: Path) -> str:
 
 
 def _cell_dir(root: Path, language: str, domain: str) -> Path:
-    return root / "trajectories" / language / domain
+    return root / "trajectories" / language / HISTORICAL_EXPORT_DIRS.get(domain, domain)
 
 
 def _validate_simulation_files(
@@ -121,18 +176,135 @@ def _validate_cell_frame(
         raise ValueError(f"{language}/{domain}: selected 50-task frame mismatch")
     if frame["trials"] != official.trials or info["num_trials"] != 1:
         raise ValueError(f"{language}/{domain}: V2 publication requires one trial")
+    _check_calls(simulations, mapped, selected, f"{language}/{domain}")
+    return mapped
+
+
+def _check_calls(
+    simulations: list[dict], mapped: dict[str, str], selected: set[str], label: str
+) -> None:
+    """One trial-0 call per selected task; unscored calls are infrastructure errors."""
     expected = {(task_id, 0) for task_id in selected}
     actual = [(mapped[str(sim["task_id"])], sim["trial"]) for sim in simulations]
     if len(actual) != len(set(actual)) or set(actual) != expected:
-        raise ValueError(f"{language}/{domain}: missing or duplicate task/trial keys")
+        raise ValueError(f"{label}: missing or duplicate task/trial keys")
     if any(
         sim["reward"] is None and sim["termination_reason"] != "infrastructure_error"
         for sim in simulations
     ):
-        raise ValueError(
-            f"{language}/{domain}: unscored call lacks infrastructure status"
+        raise ValueError(f"{label}: unscored call lacks infrastructure status")
+
+
+def _check_recorded_binding(info: dict, loaded: "LoadedLanguage", label: str) -> None:
+    """The recorded language binding must be the released cell's, pin for pin.
+
+    Checks ``info.language_artifacts`` and every ``info.language_tasks`` entry
+    against the cell this checkout releases: pack and domain revisions, every
+    ``LanguageArtifactPins`` field and the task-loader options. The one
+    exception is ``runtime_rules_sha256``, which may instead be a verified
+    digest in ``ACCEPTED_RUNTIME_RULES``.
+    """
+    pins = loaded.artifact_pins.model_dump(mode="json")
+    released_rules = pins.pop("runtime_rules_sha256")
+    binding = {
+        "language": loaded.pack.language,
+        "mode": loaded.mode,
+        "pack_extension": loaded.pack_extension,
+        "pack_revision": loaded.pack.revision,
+        "domain_revision": loaded.binding.revision,
+        **pins,
+    }
+    records = [(info["language_artifacts"], pins)] + [
+        (entry, binding) for entry in info["language_tasks"].values()
+    ]
+    for recorded, expected in records:
+        changed = sorted(
+            field for field, value in expected.items() if recorded.get(field) != value
         )
-    return mapped
+        if changed:
+            raise ValueError(
+                f"{label}: recorded binding differs from the release: "
+                + ", ".join(changed)
+            )
+        rules = recorded.get("runtime_rules_sha256")
+        if rules != released_rules and (
+            released_rules is None
+            or rules not in ACCEPTED_RUNTIME_RULES.get(loaded.domain, ())
+        ):
+            raise ValueError(f"{label}: unverified runtime_rules_sha256 {rules}")
+    if any(
+        entry["task_selection"]["task_kwargs"] != loaded.selection.task_kwargs
+        for entry in info["language_tasks"].values()
+    ):
+        raise ValueError(f"{label}: recorded task-loader options differ")
+
+
+def _recorded_conditions(info: dict, language: str, label: str) -> dict:
+    """Recorded run settings shared by every cell; per-cell fields are removed."""
+    conditions = {
+        field: value for field, value in info.items() if field not in _CELL_FIELDS
+    }
+    audio = dict(conditions["audio_native_config"])
+    if audio.get("language") != language:
+        raise ValueError(f"{label}: provider language differs from the cell")
+    audio["language"] = None
+    conditions["audio_native_config"] = audio
+    return conditions
+
+
+def _derived_cell(
+    data: dict, simulations: list[dict], cell: CellFrame, official: BenchmarkFrame
+) -> tuple[dict[str, str], dict]:
+    """Check a pre-manifest release cell; return its task map and conditions.
+
+    Banking and entity calls record no ``info.benchmark``, so the frame identity
+    is derived: the recorded binding must be the released one, the tasks the
+    frozen subset (localized IDs map through ``canonical_task_id``) and each
+    call trial 0 of the regular speech condition.
+    """
+    language, domain = cell.language, cell.domain
+    label = f"{language}/{domain}"
+    info = data["info"]
+    if info.get("benchmark") is not None:
+        raise ValueError(f"{label}: expected a pre-manifest release cell")
+    if info.get("language") != language:
+        raise ValueError(f"{label}: recorded language mismatch")
+    if info["environment_info"]["domain_name"] != domain:
+        raise ValueError(f"{label}: recorded domain mismatch")
+    loaded = load_cell_language(language, domain, official.mode)
+    if binding_revision(loaded) != cell.binding_revision:
+        raise ValueError(f"{label}: this checkout differs from the published binding")
+    _check_recorded_binding(info, loaded, label)
+    mapped = {
+        str(task_id): details["canonical_task_id"]
+        for task_id, details in info["language_tasks"].items()
+    }
+    task_ids = [mapped[str(task["id"])] for task in data["tasks"]]
+    if len(task_ids) != len(set(task_ids)) or set(task_ids) != set(
+        cell.canonical_task_ids
+    ):
+        raise ValueError(f"{label}: task set differs from the frozen subset")
+    if official.trials != [0] or info["num_trials"] != 1:
+        raise ValueError(f"{label}: V2 publication requires one trial")
+    if any(
+        info.get(field) != "regular"
+        for field in (
+            "speech_complexity",
+            "channel_effects_mode",
+            "speech_effects_mode",
+        )
+    ):
+        raise ValueError(f"{label}: only the regular speech condition is scored")
+    _check_calls(simulations, mapped, set(cell.canonical_task_ids), label)
+    return mapped, _recorded_conditions(info, language, label)
+
+
+def _condition_fingerprint(conditions: dict) -> str:
+    """Deterministic fingerprint of recorded settings, tagged with the evidence."""
+    payload = {"evidence": EVIDENCE, "recorded_conditions": conditions}
+    return sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
 
 
 def _validate_source_correction(root: Path) -> None:
@@ -205,56 +377,18 @@ def _judge_plan(
     return SuitePlan(items=items)
 
 
-def build_historical_package(
-    source_root: Path, judges_roots: list[Path], submitter: SubmitterMetadata
-) -> BenchmarkPackage:
-    """Derive the 2.0 package for one provider's frozen 18-cell export."""
-    _validate_source_correction(source_root)
-    official = load_frame("voice", num_trials=1)
-    trials: list[TaskTrial] = []
-    sources: dict[str, str] = {}
-    agents: set[tuple[str, str]] = set()
-    caller_models: set[str] = set()
-    scored_by_cell: dict[tuple[str, str], list[str]] = {}
+def _judge_diagnostics(
+    official: BenchmarkFrame,
+    judges_roots: list[Path],
+    scored_by_cell: dict[tuple[str, str], list[str]],
+):
+    """Diagnostics from the saved verdicts of every scored call."""
     verdicts: dict[str, dict[str, list[StoredVerdict]]] = defaultdict(dict)
-    for cell in official.cells:
-        language, domain = cell.language, cell.domain
-        results_path = _cell_dir(source_root, language, domain) / "results.json"
-        data = json.loads(results_path.read_text())
-        simulations = data["simulation_index"]
-        info = data["info"]
-        audio_config = info["benchmark"]["conditions"]["audio_native_config"]
-        agents.add((audio_config["provider"], audio_config["model"]))
-        caller_models.add(info["user_info"]["llm"])
-        task_mapping = _validate_cell_frame(
-            data, simulations, language, domain, official
-        )
-        _validate_simulation_files(source_root, simulations, language, domain)
-        benchmark = info["benchmark"]
-        sources[f"{language}/{domain}"] = file_sha256(results_path)
-        trials.extend(
-            TaskTrial(
-                language=language,
-                domain=domain,
-                canonical_task_id=task_mapping[str(sim["task_id"])],
-                trial=sim["trial"],
-                condition_fingerprint=benchmark["condition_fingerprint"],
-                binding_revision=benchmark["binding_revision"],
-                status=TrialStatus.SCORED
-                if sim["reward"] is not None
-                else TrialStatus.ERROR,
-                reward=sim["reward"],
-            )
-            for sim in simulations
-        )
-        scored = [sim["id"] for sim in simulations if sim["reward"] is not None]
-        scored_by_cell[(language, domain)] = scored
+    for (language, _), scored in scored_by_cell.items():
         for simulation_id in scored:
             verdicts[language][simulation_id] = _load_verdicts(
                 judges_roots, language, simulation_id
             )
-    if len(agents) != 1 or len(caller_models) != 1:
-        raise ValueError("Voice V2 export mixes agent or caller models")
     for language, by_call in verdicts.items():
         saved = {
             path.stem
@@ -289,6 +423,84 @@ def build_historical_package(
                 stored,
             )
         )
+    return export_diagnostics(official, catalogs.pop(), cells)
+
+
+def build_historical_package(
+    source_root: Path,
+    judges_roots: list[Path] | None,
+    submitter: SubmitterMetadata,
+    benchmark: str = "voice",
+) -> BenchmarkPackage:
+    """Derive the 2.0 package for one provider's frozen export of one frame.
+
+    ``benchmark`` is the published preset: ``voice`` (the 18 core cells, which
+    record their frame and are judged), or ``banking`` / ``entity``, whose
+    pre-manifest cells are derived and carry no judge diagnostics.
+    """
+    if benchmark not in HISTORICAL_BENCHMARKS:
+        raise ValueError(
+            f"Historical Voice V2 packages one of {', '.join(HISTORICAL_BENCHMARKS)}"
+        )
+    official = load_frame(benchmark, num_trials=1)
+    judged = official.benchmark_version in JUDGED_BENCHMARKS
+    if judged != bool(judges_roots):
+        raise ValueError(
+            f"{official.benchmark_version} "
+            + ("requires" if judged else "takes no")
+            + " --judges-root"
+        )
+    _validate_source_correction(source_root)
+    trials: list[TaskTrial] = []
+    sources: dict[str, str] = {}
+    agents: set[tuple[str, str]] = set()
+    caller_models: set[str] = set()
+    conditions: set[str] = set()
+    scored_by_cell: dict[tuple[str, str], list[str]] = {}
+    for cell in official.cells:
+        language, domain = cell.language, cell.domain
+        results_path = _cell_dir(source_root, language, domain) / "results.json"
+        data = json.loads(results_path.read_text())
+        simulations = data["simulation_index"]
+        info = data["info"]
+        if judged:
+            benchmark_info = info["benchmark"]
+            audio_config = benchmark_info["conditions"]["audio_native_config"]
+            task_mapping = _validate_cell_frame(
+                data, simulations, language, domain, official
+            )
+            fingerprint = benchmark_info["condition_fingerprint"]
+        else:
+            audio_config = info["audio_native_config"]
+            task_mapping, recorded = _derived_cell(data, simulations, cell, official)
+            fingerprint = _condition_fingerprint(recorded)
+        agents.add((audio_config["provider"], audio_config["model"]))
+        caller_models.add(info["user_info"]["llm"])
+        conditions.add(fingerprint)
+        _validate_simulation_files(source_root, simulations, language, domain)
+        sources[f"{language}/{domain}"] = file_sha256(results_path)
+        trials.extend(
+            TaskTrial(
+                language=language,
+                domain=domain,
+                canonical_task_id=task_mapping[str(sim["task_id"])],
+                trial=sim["trial"],
+                condition_fingerprint=fingerprint,
+                binding_revision=cell.binding_revision,
+                status=TrialStatus.SCORED
+                if sim["reward"] is not None
+                else TrialStatus.ERROR,
+                reward=sim["reward"],
+            )
+            for sim in simulations
+        )
+        scored_by_cell[(language, domain)] = [
+            sim["id"] for sim in simulations if sim["reward"] is not None
+        ]
+    if len(agents) != 1 or len(caller_models) != 1:
+        raise ValueError("Voice V2 export mixes agent or caller models")
+    if len(conditions) != 1:
+        raise ValueError("Voice V2 export mixes recorded run conditions")
     provider, model = agents.pop()
     return BenchmarkPackage(
         metadata=PackageMetadata(
@@ -303,19 +515,22 @@ def build_historical_package(
             summary=summarize(official, trials),
             sources=sources,
         ),
-        diagnostics=export_diagnostics(official, catalogs.pop(), cells),
+        diagnostics=_judge_diagnostics(official, judges_roots, scored_by_cell)
+        if judged
+        else None,
     ).check()
 
 
 def prepare_historical_package(
     source_root: Path,
-    judges_roots: list[Path],
+    judges_roots: list[Path] | None,
     metadata_file: Path,
     output: Path,
+    benchmark: str = "voice",
 ) -> BenchmarkPackage:
     """Write ``<output>/<name>/`` from the saved export; nothing is copied."""
     submitter = SubmitterMetadata.model_validate_json(metadata_file.read_text())
-    package = build_historical_package(source_root, judges_roots, submitter)
+    package = build_historical_package(source_root, judges_roots, submitter, benchmark)
     destination = output / package.name
     if destination.exists():
         raise FileExistsError(f"destination already exists: {destination}")
@@ -325,16 +540,36 @@ def prepare_historical_package(
 
 
 def validate_historical_package(
-    directory: Path, source_root: Path, judges_roots: list[Path]
+    directory: Path,
+    source_root: Path,
+    judges_roots: list[Path] | None,
+    benchmark: str | None = None,
 ) -> BenchmarkPackage:
-    """Recompute the package from the saved export and verdicts."""
+    """Recompute the package from the saved export and verdicts.
+
+    The preset is read from the package's frame; ``benchmark``, if given, must
+    name the same one.
+    """
     package = load_package(directory)
     if package.metadata.evidence != EVIDENCE:
         raise ValueError(f"{directory} is not a historical Voice V2 package")
+    recorded = next(
+        (
+            name
+            for name in HISTORICAL_BENCHMARKS
+            if load_frame(name).benchmark_version
+            == package.submission.frame.benchmark_version
+        ),
+        None,
+    )
+    if recorded is None:
+        raise ValueError(f"{directory} packages no frame of the release export")
+    if benchmark not in (None, recorded):
+        raise ValueError(f"{directory} packages {recorded}, not {benchmark}")
     submitter = SubmitterMetadata.model_validate(
         package.metadata.model_dump(include=set(SubmitterMetadata.model_fields))
     )
-    expected = build_historical_package(source_root, judges_roots, submitter)
+    expected = build_historical_package(source_root, judges_roots, submitter, recorded)
     expected.metadata.trajectories = package.metadata.trajectories
     if expected.submission != package.submission:
         raise ValueError("Submission differs from the saved release export")

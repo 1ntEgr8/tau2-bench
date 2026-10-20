@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- The maintainer-only historical adapter (`tau2 submit prepare/validate
+  --historical-voice-v2`) also packages the frozen 2026-10-02 release export's
+  banking and entity (intake) calls: `--benchmark banking` builds a
+  `voice-v2-banking` package and `--benchmark entity` a `voice-v2-entity` one
+  (default: `voice`). Those calls predate their manifests, so the adapter
+  checks each recorded binding against the released cell and accepts only
+  three verified `runtime_rules_sha256` digests. Neither frame is judged, so
+  neither takes `--judges-root`. Validation reads the frame from the package.
+  See [docs/voice-v2-publication.md](docs/voice-v2-publication.md).
+- 2.0 package names: `voice-v2-banking` and `voice-v2-entity` packages are
+  named `{model_name}_{model_organization}_{submission_date}_banking` /
+  `_entity`. One agent's voice-v2, banking and entity packages share their
+  metadata so the leaderboard can group them, and without the suffix they would
+  collide. voice-v2 and text-v1 names are unchanged.
+
 ### Changed
 - 2.0 scoring excludes infrastructure-errored calls from the denominator
   instead of blocking the cell. A cell is complete once every owed call is
