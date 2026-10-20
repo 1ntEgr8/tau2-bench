@@ -36,7 +36,9 @@ averaged over tasks within a cell, then over cells with equal weight.
 The full, fixed population a benchmark is scored over: every cell, every
 frozen task ID, and the trial indices. A run that covers only part of the
 frame (a slice or a `--num-tasks` sample) has no official score; the frame is the
-denominator. A saved run records its frame in `benchmark-frame.json` at the root.
+denominator. Calls that ended in an infrastructure error are the exception: they
+are harness faults, so they are excluded from the denominator and reported as
+`error_trials`. A saved run records its frame in `benchmark-frame.json` at the root.
 
 ## Generation quality
 

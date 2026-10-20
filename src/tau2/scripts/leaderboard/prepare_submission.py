@@ -1047,8 +1047,9 @@ def _incomplete_message(root: Path, frame, summary, judge_coverage) -> str:
         lines.append(
             "  - Rerun the original `tau2 run ... --save-to <root>` command with "
             "--auto-resume: it keeps finished calls, adds missing ones and retries "
-            "infrastructure errors. Unscored and unexpected-error calls are not "
-            "retried; remove them from the cell results first."
+            "infrastructure errors (only required for a cell with no scored call). "
+            "Unscored and unexpected-error calls are not retried; remove them from "
+            "the cell results first."
         )
     if judge_coverage is not None:
         lines.append(
@@ -1139,6 +1140,13 @@ def prepare_benchmark_submission(
     destination = output / package.name
     package.write(destination)
     print(f"Saved {destination}")
+    summary = package.submission.summary
+    if summary.error_trials:
+        print(
+            f"{summary.error_trials}/{summary.expected_trials} calls ended in an "
+            "infrastructure error; they are excluded from the score and reported "
+            "as error_trials."
+        )
     print(f"Check it with: tau2 submit validate {destination} --results {root}")
     return destination
 

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- 2.0 scoring excludes infrastructure-errored calls from the denominator
+  instead of blocking the cell. A cell is complete once every owed call is
+  scored or errored and at least one is scored; its score averages the scored
+  calls only, and a task whose calls all errored drops out of the cell mean.
+  Errored calls stay reported as `error_trials` and are no longer listed as
+  gaps by `tau2 submit prepare`. Missing and unscored calls, and cells whose
+  calls all errored, still block a submission.
+
 ## [2.0.0] - 2026-10-19
 
 > **⚠️ Scoring change — scores are not comparable with 1.x.** Communication checks,

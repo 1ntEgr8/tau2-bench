@@ -43,15 +43,26 @@ class IncompleteSubmissionError(ValueError):
 
 
 def describe_reward_gaps(summary: BenchmarkSummary) -> list[str]:
-    """Plain-text reward coverage gaps: an overall count, then one line per cell."""
-    lacking = summary.expected_trials - summary.scored_trials
-    if not lacking:
+    """Plain-text reward coverage gaps: an overall count, then one line per cell.
+
+    Infrastructure-errored calls are not gaps: they are excluded from the score
+    and only mentioned, unless a cell has no scored call at all.
+    """
+    if summary.complete:
         return []
-    lines = [
-        f"Rewards: {lacking}/{summary.expected_trials} calls lack a scored reward "
-        f"({summary.missing_trials} missing, {summary.error_trials} errored, "
-        f"{summary.unscored_trials} unscored)."
-    ]
+    unsettled = summary.missing_trials + summary.unscored_trials
+    lines = []
+    if unsettled:
+        lines.append(
+            f"Rewards: {unsettled}/{summary.expected_trials} calls lack a scored "
+            f"reward ({summary.missing_trials} missing, "
+            f"{summary.unscored_trials} unscored)."
+        )
+    if summary.error_trials:
+        lines.append(
+            f"Rewards: {summary.error_trials} infrastructure-errored calls are "
+            "excluded from the score, not counted as gaps."
+        )
     for cell in summary.cells:
         if cell.complete:
             continue
@@ -59,11 +70,14 @@ def describe_reward_gaps(summary: BenchmarkSummary) -> list[str]:
             f"{count} {label}"
             for count, label in (
                 (cell.missing_trials, "missing"),
-                (cell.error_trials, "errored"),
                 (cell.unscored_trials, "unscored"),
             )
             if count
         ]
+        if not cell.scored_trials:
+            parts.append("no scored call")
+        if cell.error_trials:
+            parts.append(f"{cell.error_trials} errored (excluded)")
         lines.append(f"  {cell.language}-{cell.domain}: " + ", ".join(parts))
     return lines
 
@@ -432,9 +446,14 @@ def _summarize(
 ) -> BenchmarkSummary:
     """Average trials within task, tasks within cell, and all cells equally.
 
-    Partial means are explicitly labeled and never substituted for an official
-    score. Repeated observations, unknown membership and incompatible conditions
-    fail rather than quietly changing the sample or its weights.
+    Infrastructure-errored trials are harness faults, not model failures: they
+    leave the denominator (a task whose trials all errored drops out of its cell
+    mean) and stay counted in ``error_trials``. A cell is complete once every
+    owed trial is scored or errored and at least one is scored; missing and
+    unscored trials still block it. Partial means are explicitly labeled and
+    never substituted for an official score. Repeated observations, unknown
+    membership and incompatible conditions fail rather than quietly changing the
+    sample or its weights.
     """
     conditions = {trial.condition_fingerprint for trial in trials}
     if len(conditions) > 1:
@@ -475,16 +494,16 @@ def _summarize(
         )
         owed = len(cell.canonical_task_ids) * len(frame.trials)
         scored = sum(trial.status == TrialStatus.SCORED for trial in observations)
-        complete = scored == owed
+        errored = sum(trial.status == TrialStatus.ERROR for trial in observations)
+        # An all-errored cell has no score to report, so it never counts.
+        complete = scored > 0 and scored + errored == owed
         summaries.append(
             CellSummary(
                 language=cell.language,
                 domain=cell.domain,
                 expected_trials=owed,
                 scored_trials=scored,
-                error_trials=sum(
-                    trial.status == TrialStatus.ERROR for trial in observations
-                ),
+                error_trials=errored,
                 unscored_trials=sum(
                     trial.status == TrialStatus.UNSCORED for trial in observations
                 ),

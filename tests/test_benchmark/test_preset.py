@@ -277,9 +277,11 @@ def test_saved_submission_and_controller_cli_use_ordinary_configs(
         export_submission(root, published_frame)
 
 
-@pytest.mark.parametrize("provider", ("openai", "livekit"))
+@pytest.mark.parametrize(
+    "provider, errored", (("openai", False), ("livekit", False), ("openai", True))
+)
 def test_complete_saved_matrix_submission_auto_detection(
-    published_frame, tmp_path, monkeypatch, provider, submitter_file
+    published_frame, tmp_path, monkeypatch, provider, errored, submitter_file
 ):
     import argparse
 
@@ -311,6 +313,9 @@ def test_complete_saved_matrix_submission_auto_detection(
     for config in plan.configs:
         loaded = load_language(config.language, config.domain, mode="voice")
         info = get_info(config)
+        # Infrastructure errors on two en-airline calls (one would have passed)
+        # leave the denominator instead of blocking the package.
+        failed = errored and (config.language, config.domain) == ("en", "airline")
         sims = [
             SimulationRun(
                 id=f"sim-{index}",
@@ -319,8 +324,12 @@ def test_complete_saved_matrix_submission_auto_detection(
                 start_time="a",
                 end_time="b",
                 duration=1,
-                termination_reason=TerminationReason.USER_STOP,
-                reward_info=RewardInfo(reward=float(index < 25)),
+                termination_reason=TerminationReason.INFRASTRUCTURE_ERROR
+                if failed and index < 2
+                else TerminationReason.USER_STOP,
+                reward_info=None
+                if failed and index < 2
+                else RewardInfo(reward=float(index < 25)),
                 language_context=info.language_tasks[task.id],
             )
             for index, task in enumerate(loaded.tasks)
@@ -329,7 +338,21 @@ def test_complete_saved_matrix_submission_auto_detection(
             root / f"{config.language}-{config.domain}" / "results.json", format="dir"
         )
     submission = export_submission(root, published_frame, require_complete=True)
-    assert submission.summary.score == 0.5 and submission.summary.scored_trials == 900
+    if errored:
+        summary = submission.summary
+        assert summary.complete and summary.error_trials == 2
+        assert summary.scored_trials == 898 and summary.expected_trials == 900
+        en_airline = next(
+            cell
+            for cell in summary.cells
+            if (cell.language, cell.domain) == ("en", "airline")
+        )
+        assert en_airline.score == pytest.approx(23 / 48)
+        assert summary.score == pytest.approx((17 * 0.5 + 23 / 48) / 18)
+    else:
+        assert (
+            submission.summary.score == 0.5 and submission.summary.scored_trials == 900
+        )
     assert (
         BenchmarkSubmission.model_validate_json(submission.model_dump_json())
         == submission
