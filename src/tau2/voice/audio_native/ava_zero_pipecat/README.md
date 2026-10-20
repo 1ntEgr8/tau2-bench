@@ -1,9 +1,11 @@
 # Ava Zero provider (Pipecat RTVI)
 
 This adapter connects τ-bench's discrete-time audio agent to Avartha's Ava Zero
-voice agent. It talks to an already-running Ava Zero server over Pipecat's
-protobuf RTVI WebSocket transport; τ-bench does not start or configure the
-server. Model, speech, and turn-taking settings belong to the server.
+voice agent. By default it talks to an already-running Ava Zero server over
+Pipecat's protobuf RTVI WebSocket transport; it can instead call a hosted Ava
+Zero agent over WebRTC (see [WebRTC transport](#webrtc-transport)). τ-bench
+does not start or configure the agent. Model, speech, and turn-taking settings
+belong to the server.
 
 ## Install
 
@@ -26,10 +28,12 @@ tau2 run --domain retail --audio-native \
 | Option | Default | Description |
 |---|---|---|
 | `--audio-native-model` | `ava-zero` | Server-side agent ID to start for each call |
-| `--ava-zero-base-url` | `ws://localhost:7860` | Base URL of the server; `http(s)` and `ws(s)` are both accepted |
-| `--ava-zero-websocket-token-env` | *(none)* | Name of an environment variable whose value is sent as the WebSocket `token` query parameter |
+| `--ava-zero-transport` | `websocket` | `websocket` for a running server, `webrtc` for a hosted agent |
+| `--ava-zero-base-url` | `ws://localhost:7860` | Base URL of the server; `http(s)` and `ws(s)` are both accepted. With `webrtc`, the hosted agent's URL |
+| `--ava-zero-websocket-token-env` | *(none)* | Name of an environment variable whose value is sent as the WebSocket `token` query parameter (`websocket` only) |
 
-`TAU2_AVA_ZERO_BASE_URL`, when set, takes precedence over `--ava-zero-base-url`.
+With the WebSocket transport, `TAU2_AVA_ZERO_BASE_URL`, when set, takes
+precedence over `--ava-zero-base-url`.
 `--reasoning-effort` is rejected: reasoning is configured on the server.
 
 ## What happens on each call
@@ -55,6 +59,40 @@ played. The server sends each sentence of text before the audio that speaks
 it; the adapter holds the text back until the server's word-timing events or
 its end-of-utterance playback caption show that the words aired. On barge-in,
 text the caller has not heard is discarded.
+
+## WebRTC transport
+
+`--ava-zero-transport webrtc` calls a hosted Ava Zero agent through Pipecat's
+agent-server (SmallWebRTC) protocol instead of a WebSocket. It needs the live
+extra, which provides the WebRTC client, and `AVARTHA_API_KEY`, which is sent
+as a bearer token when starting each call:
+
+```bash
+uv sync --extra live
+
+export AVARTHA_API_KEY=<your-api-key>
+tau2 run --domain retail --audio-native \
+  --audio-native-provider ava_zero_pipecat \
+  --ava-zero-transport webrtc \
+  --ava-zero-base-url https://<host>/inference/serverless/pipecat/v1/public/<agent_id> \
+  --num-tasks 1
+```
+
+Each call:
+
+1. `POST <agent-url>/start` with `caller_tools: true` and the unmodified domain
+   policy as the agent prompt override. The reply carries the session ID and
+   ICE servers.
+2. `POST <agent-url>/sessions/<session-id>/api/offer` exchanges the SDP offer
+   and answer. The call carries one Opus audio track each way and an ordered
+   `chat` data channel for RTVI messages.
+3. The boot verdict, tool registration, tool calls, and transcript handling are
+   the same as for the WebSocket transport. Caller audio is paced onto the
+   track in 20 ms frames; the agent's track is resampled to 24 kHz PCM16, and
+   frames of digital silence between utterances are dropped.
+4. On disconnect it sends RTVI `disconnect-bot` and closes the peer connection.
+   The hosted agent serves no cost report, so `provider_cost_report` is not
+   recorded.
 
 ## Protocol compatibility
 

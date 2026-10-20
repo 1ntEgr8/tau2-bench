@@ -83,3 +83,32 @@ def test_config_survives_controller_worker_serialization():
     assert restored.audio_native_config.ava_zero_config == (
         config.audio_native_config.ava_zero_config
     )
+
+
+AGENT_URL = "https://platform.example/inference/serverless/pipecat/v1/public/agent-1"
+
+
+def test_websocket_is_the_default_transport():
+    assert AvaZeroPipecatConfig().transport == "websocket"
+
+
+def test_webrtc_needs_the_hosted_agent_url():
+    config = AvaZeroPipecatConfig(transport="webrtc", base_url=AGENT_URL)
+
+    assert config.base_url == AGENT_URL
+    with pytest.raises(ValidationError, match="http\\(s\\) URL"):
+        AvaZeroPipecatConfig(transport="webrtc")
+    with pytest.raises(ValidationError, match="http\\(s\\) URL"):
+        AvaZeroPipecatConfig(transport="webrtc", base_url="ws://localhost:7860")
+
+
+def test_websocket_token_is_rejected_for_webrtc():
+    with pytest.raises(ValidationError, match="websocket transport"):
+        AvaZeroPipecatConfig(
+            transport="webrtc", base_url=AGENT_URL, websocket_token_env="TOKEN"
+        )
+
+
+def test_unknown_transport_is_rejected():
+    with pytest.raises(ValidationError):
+        AvaZeroPipecatConfig(transport="sip")

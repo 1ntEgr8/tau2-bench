@@ -291,10 +291,24 @@ def add_run_args(parser):
         "it is the server-side agent ID.",
     )
     parser.add_argument(
+        "--ava-zero-transport",
+        choices=["websocket", "webrtc"],
+        default="websocket",
+        help=(
+            "How the ava_zero_pipecat provider reaches Ava Zero: 'websocket' "
+            "connects to a running server; 'webrtc' calls a hosted agent through "
+            "Pipecat's agent-server protocol (requires the live extra and "
+            "AVARTHA_API_KEY). "
+            "Default is 'websocket'."
+        ),
+    )
+    parser.add_argument(
         "--ava-zero-base-url",
         default=DEFAULT_AVA_ZERO_BASE_URL,
         help=(
-            "Base URL of a running Ava Zero server (ava_zero_pipecat provider). "
+            "Base URL of a running Ava Zero server (ava_zero_pipecat provider), "
+            "or with --ava-zero-transport webrtc the hosted agent's URL, "
+            "https://<host>/inference/serverless/pipecat/v1/public/<agent_id>. "
             f"Default is {DEFAULT_AVA_ZERO_BASE_URL}."
         ),
     )
@@ -676,6 +690,7 @@ def main():
             if args.audio_native_provider == "ava_zero_pipecat":
                 try:
                     ava_zero_config = AvaZeroPipecatConfig(
+                        transport=args.ava_zero_transport,
                         base_url=args.ava_zero_base_url,
                         agent=audio_native_model,
                         websocket_token_env=args.ava_zero_websocket_token_env,

@@ -70,8 +70,10 @@ tau2 run --domain retail --audio-native \
 
 The adapter installs the domain policy as a per-call session, registers the
 domain tools, and records the server's session ID and cost report on each
-simulation. See the [Ava Zero provider guide](ava_zero_pipecat/README.md) for
-the protocol, options, and live test setup.
+simulation. `--ava-zero-transport webrtc` calls a hosted Ava Zero agent over
+WebRTC instead (requires the `live` extra). See the
+[Ava Zero provider guide](ava_zero_pipecat/README.md) for the protocol,
+options, and live test setup.
 
 ## Adding a New Provider
 

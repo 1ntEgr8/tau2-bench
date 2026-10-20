@@ -323,10 +323,18 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
 
     @property
     def provider(self) -> AvaZeroPipecatProvider:
-        """Get the provider, creating it lazily."""
+        """Get the provider for the configured transport, creating it lazily."""
 
         if self._provider is None:
-            self._provider = AvaZeroPipecatProvider(self.ava_zero_config)
+            if self.ava_zero_config.transport == "webrtc":
+                # aiortc ships in the live extra; only WebRTC calls need it.
+                from tau2.voice.audio_native.ava_zero_pipecat.webrtc import (
+                    AvaZeroWebRTCProvider,
+                )
+
+                self._provider = AvaZeroWebRTCProvider(self.ava_zero_config)
+            else:
+                self._provider = AvaZeroPipecatProvider(self.ava_zero_config)
         return self._provider
 
     @property
