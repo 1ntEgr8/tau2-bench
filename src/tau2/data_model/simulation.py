@@ -1421,10 +1421,6 @@ class SimulationRun(BaseModel):
         description="Provider session ID (e.g., OpenAI session ID, xAI conversation ID) for debugging.",
         default=None,
     )
-    provider_cost_report: Optional[dict] = Field(
-        description="Provider-native per-session cost and usage metadata.",
-        default=None,
-    )
     policy: Optional[str] = Field(
         description="The policy/system prompt used for this simulation (knowledge domain only).",
         default=None,
