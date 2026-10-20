@@ -496,7 +496,8 @@ const Leaderboard = () => {
 
     const params = new URLSearchParams(window.location.search)
     params.set('benchmark', benchmark)
-    params.delete('view')
+    // Drop the legacy table/progress `view`; keep the τ-i18n language map's.
+    if (!(benchmark === 'voice' && params.get('view') === 'languages')) params.delete('view')
 
     const next = `${window.location.pathname}?${params.toString()}`
     if (`${window.location.pathname}${window.location.search}` !== next) {

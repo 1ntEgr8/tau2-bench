@@ -1,4 +1,4 @@
-import { Fragment, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import data from '../data/multilingual/results.json'
 import { summarize, frontier, percent, mean, heatScale } from '../data/multilingual/metrics'
 import PackageBreakdown from './PackageBreakdown'
@@ -239,6 +239,21 @@ export default function MultilingualVoice({ submissionTypeFilters, showStandard 
     const requested = new URLSearchParams(window.location.search).get('view')
     return requested === 'languages' ? 'languages' : 'space'
   })
+  // Keep the chart view in the URL so a shared or refreshed link reopens it.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (view === 'languages') params.set('view', 'languages')
+    else params.delete('view')
+    const next = `${window.location.pathname}?${params.toString()}`
+    if (`${window.location.pathname}${window.location.search}` !== next) window.history.replaceState(null, '', next)
+    // Leaving the τ-i18n view (English only, another benchmark) drops it.
+    return () => {
+      const left = new URLSearchParams(window.location.search)
+      if (!left.has('view')) return
+      left.delete('view')
+      window.history.replaceState(null, '', `${window.location.pathname}?${left.toString()}`)
+    }
+  }, [view])
   const [mapMetric, setMapMetric] = useState('task')
   const [sort, setSort] = useState('task')
   const [breakdown, setBreakdown] = useState(null)

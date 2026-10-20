@@ -115,3 +115,18 @@ test('a same-path popstate keeps the English only toggle', async ({ page }) => {
   })
   await expect(page.getByRole('button', { name: 'English only' })).toHaveAttribute('aria-pressed', 'true')
 })
+
+test('the language map view survives a reload and leaves with the τ-i18n view', async ({ page }) => {
+  await page.goto('/leaderboard?benchmark=voice&view=languages')
+  const tab = name => page.locator('.mv-view-tabs button', { hasText: name })
+  await expect(tab('Language map')).toHaveAttribute('aria-pressed', 'true')
+  await expect(page).toHaveURL(/view=languages/)
+  await page.reload()
+  await expect(tab('Language map')).toHaveAttribute('aria-pressed', 'true')
+  await tab('3D explorer').click()
+  await expect(page).not.toHaveURL(/view=/)
+  await tab('Language map').click()
+  await expect(page).toHaveURL(/view=languages/)
+  await page.getByRole('button', { name: 'English only' }).click()
+  await expect(page).not.toHaveURL(/view=/)
+})
