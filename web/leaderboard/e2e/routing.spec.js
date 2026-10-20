@@ -235,6 +235,17 @@ test('static author and published blog pages link to community spotlight', async
   }
 })
 
+test('app routes load the favicon from the site root', async ({ page, request }) => {
+  // GitHub Pages redirects /leaderboard to /leaderboard/, where a relative
+  // icon href would resolve under the route.
+  for (const path of ['/', '/leaderboard/', '/progress/', '/blog/', '/trajectory-visualizer/']) {
+    await page.goto(path)
+    const href = await page.locator('link[rel="icon"]').getAttribute('href')
+    const icon = await request.get(new URL(href, page.url()).href)
+    expect(icon.status(), `${path} favicon ${href}`).toBe(200)
+  }
+})
+
 test('published static pages use the Sierra favicon', async ({ page }) => {
   for (const path of [
     '/authors/soham-ray.html',
