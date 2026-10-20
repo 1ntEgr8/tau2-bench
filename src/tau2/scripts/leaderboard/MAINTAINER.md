@@ -80,12 +80,14 @@ The GitHub Actions workflow will sync `submission.json` and `manifest.json` to S
 
 ## Handling a 2.0 package PR
 
-A 2.0 package is up to four files in `web/leaderboard/public/submissions/<name>/`:
+A 2.0 package is a few files in `web/leaderboard/public/submissions/<name>/`:
 `benchmark-submission.json`, `benchmark-diagnostics.json` and
-`benchmark-quality.json` (both voice-v2) and `benchmark-metadata.json`.
-voice-v2 packages are listed in the manifest's `voice_v2_submissions` array and
-are the rows of the τ³-Voice **τ-i18n (Multilingual)** leaderboard; the quality
-file supplies their Interaction and Generation quality.
+`benchmark-quality.json` (both voice-v2 only), and `benchmark-metadata.json`.
+`benchmark-quality.json` holds each scored call's Interaction and Generation
+quality (`experience`) verdicts, which feed the leaderboard's Interaction and
+Generation quality columns. voice-v2 packages are listed in the manifest's
+`voice_v2_submissions` array and are the rows of the τ³-Voice **τ-i18n
+(Multilingual)** leaderboard.
 voice-v2-banking and voice-v2-entity packages (`benchmark-submission.json` and
 `benchmark-metadata.json` only) go in `voice_v2_domain_submissions`. Each fills
 the Banking or Intake row of the voice-v2 package with the same model name,
@@ -112,8 +114,8 @@ under its own domain. 1.x tabs are unaffected.
      --upload --aws-profile tau-bench-ci
    ```
 
-   The script recomputes rewards, judge diagnostics and the recorded agent
-   identity from the matrix (`tau2 submit validate`), then prints the upload
+   The script recomputes rewards, judge diagnostics, call quality and the
+   recorded agent identity from the matrix (`tau2 submit validate`), then prints the upload
    plan. With `--upload` it syncs each cell to
    `s3://sierra-tau-bench-public/submissions/<name>/trajectories/<language>/<domain>/`
    and the root's JSON files to `trajectories/`, sets `trajectories` in
@@ -134,7 +136,9 @@ Release packages cite the release export instead of a matrix
 [docs/voice-v2-publication.md](../../../../docs/voice-v2-publication.md). The
 upload also copies the export's `correction.json` to `source_correction.json`
 and the verdicts to `judges/<agent_provider>/<language>/`, matching the
-uploaded Gemini entry.
+uploaded Gemini entry. The voice-v2 release package's `benchmark-quality.json`
+is recomputed from the export's saved ticks and verdicts; validation needs the
+same `--results` and `--judges-root` inputs.
 
 The same export's banking and entity calls package as `voice-v2-banking` and
 `voice-v2-entity` with `--historical-voice-v2 --benchmark banking|entity` and

@@ -160,8 +160,22 @@ def test_prepare_and_validate_recompute_rewards_and_judges(
     }
     submission = json.loads((package / "benchmark-submission.json").read_text())
     assert submission["summary"]["complete"] is True
+    quality = load_package(package).quality
+    assert len(quality.cells) == 18
+    # Every scored call gets a record; tool misuse comes from its tool_use verdict.
+    assert all(len(cell.calls) == 50 for cell in quality.cells)
+    assert all(cell.interaction_components.tool_misuse.known for cell in quality.cells)
 
     _submit("validate", package, "--results", judged_matrix)
+
+    # A self-consistent but changed call record differs from the saved calls.
+    edited = json.loads((package / "benchmark-quality.json").read_text())
+    edited["cells"][0]["calls"][0]["experience_utterances"] += 1
+    edited_package = tmp_path / "edited"
+    shutil.copytree(package, edited_package)
+    (edited_package / "benchmark-quality.json").write_text(json.dumps(edited))
+    with pytest.raises(ValueError, match="Call quality differs"):
+        _submit("validate", edited_package, "--results", judged_matrix)
 
     # A forged summary in the package fails its own consistency check.
     forged = json.loads((package / "benchmark-diagnostics.json").read_text())

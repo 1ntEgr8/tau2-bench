@@ -198,6 +198,9 @@ def test_domain_export_round_trips_as_a_package(release_export, tmp_path):
     frame = load_frame(benchmark)
     assert package.submission.frame == frame
     assert package.diagnostics is None
+    # Call quality is defined for the core voice-v2 frame only.
+    assert package.quality is None
+    assert not (output / name / "benchmark-quality.json").exists()
     assert package.metadata.evidence == "historical-voice-v2-2026-10-02"
     assert (package.metadata.agent_provider, package.metadata.agent_model) == (
         "openai_live",

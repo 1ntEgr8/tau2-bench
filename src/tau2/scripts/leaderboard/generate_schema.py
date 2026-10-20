@@ -7,7 +7,9 @@ Writes, under web/leaderboard/public/submissions/:
 
 - ``schema.json``: 1.x and voice-v1 ``submission.json`` (``Submission``).
 - ``schema_benchmark_metadata.json``: the 2.0 package's
-  ``benchmark-metadata.json`` (``PackageMetadata``). The package's other files
+  ``benchmark-metadata.json`` (``PackageMetadata``).
+- ``schema_benchmark_quality.json``: the voice-v2 package's
+  ``benchmark-quality.json`` (``BenchmarkQuality``). The package's other files
   are ``BenchmarkSubmission`` and ``BenchmarkDiagnostics`` exports.
 
 With --check, verifies the files are up-to-date and exits non-zero if not.
@@ -21,6 +23,7 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from tau2.scripts.leaderboard.benchmark_package import PackageMetadata
+from tau2.scripts.leaderboard.benchmark_quality import BenchmarkQuality
 from tau2.scripts.leaderboard.submission import Submission
 
 SUBMISSIONS_DIR = (
@@ -32,6 +35,7 @@ SUBMISSIONS_DIR = (
 )
 SCHEMA_PATH = SUBMISSIONS_DIR / "schema.json"
 METADATA_SCHEMA_PATH = SUBMISSIONS_DIR / "schema_benchmark_metadata.json"
+QUALITY_SCHEMA_PATH = SUBMISSIONS_DIR / "schema_benchmark_quality.json"
 
 
 def _schema(model: type[BaseModel], title: str, description: str) -> str:
@@ -64,6 +68,17 @@ def generate_metadata_schema() -> str:
     )
 
 
+def generate_quality_schema() -> str:
+    """Generate the voice-v2 package call-quality schema."""
+    return _schema(
+        BenchmarkQuality,
+        "Tau2-Bench 2.0 Package Call Quality",
+        "benchmark-quality.json in a voice-v2 leaderboard package: call-level "
+        "Interaction and Experience (Generation quality). Auto-generated from "
+        "src/tau2/scripts/leaderboard/benchmark_quality.py — do not edit by hand.",
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -76,6 +91,7 @@ def main():
     outputs = {
         SCHEMA_PATH: generate_schema(),
         METADATA_SCHEMA_PATH: generate_metadata_schema(),
+        QUALITY_SCHEMA_PATH: generate_quality_schema(),
     }
     if args.check:
         stale = [

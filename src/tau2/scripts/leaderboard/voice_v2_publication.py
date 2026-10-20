@@ -33,6 +33,7 @@ from tau2.data_model.judges import (
     StoredVerdict,
     SuitePlan,
 )
+from tau2.data_model.simulation import SimulationRun
 from tau2.judges.submission import JUDGED_BENCHMARKS, export_diagnostics
 from tau2.metrics.benchmark import summarize
 from tau2.runner.presets import binding_revision, load_cell_language, load_frame
@@ -42,6 +43,13 @@ from tau2.scripts.leaderboard.benchmark_package import (
     PackageMetadata,
     SubmitterMetadata,
     load_package,
+)
+from tau2.scripts.leaderboard.benchmark_quality import (
+    QUALITY_BENCHMARKS,
+    BenchmarkQuality,
+    build_quality,
+    cell_quality,
+    score_call,
 )
 
 if TYPE_CHECKING:
@@ -377,18 +385,26 @@ def _judge_plan(
     return SuitePlan(items=items)
 
 
-def _judge_diagnostics(
-    official: BenchmarkFrame,
-    judges_roots: list[Path],
-    scored_by_cell: dict[tuple[str, str], list[str]],
-):
-    """Diagnostics from the saved verdicts of every scored call."""
+def _saved_verdicts(
+    judges_roots: list[Path], scored_by_cell: dict[tuple[str, str], list[str]]
+) -> dict[str, dict[str, list[StoredVerdict]]]:
+    """The saved verdict rows of every scored call, by language and call."""
     verdicts: dict[str, dict[str, list[StoredVerdict]]] = defaultdict(dict)
     for (language, _), scored in scored_by_cell.items():
         for simulation_id in scored:
             verdicts[language][simulation_id] = _load_verdicts(
                 judges_roots, language, simulation_id
             )
+    return verdicts
+
+
+def _judge_diagnostics(
+    official: BenchmarkFrame,
+    judges_roots: list[Path],
+    scored_by_cell: dict[tuple[str, str], list[str]],
+    verdicts: dict[str, dict[str, list[StoredVerdict]]],
+):
+    """Diagnostics from the saved verdicts of every scored call."""
     for language, by_call in verdicts.items():
         saved = {
             path.stem
@@ -424,6 +440,29 @@ def _judge_diagnostics(
             )
         )
     return export_diagnostics(official, catalogs.pop(), cells)
+
+
+def _historical_quality(
+    source_root: Path,
+    official: BenchmarkFrame,
+    scored_by_cell: dict[tuple[str, str], list[str]],
+    verdicts: dict[str, dict[str, list[StoredVerdict]]],
+) -> BenchmarkQuality:
+    """Call-level quality from each scored call's saved ticks and verdicts."""
+    cells = []
+    for (language, domain), scored in scored_by_cell.items():
+        directory = _cell_dir(source_root, language, domain) / "simulations"
+        calls = []
+        for simulation_id in scored:
+            simulation = SimulationRun.model_validate_json(
+                (directory / f"{simulation_id}.json").read_text()
+            )
+            rows = {
+                row.identity.measure: row for row in verdicts[language][simulation_id]
+            }
+            calls.append(score_call(simulation, rows))
+        cells.append(cell_quality(language, domain, calls))
+    return build_quality(official, cells)
 
 
 def build_historical_package(
@@ -502,6 +541,7 @@ def build_historical_package(
     if len(conditions) != 1:
         raise ValueError("Voice V2 export mixes recorded run conditions")
     provider, model = agents.pop()
+    verdicts = _saved_verdicts(judges_roots, scored_by_cell) if judged else {}
     return BenchmarkPackage(
         metadata=PackageMetadata(
             **submitter.model_dump(),
@@ -515,8 +555,11 @@ def build_historical_package(
             summary=summarize(official, trials),
             sources=sources,
         ),
-        diagnostics=_judge_diagnostics(official, judges_roots, scored_by_cell)
+        diagnostics=_judge_diagnostics(official, judges_roots, scored_by_cell, verdicts)
         if judged
+        else None,
+        quality=_historical_quality(source_root, official, scored_by_cell, verdicts)
+        if judged and official.benchmark_version in QUALITY_BENCHMARKS
         else None,
     ).check()
 
@@ -575,6 +618,8 @@ def validate_historical_package(
         raise ValueError("Submission differs from the saved release export")
     if expected.diagnostics != package.diagnostics:
         raise ValueError("Judge diagnostics differ from the saved release verdicts")
+    if expected.quality != package.quality:
+        raise ValueError("Call quality differs from the saved release calls")
     if expected.metadata != package.metadata:
         raise ValueError("Recorded agent identity differs from the saved export")
     return package

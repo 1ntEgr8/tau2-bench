@@ -22,10 +22,13 @@ from tau2.scripts.leaderboard.benchmark_package import (
     load_package,
     package_name,
 )
+from tau2.scripts.leaderboard.benchmark_quality import QUALITY_FILE_NAME
 from tau2.scripts.leaderboard.generate_schema import (
     METADATA_SCHEMA_PATH,
+    QUALITY_SCHEMA_PATH,
     SCHEMA_PATH,
     generate_metadata_schema,
+    generate_quality_schema,
     generate_schema,
 )
 from tau2.scripts.leaderboard.submission import LeaderboardManifest
@@ -51,6 +54,13 @@ def _write_json(path: Path, payload) -> None:
 
 
 def _verdict(language, domain, simulation_id, measure, violation=False):
+    units = [
+        {"unit_id": "0", "opportunity": True, "violation": violation},
+        {"unit_id": "1", "opportunity": False, "violation": False},
+    ]
+    if measure == "tool_use":
+        # The tool-use judge scores the whole call as one unit.
+        units = [{"unit_id": "call", "opportunity": True, "violation": violation}]
     return {
         "identity": {
             "input": {
@@ -76,22 +86,7 @@ def _verdict(language, domain, simulation_id, measure, violation=False):
             "transport_revision": "multimodal-responses-v1",
             "catalog_revision": "fixture-catalog",
         },
-        "verdict": {
-            "units": [
-                {
-                    "unit_id": "0",
-                    "opportunity": True,
-                    "violation": violation,
-                    "evidence": "fixture",
-                },
-                {
-                    "unit_id": "1",
-                    "opportunity": False,
-                    "violation": False,
-                    "evidence": "fixture",
-                },
-            ]
-        },
+        "verdict": {"units": [dict(unit, evidence="fixture") for unit in units]},
     }
 
 
@@ -256,6 +251,22 @@ def test_historical_export_is_a_canonical_package(package, release_export):
     assert (tool_use.applicable_calls, tool_use.judged_calls) == (50, 50)
     assert tool_use.complete and tool_use.pass_units + tool_use.fail_units == 50
     assert {row.measure for row in en_airline.summary} == {"naturalness", "tool_use"}
+    quality = loaded.quality
+    assert (quality.benchmark_version, quality.frame_revision) == (
+        "voice-v2",
+        loaded.submission.frame.revision,
+    )
+    assert [(c.language, c.domain) for c in quality.cells] == [
+        (c.language, c.domain) for c in loaded.submission.frame.cells
+    ]
+    en_airline_quality = quality.cells[0]
+    assert len(en_airline_quality.calls) == 50
+    # The fixture calls have no ticks and no fidelity verdicts: only the tool-use
+    # component is known, so neither measure can decide a call.
+    assert en_airline_quality.interaction_components.tool_misuse.known == 50
+    assert en_airline_quality.interaction_components.nonresponse.known == 0
+    assert en_airline_quality.interaction.unscored == 50
+    assert en_airline_quality.experience.unscored == 50
     _validate(package, release_export)
 
 
@@ -283,6 +294,26 @@ def test_validate_rejects_changed_package_and_evidence(package, release_export):
     (package / SUBMISSION_FILE_NAME).write_text(json.dumps(submission))
     with pytest.raises(ValueError, match="summary does not match"):
         _validate(package, release_export)
+
+
+def test_validate_recomputes_call_quality(package, release_export):
+    path = package / QUALITY_FILE_NAME
+    original = path.read_text()
+    quality = json.loads(original)
+    # A self-consistent edit still differs from the recomputed calls.
+    quality["cells"][0]["calls"][0]["experience_utterances"] += 1
+    path.write_text(json.dumps(quality))
+    with pytest.raises(ValueError, match="Call quality differs"):
+        _validate(package, release_export)
+    quality["cells"][0]["interaction"]["passed"] += 1
+    path.write_text(json.dumps(quality))
+    with pytest.raises(ValueError, match="totals do not match the calls"):
+        load_package(package)
+    path.unlink()
+    with pytest.raises(ValueError, match=f"lacks {QUALITY_FILE_NAME}"):
+        load_package(package)
+    path.write_text(original)
+    _validate(package, release_export)
 
 
 def test_validate_rejects_changed_verdict(package, release_export, tmp_path):
@@ -461,6 +492,7 @@ def test_index_must_agree_with_saved_simulation(release_export) -> None:
 def test_schemas_are_current_and_manifest_has_a_2_0_key():
     assert SCHEMA_PATH.read_text() == generate_schema()
     assert METADATA_SCHEMA_PATH.read_text() == generate_metadata_schema()
+    assert QUALITY_SCHEMA_PATH.read_text() == generate_quality_schema()
     manifest = LeaderboardManifest.model_validate_json(
         (SCHEMA_PATH.parent / "manifest.json").read_text()
     )

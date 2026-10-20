@@ -43,10 +43,29 @@ are harness faults, so they are excluded from the denominator and reported as
 ## Generation quality
 
 The public name for the τ-i18n measure that papers, data and code call
-**Experience** (`experience`). It is the share of aligned agent utterances
-that pass both the naturalness and the speech-fidelity checks. The
-leaderboard shows it as Generation quality. Keys such as `experience` and
-the paper's `experience.json` keep the old name.
+**Experience** (`experience`). An agent utterance has an issue when the
+naturalness or the speech-fidelity judge flagged it. The paper reports the
+share of aligned utterances without an issue. Voice-v2 packages score it per
+call (`voice-v2-experience-call-v1`, in `benchmark-quality.json`): a call
+passes when at most 25% of its eligible agent utterances have an issue. It is
+*unscored*, never failed, unless both judges returned complete verdicts that
+pair every utterance. The leaderboard shows it as Generation quality and rates
+it as passed / (passed + failed). Keys such as `experience` and the paper's
+`experience.json` keep the old name.
+
+## Interaction
+
+The call-level turn-taking measure of voice-v2 packages
+(`voice-v2-interaction-call-v1`, in `benchmark-quality.json`). Each scored
+call gets five flags: **nonresponse** (a missed caller turn, a mean reply
+latency over 3 s, or an unyielded interruption), **interruption** (more than 3
+agent onsets over caller speech), **selectivity** (more than 3 errors summed
+over backchannels, vocal tics and non-directed speech), **monologue** (an agent
+floor hold over 45 s) and **tool_misuse** (the saved `tool_use` judge verdict).
+The first four come from the call's ticks; a flag is unknown when the call has
+no opportunity for it. A call fails with at least two known flags set, passes
+when even all unknown flags set could not reach two, and is otherwise
+unscored. The rate is passed / (passed + failed).
 
 ## Judge
 
