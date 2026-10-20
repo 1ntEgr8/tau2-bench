@@ -22,7 +22,11 @@ from tau2.data_model.tasks import Task
 from tau2.data_model.transcript import AgentTurn
 from tau2.judges.base import BaseJudge, require_complete_response, response_error
 from tau2.judges.exclusions import judged_agent_turns
-from tau2.judges.run_evidence import RunEvidence, live_input_errors
+from tau2.judges.run_evidence import (
+    LIVE_INPUT_CALL_ERROR,
+    RunEvidence,
+    live_input_errors,
+)
 from tau2.utils.llm_utils import extract_json_from_llm_response, generate
 from tau2.utils.transcript.display import marked_text
 
@@ -420,8 +424,7 @@ class CriteriaJudge(BaseJudge):
         errors = live_input_errors(simulation)
         if errors and selection.is_call:
             raise ValueError(
-                "Call-level judgment requires complete Live input: "
-                + "; ".join(e.error for e in errors)
+                f"{LIVE_INPUT_CALL_ERROR}: " + "; ".join(e.error for e in errors)
             )
         blocked = {e.unit_id for e in errors}
         turns = judged_agent_turns(

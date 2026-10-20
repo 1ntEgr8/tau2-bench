@@ -533,3 +533,99 @@ def test_unjudged_unit_cannot_also_be_a_pass():
         )
     with pytest.raises(ValueError, match="Empty"):
         MeasureVerdict(units=[])
+
+
+def _live_input_rows(tmp_path, backends):
+    """Store one naturalness verdict per input, using one backend per trial."""
+    path = tmp_path / "verdicts.json"
+    execute_suite(
+        inputs(),
+        load_catalog(),
+        path,
+        only=[Measure.NATURALNESS],
+        backend=lambda item, *rest: backends[item.trial](item, *rest),
+    )
+    stored = read_verdicts(path)
+    plan = plan_suite(inputs(), load_catalog(), stored, only=[Measure.NATURALNESS])
+    return plan, stored
+
+
+def _with_errors(*kinds):
+    from tau2.data_model.judges import UnitError
+
+    def backend(*args):
+        result = passing_backend(*args)
+        result.unit_errors = [
+            UnitError(unit_id=f"u{index}", kind=kind, error="No transcript")
+            for index, kind in enumerate(kinds)
+        ]
+        return result
+
+    return backend
+
+
+def _live_input_call_error(*_):
+    from tau2.judges.run_evidence import LIVE_INPUT_CALL_ERROR
+
+    raise ValueError(f"{LIVE_INPUT_CALL_ERROR}: segment 3 has no transcript")
+
+
+def test_missing_live_transcripts_are_excluded_not_blocking(tmp_path):
+    from tau2.judges.submission import CellDiagnostics, _cell_rows
+    from tau2.judges.summary import summarize_suite
+
+    plan, stored = _live_input_rows(
+        tmp_path, [_with_errors("input"), _live_input_call_error]
+    )
+    assert stored[1].error.startswith("ValueError: Call-level judgment")
+    report = summarize_suite(plan, stored)[0]
+    assert report.complete
+    assert (report.judged_calls, report.input_excluded_calls) == (1, 1)
+    assert report.error_calls == 0 and report.partial_calls == 1
+    assert report.error_units == report.input_error_units == 1
+    assert report.pass_units == 1 and report.observed_pass_fraction == 1
+    fingerprints, _ = _cell_rows(plan.items, stored)
+    cell = CellDiagnostics(
+        language="pt", domain="retail", summary=[report], verdicts=fingerprints
+    )
+    assert CellDiagnostics.model_validate_json(cell.model_dump_json()) == cell
+    forged = cell.model_dump()
+    forged["verdicts"][0]["input_error_units"] = 0
+    with pytest.raises(ValueError, match="does not match verdict fingerprints"):
+        CellDiagnostics.model_validate(forged)
+
+
+def test_other_judge_errors_still_block_beside_live_input(tmp_path):
+    from tau2.judges.summary import summarize_suite
+
+    plan, stored = _live_input_rows(
+        tmp_path, [_with_errors("input", "response"), _live_input_call_error]
+    )
+    report = summarize_suite(plan, stored)[0]
+    assert not report.complete
+    assert (report.judged_calls, report.error_calls) == (0, 1)
+    assert report.input_excluded_calls == 1 and report.input_error_units == 1
+
+    def api_failure(*_):
+        raise ValueError("RateLimitError: try again")
+
+    plan, stored = _live_input_rows(tmp_path / "api", [passing_backend, api_failure])
+    report = summarize_suite(plan, stored)[0]
+    assert not report.complete and report.error_calls == 1
+    assert report.input_excluded_calls == 0
+
+
+def test_measure_with_every_call_excluded_is_incomplete(tmp_path):
+    from tau2.data_model.judges import UnitError
+    from tau2.judges.summary import summarize_suite
+
+    def no_units(*_):
+        return MeasureVerdict(
+            units=[],
+            unit_errors=[UnitError(unit_id="1", kind="input", error="No transcript")],
+        )
+
+    plan, stored = _live_input_rows(tmp_path, [no_units, _live_input_call_error])
+    report = summarize_suite(plan, stored)[0]
+    assert report.input_excluded_calls == 2 and report.judged_calls == 0
+    assert not report.complete

@@ -1014,9 +1014,15 @@ def _judge_gaps(coverage) -> list[str]:
                     (measure.not_judged_calls, "not judged"),
                     (measure.error_calls, "judge errors"),
                     (measure.missing_input_calls, "missing audio"),
+                    (
+                        measure.input_excluded_calls,
+                        "excluded for missing Live transcripts",
+                    ),
                 )
                 if count
             ]
+            if measure.applicable_calls and not measure.judged_calls:
+                reasons.append("no judged call")
             parts.append(
                 f"{measure.measure} {measure.judged_calls}/"
                 f"{measure.applicable_calls} judged ({', '.join(reasons)})"
@@ -1147,6 +1153,18 @@ def prepare_benchmark_submission(
             "infrastructure error; they are excluded from the score and reported "
             "as error_trials."
         )
+    if package.diagnostics is not None:
+        excluded = sum(
+            measure.input_excluded_calls
+            for cell in package.diagnostics.cells
+            for measure in cell.summary
+        )
+        if excluded:
+            print(
+                f"{excluded} judge call/measure pairs lack a Live transcript; they "
+                "are excluded from judge diagnostics and reported as "
+                "input_excluded_calls."
+            )
     print(f"Check it with: tau2 submit validate {destination} --results {root}")
     return destination
 

@@ -60,7 +60,10 @@ must be run before `tau2 submit prepare`.
 One named quantity a judge reports, such as `naturalness`, `speech_fidelity`
 or `tool_use`. A measure applies to some languages and not
 others; `tau2 judges summarize` lists, for each cell and measure, how many calls
-it applies to, how many were judged, and the pass and fail counts.
+it applies to, how many were judged, and the pass and fail counts. Calls a
+measure cannot judge because recorded Live speech has no transcript are
+excluded from it and counted as `input_excluded_calls`; they do not block a
+submission.
 
 ## Pack
 

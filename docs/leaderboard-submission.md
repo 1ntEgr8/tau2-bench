@@ -130,6 +130,16 @@ a cell whose calls all errored still blocks. Missing and unscored calls still
 block. Rerunning with `--auto-resume` retries infrastructure errors if you want
 them scored.
 
+Judge verdicts blocked only because recorded Live speech has no transcript
+are recording gaps, not judge failures, so they do not block either. A verdict
+whose only unit errors are missing-Live-input (`kind: "input"`) errors counts
+as judged; its blocked units stay out of the pass fraction and are reported as
+`input_error_units`. A call a measure cannot judge at all for that reason (for
+call-level measures, any missing transcript) is excluded and reported as
+`input_excluded_calls`. Any other judge error (a model or API failure, an
+unparseable reply) still blocks: rerun `tau2 judges suite` to retry it. A
+measure whose applicable calls are all excluded still blocks.
+
 Only the default production judge catalog is accepted. Verdicts made with
 `--registry` bundles have a different catalog revision and will not validate.
 
