@@ -291,7 +291,12 @@ See [Task schema and evaluation](evaluation.md).
   use the same equal-cell rule.
 - A scored zero is a failed task. Infrastructure errors, unscored calls and
   missing calls are counted separately; they are not zeros.
-- Only a complete frame has an official score. A slice or sample gets a
+- Infrastructure errors are excluded from the denominator and reported as
+  `error_trials`: a cell scores over its scored calls, and a task whose calls
+  all errored drops out of its cell. Retrying them (by resuming) is optional. A
+  cell with no scored call has no score.
+- Only a complete frame has an official score. A frame is complete when every
+  call is scored or infrastructure-errored; missing and unscored calls block it. A slice or sample gets a
   *requested-scope* score, and an incomplete run reports an explicitly partial
   `observed_score`.
 
