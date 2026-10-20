@@ -368,6 +368,17 @@ def test_historical_flags_are_rejected_without_the_adapter(tmp_path):
 def test_metadata_contract():
     submitter = SubmitterMetadata.model_validate(SUBMITTER)
     assert package_name(submitter) == NAME
+    # One agent's packages share metadata; domain frames get distinct names.
+    names = {
+        version: package_name(submitter, version)
+        for version in ("voice-v2", "text-v1", "voice-v2-banking", "voice-v2-entity")
+    }
+    assert names == {
+        "voice-v2": NAME,
+        "text-v1": NAME,
+        "voice-v2-banking": f"{NAME}_banking",
+        "voice-v2-entity": f"{NAME}_entity",
+    }
     with pytest.raises(ValidationError):
         SubmitterMetadata.model_validate({**SUBMITTER, "contact_info": {}})
     with pytest.raises(ValidationError):
@@ -455,3 +466,43 @@ def test_schemas_are_current_and_manifest_has_a_2_0_key():
     )
     for name in manifest.voice_v2_submissions + manifest.voice_v2_domain_submissions:
         load_package(SCHEMA_PATH.parent / name)
+
+
+def test_historical_infrastructure_errors_are_excluded_and_validate(
+    release_export, tmp_path, forbid_paid_calls
+):
+    """Unscored infrastructure calls leave the denominator, not the package."""
+    source, judges, metadata = release_export
+    copied, verdicts = tmp_path / "export", tmp_path / "verdicts"
+    shutil.copytree(source, copied)
+    shutil.copytree(judges, verdicts)
+    directory = copied / "trajectories" / "zh" / "telecom"
+    results = json.loads((directory / "results.json").read_text())
+    # Positions 1 and 3 would have passed; their tasks drop out of the mean.
+    for entry in (results["simulation_index"][1], results["simulation_index"][3]):
+        entry.update(reward=None, termination_reason="infrastructure_error")
+        path = directory / "simulations" / f"{entry['id']}.json"
+        simulation = json.loads(path.read_text())
+        simulation.update(reward_info=None, termination_reason="infrastructure_error")
+        path.write_text(json.dumps(simulation))
+        (verdicts / "zh" / f"{entry['id']}.json").unlink()
+    (directory / "results.json").write_text(json.dumps(results))
+    output = tmp_path / "out"
+    _submit(
+        "prepare",
+        copied,
+        "--historical-voice-v2",
+        "--judges-root",
+        verdicts,
+        "--metadata-file",
+        metadata,
+        "--output",
+        output,
+    )
+    summary = load_package(output / NAME).submission.summary
+    assert summary.complete and summary.error_trials == 2
+    cell = next(c for c in summary.cells if (c.language, c.domain) == ("zh", "telecom"))
+    assert (cell.scored_trials, cell.error_trials) == (48, 2)
+    assert cell.score == pytest.approx(23 / 48)
+    assert summary.score == pytest.approx((17 * 0.5 + 23 / 48) / 18)
+    _validate(output / NAME, (copied, verdicts, metadata))

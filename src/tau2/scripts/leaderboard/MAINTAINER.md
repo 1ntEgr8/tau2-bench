@@ -95,7 +95,9 @@ under its own domain. 1.x tabs are unaffected.
 
 1. **Review** the PR: the directory name equals
    `{model_name}_{model_organization}_{submission_date}` (slugified; the review
-   script checks it), `benchmark-metadata.json` has a contact email, and
+   script checks it). voice-v2-banking and voice-v2-entity packages append
+   `_banking` / `_entity`, because they share the voice-v2 package's metadata.
+   Also check that `benchmark-metadata.json` has a contact email and that
    `submission_type` is right.
 2. **Download** the submitter's matrix root (`benchmark-frame.json` plus every
    `<language>-<domain>/` cell with `results.json`, `simulations/`,
@@ -133,6 +135,14 @@ Release packages cite the release export instead of a matrix
 upload also copies the export's `correction.json` to `source_correction.json`
 and the verdicts to `judges/<agent_provider>/<language>/`, matching the
 uploaded Gemini entry.
+
+The same export's banking and entity calls package as `voice-v2-banking` and
+`voice-v2-entity` with `--historical-voice-v2 --benchmark banking|entity` and
+no `--judges-root`. These frames are not judged. Their cells predate the
+manifests, so the adapter checks the recorded bindings against the release and
+accepts only the verified `runtime_rules_sha256` digests in
+`ACCEPTED_RUNTIME_RULES` (`voice_v2_publication.py`). Never extend that
+allowlist without verifying the source diff it covers.
 
 ## Manual S3 Commands
 

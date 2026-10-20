@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- The maintainer-only historical adapter (`tau2 submit prepare/validate
+  --historical-voice-v2`) also packages the frozen 2026-10-02 release export's
+  banking and entity (intake) calls: `--benchmark banking` builds a
+  `voice-v2-banking` package and `--benchmark entity` a `voice-v2-entity` one
+  (default: `voice`). Those calls predate their manifests, so the adapter
+  checks each recorded binding against the released cell and accepts only
+  three verified `runtime_rules_sha256` digests. Neither frame is judged, so
+  neither takes `--judges-root`. Validation reads the frame from the package.
+  See [docs/voice-v2-publication.md](docs/voice-v2-publication.md).
+- 2.0 package names: `voice-v2-banking` and `voice-v2-entity` packages are
+  named `{model_name}_{model_organization}_{submission_date}_banking` /
+  `_entity`. One agent's voice-v2, banking and entity packages share their
+  metadata so the leaderboard can group them, and without the suffix they would
+  collide. voice-v2 and text-v1 names are unchanged.
+
+### Changed
+- 2.0 scoring excludes infrastructure-errored calls from the denominator
+  instead of blocking the cell. A cell is complete once every owed call is
+  scored or errored and at least one is scored; its score averages the scored
+  calls only, and a task whose calls all errored drops out of the cell mean.
+  Errored calls stay reported as `error_trials` and are no longer listed as
+  gaps by `tau2 submit prepare`. Missing and unscored calls, and cells whose
+  calls all errored, still block a submission.
+- Judge diagnostics treat missing Live transcripts as recording gaps, not
+  judge failures. A verdict whose only unit errors are missing-Live-input
+  errors counts as judged (blocked units stay out of pass fractions and are
+  reported as `input_error_units`); a call a measure cannot judge for that
+  reason is excluded and reported as `input_excluded_calls`. Other judge
+  errors still block, as does a measure whose applicable calls are all
+  excluded. `VerdictFingerprint` gains `input_error_units`, so voice-v2
+  packages prepared before this change must be re-prepared.
+
 ## [2.0.0] - 2026-10-19
 
 > **⚠️ Scoring change — scores are not comparable with 1.x.** Communication checks,

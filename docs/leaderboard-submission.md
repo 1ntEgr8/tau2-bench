@@ -79,7 +79,7 @@ is optional; pass it only to assert which benchmark you expect. See
 
 ```bash
 # 1. Run the released voice benchmark. Repeat the same command (it resumes) to
-#    fill missing calls and retry infrastructure errors.
+#    fill missing calls; it also retries infrastructure errors.
 tau2 run --audio-native --audio-native-model <model> --save-to voice-run
 
 # 2. Judge every cell. Resumable: it judges only missing, stale and errored verdicts.
@@ -99,7 +99,9 @@ tau2 submit validate ./submissions/<name> --results data/simulations/voice-run
 `submitter.json` names the submission (see [Package metadata](#package-metadata)).
 `prepare` writes the package to `./submissions/<name>/`, where `<name>` is
 `{model_name}_{model_organization}_{submission_date}` in lowercase letters,
-numbers and hyphens.
+numbers and hyphens. voice-v2 and text-v1 names have no suffix. Banking and
+entity packages add `_banking` or `_entity`, so that one agent's three packages
+can share their metadata (see [Banking and τ-entity](#banking-and-τ-entity-voice)).
 
 `prepare` refuses unless every cell's rewards are complete and every applicable
 judge measure in every cell has a usable saved verdict. It reads saved results
@@ -108,8 +110,9 @@ and a message like this:
 
 ```
 Error: Submission is incomplete for voice-v2 (data/simulations/voice-run).
-Rewards: 60/900 calls lack a scored reward (60 missing, 0 errored, 0 unscored).
-  pt-retail: 10 missing
+Rewards: 60/900 calls lack a scored reward (60 missing, 0 unscored).
+Rewards: 6 infrastructure-errored calls are excluded from the score, not counted as gaps.
+  pt-retail: 10 missing, 2 errored (excluded)
   ko-telecom: 50 missing
 Judges: 1/18 cells have applicable measures without a usable saved verdict.
   zh-airline: naturalness 48/50 judged (2 not judged)
@@ -117,6 +120,27 @@ To fill the gaps:
   - Rerun the original `tau2 run ... --save-to <root>` command with --auto-resume: ...
   - Then run `tau2 judges suite data/simulations/voice-run`: it judges only missing, stale and errored verdicts.
 ```
+
+Calls that ended in an infrastructure error (`termination_reason:
+infrastructure_error`) do not block a package. They are harness faults, not
+model failures, so they are excluded from the score's denominator: a cell is
+scored over its scored calls only, and a task whose calls all errored drops out
+of its cell's mean. The package reports them as `error_trials` per cell, per
+language, per domain and overall, and `prepare` prints the total. A cell is
+complete once every call is scored or errored, provided at least one is scored;
+a cell whose calls all errored still blocks. Missing and unscored calls still
+block. Rerunning with `--auto-resume` retries infrastructure errors if you want
+them scored.
+
+Judge verdicts blocked only because recorded Live speech has no transcript
+are recording gaps, not judge failures, so they do not block either. A verdict
+whose only unit errors are missing-Live-input (`kind: "input"`) errors counts
+as judged; its blocked units stay out of the pass fraction and are reported as
+`input_error_units`. A call a measure cannot judge at all for that reason (for
+call-level measures, any missing transcript) is excluded and reported as
+`input_excluded_calls`. Any other judge error (a model or API failure, an
+unparseable reply) still blocks: rerun `tau2 judges suite` to retry it. A
+measure whose applicable calls are all excluded still blocks.
 
 Only the default production judge catalog is accepted. Verdicts made with
 `--registry` bundles have a different catalog revision and will not validate.
@@ -155,8 +179,13 @@ tau2 submit prepare data/simulations/banking-run --output ./submissions \
   --metadata-file ./submitter.json
 
 # 3. Recompute rewards from the saved matrix.
-tau2 submit validate ./submissions/<name> --results data/simulations/banking-run
+tau2 submit validate ./submissions/<name>_banking --results data/simulations/banking-run
 ```
+
+`prepare` names these packages `<name>_banking` and `<name>_entity`, where
+`<name>` is the voice-v2 package name. Use the same `submitter.json` for all
+three packages, so they share the model name, organization and submission date.
+The suffix keeps their directories apart.
 
 Banking always runs with the `alltools` retrieval config, and entity with the
 agent-directed strategy. Other retrieval configs and the scaffolded strategy
@@ -707,7 +736,7 @@ See `web/leaderboard/public/submissions/A_EXAMPLE_voice-model_example-org_2026-0
 ### 2.0 packages (text-v1, voice-v2)
 
 - [ ] PR links the complete uploaded matrix root (`benchmark-frame.json` and every cell)
-- [ ] Package directory name equals `{model_name}_{model_organization}_{submission_date}`; `manifest.json` lists it in `voice_v2_submissions`
+- [ ] Package directory name equals `{model_name}_{model_organization}_{submission_date}`, plus `_banking` / `_entity` for those frames; `manifest.json` lists it in `voice_v2_submissions` (banking and entity: `voice_v2_domain_submissions`)
 - [ ] `benchmark-metadata.json` has a contact email; `submission_type` is right (if custom: `notes` and `references` explain the change)
 - [ ] `review_submission.py <package> <downloaded-root>` passes (it runs `tau2 submit validate`); with `--upload` it copies the matrix to `trajectories/<language>/<domain>/` and sets `trajectories`
 - [ ] voice-v2: `benchmark-diagnostics.json` present and made with the production judge catalog

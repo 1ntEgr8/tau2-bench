@@ -4,11 +4,16 @@ import pytest
 
 from tau2.data_model.benchmark import (
     BenchmarkFrame,
+    BenchmarkSubmission,
     CellFrame,
     TaskTrial,
     TrialStatus,
 )
-from tau2.metrics.benchmark import summarize
+from tau2.metrics.benchmark import (
+    describe_reward_gaps,
+    summarize,
+    validate_submission,
+)
 
 
 @pytest.fixture
@@ -163,3 +168,92 @@ def test_official_run_requires_a_separately_pinned_semantic_judge(frame):
         judge=SemanticCommunicateSettings(model="explicit-test-judge", model_args={})
     )
     config.validate()
+
+
+def full_cell(frame, cell, errors=(), reward=lambda task, trial: 1.0, skip=()):
+    """Every owed trial of one cell; ``errors``/``skip`` hold (task, trial) keys."""
+    return [
+        result(cell, task, trial, None, TrialStatus.ERROR)
+        if (task, trial) in errors
+        else result(cell, task, trial, reward(task, trial))
+        for task in cell.canonical_task_ids
+        for trial in frame.trials
+        if (task, trial) not in skip
+    ]
+
+
+def full_matrix(frame, **first_cell):
+    rows = full_cell(frame, frame.cells[0], **first_cell)
+    for cell in frame.cells[1:]:
+        rows += full_cell(frame, cell)
+    return rows
+
+
+def test_infrastructure_errors_leave_the_denominator(frame):
+    # Task 0 errors on both trials and drops out; task 1 keeps one scored trial.
+    errors = {("0", 0), ("0", 1), ("1", 0)}
+    report = summarize(
+        frame,
+        full_matrix(
+            frame,
+            errors=errors,
+            reward=lambda task, trial: float(task in {"0", "1"} or trial == 0),
+        ),
+    )
+    cell = report.cells[0]
+    assert cell.complete and report.complete
+    assert (cell.scored_trials, cell.error_trials, cell.missing_trials) == (97, 3, 0)
+    # Task 1 scores 1 from its one scored trial; tasks 2..49 score 0.5 each.
+    assert cell.score == pytest.approx((1 + 48 * 0.5) / 49)
+    assert report.score == pytest.approx((cell.score + 17) / 18)
+    assert report.by_language["en"].complete
+    assert report.by_language["en"].error_trials == 3
+    assert report.error_trials == 3
+    assert describe_reward_gaps(report) == []
+
+
+def test_all_errored_cell_never_counts(frame):
+    cell = frame.cells[0]
+    errors = {
+        (task, trial) for task in cell.canonical_task_ids for trial in frame.trials
+    }
+    report = summarize(frame, full_matrix(frame, errors=errors))
+    assert not report.cells[0].complete and report.cells[0].score is None
+    assert not report.complete and report.score is None
+    assert report.by_language["en"].score is None
+    gaps = describe_reward_gaps(report)
+    assert gaps[0].startswith("Rewards: 100 infrastructure-errored calls")
+    assert gaps[1] == "  en-airline: no scored call, 100 errored (excluded)"
+
+
+def test_missing_and_unscored_still_block_beside_errors(frame):
+    missing = summarize(frame, full_matrix(frame, errors={("0", 0)}, skip={("1", 0)}))
+    assert not missing.cells[0].complete and missing.score is None
+    assert missing.cells[0].missing_trials == 1
+    assert describe_reward_gaps(missing) == [
+        "Rewards: 1/1800 calls lack a scored reward (1 missing, 0 unscored).",
+        "Rewards: 1 infrastructure-errored calls are excluded from the score, "
+        "not counted as gaps.",
+        "  en-airline: 1 missing, 1 errored (excluded)",
+    ]
+    rows = full_matrix(frame, errors={("0", 0)}, skip={("1", 0)})
+    rows.append(result(frame.cells[0], "1", 0, None, TrialStatus.UNSCORED))
+    unscored = summarize(frame, rows)
+    assert not unscored.complete and unscored.cells[0].unscored_trials == 1
+    assert describe_reward_gaps(unscored)[-1] == (
+        "  en-airline: 1 unscored, 1 errored (excluded)"
+    )
+
+
+def test_submission_with_errors_validates_round_trip(frame):
+    rows = full_matrix(frame, errors={("0", 0), ("3", 1)})
+    submission = BenchmarkSubmission(
+        frame=frame, trials=rows, summary=summarize(frame, rows), sources={}
+    )
+    loaded = BenchmarkSubmission.model_validate_json(submission.model_dump_json())
+    validate_submission(loaded)
+    assert loaded.summary.complete and loaded.summary.error_trials == 2
+    forged = loaded.model_copy(deep=True)
+    forged.summary.error_trials = 0
+    with pytest.raises(ValueError, match="summary does not match"):
+        validate_submission(forged)
