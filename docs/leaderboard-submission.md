@@ -99,7 +99,9 @@ tau2 submit validate ./submissions/<name> --results data/simulations/voice-run
 `submitter.json` names the submission (see [Package metadata](#package-metadata)).
 `prepare` writes the package to `./submissions/<name>/`, where `<name>` is
 `{model_name}_{model_organization}_{submission_date}` in lowercase letters,
-numbers and hyphens.
+numbers and hyphens. voice-v2 and text-v1 names have no suffix. Banking and
+entity packages add `_banking` or `_entity`, so that one agent's three packages
+can share their metadata (see [Banking and τ-entity](#banking-and-τ-entity-voice)).
 
 `prepare` refuses unless every cell's rewards are complete and every applicable
 judge measure in every cell has a usable saved verdict. It reads saved results
@@ -177,8 +179,13 @@ tau2 submit prepare data/simulations/banking-run --output ./submissions \
   --metadata-file ./submitter.json
 
 # 3. Recompute rewards from the saved matrix.
-tau2 submit validate ./submissions/<name> --results data/simulations/banking-run
+tau2 submit validate ./submissions/<name>_banking --results data/simulations/banking-run
 ```
+
+`prepare` names these packages `<name>_banking` and `<name>_entity`, where
+`<name>` is the voice-v2 package name. Use the same `submitter.json` for all
+three packages, so they share the model name, organization and submission date.
+The suffix keeps their directories apart.
 
 Banking always runs with the `alltools` retrieval config, and entity with the
 agent-directed strategy. Other retrieval configs and the scaffolded strategy
@@ -727,7 +734,7 @@ See `web/leaderboard/public/submissions/A_EXAMPLE_voice-model_example-org_2026-0
 ### 2.0 packages (text-v1, voice-v2)
 
 - [ ] PR links the complete uploaded matrix root (`benchmark-frame.json` and every cell)
-- [ ] Package directory name equals `{model_name}_{model_organization}_{submission_date}`; `manifest.json` lists it in `voice_v2_submissions`
+- [ ] Package directory name equals `{model_name}_{model_organization}_{submission_date}`, plus `_banking` / `_entity` for those frames; `manifest.json` lists it in `voice_v2_submissions` (banking and entity: `voice_v2_domain_submissions`)
 - [ ] `benchmark-metadata.json` has a contact email; `submission_type` is right (if custom: `notes` and `references` explain the change)
 - [ ] `review_submission.py <package> <downloaded-root>` passes (it runs `tau2 submit validate`); with `--upload` it copies the matrix to `trajectories/<language>/<domain>/` and sets `trajectories`
 - [ ] voice-v2: `benchmark-diagnostics.json` present and made with the production judge catalog

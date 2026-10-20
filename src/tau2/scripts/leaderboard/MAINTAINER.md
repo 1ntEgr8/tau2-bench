@@ -94,7 +94,9 @@ under its own domain. 1.x tabs are unaffected.
 
 1. **Review** the PR: the directory name equals
    `{model_name}_{model_organization}_{submission_date}` (slugified; the review
-   script checks it), `benchmark-metadata.json` has a contact email, and
+   script checks it). voice-v2-banking and voice-v2-entity packages append
+   `_banking` / `_entity`, because they share the voice-v2 package's metadata.
+   Also check that `benchmark-metadata.json` has a contact email and that
    `submission_type` is right.
 2. **Download** the submitter's matrix root (`benchmark-frame.json` plus every
    `<language>-<domain>/` cell with `results.json`, `simulations/`,

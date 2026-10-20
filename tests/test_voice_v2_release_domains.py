@@ -31,7 +31,7 @@ SUBMITTER = {
     "submission_date": "2026-10-02",
     "contact_info": {"email": "review@example.org"},
 }
-NAME = "offline-fixture-1-0_test-org_2026-10-02"
+NAME = "offline-fixture-1-0_test-org_2026-10-02"  # plus _banking / _entity
 DOMAINS = {"banking": "banking_knowledge", "entity": "intake"}
 
 
@@ -191,7 +191,10 @@ def test_domain_export_round_trips_as_a_package(release_export, tmp_path):
         "--output",
         output,
     )
-    package = load_package(output / NAME)
+    name = f"{NAME}_{benchmark}"
+    assert [path.name for path in output.iterdir()] == [name]
+    package = load_package(output / name)
+    assert package.name == name
     frame = load_frame(benchmark)
     assert package.submission.frame == frame
     assert package.diagnostics is None
@@ -211,12 +214,12 @@ def test_domain_export_round_trips_as_a_package(release_export, tmp_path):
         f"{cell.language}/{cell.domain}" for cell in frame.cells
     }
     # Validation reads the frame from the package; no --benchmark needed.
-    _submit("validate", output / NAME, "--historical-voice-v2", "--results", source)
+    _submit("validate", output / name, "--historical-voice-v2", "--results", source)
     with pytest.raises(ValueError, match="packages"):
         other = "entity" if benchmark == "banking" else "banking"
         _submit(
             "validate",
-            output / NAME,
+            output / name,
             "--historical-voice-v2",
             "--benchmark",
             other,
@@ -363,3 +366,33 @@ def test_unscored_call_is_an_explicit_error(tmp_path):
     owed = sum(len(cell.canonical_task_ids) for cell in frame.cells)
     assert (summary.error_trials, summary.scored_trials) == (1, owed - 1)
     assert summary.complete
+
+
+def test_review_requires_the_suffixed_package_name(release_export, tmp_path):
+    """Review dry runs (no upload) accept only the frame-suffixed directory."""
+    from rich.console import Console
+
+    from tau2.scripts.leaderboard.review_submission import _review_package
+
+    benchmark, source, metadata = release_export
+    output = tmp_path / "out"
+    _submit(
+        "prepare",
+        source,
+        "--historical-voice-v2",
+        "--benchmark",
+        benchmark,
+        "--metadata-file",
+        metadata,
+        "--output",
+        output,
+    )
+    args = argparse.Namespace(
+        verify_only=False, historical_voice_v2=True, judges_root=[], upload=False
+    )
+    console = Console(quiet=True)
+    _review_package(output / f"{NAME}_{benchmark}", source, args, console)
+    unsuffixed = output / NAME
+    (output / f"{NAME}_{benchmark}").rename(unsuffixed)
+    with pytest.raises(ValueError, match=f"must be named {NAME}_{benchmark}"):
+        _review_package(unsuffixed, source, args, console)

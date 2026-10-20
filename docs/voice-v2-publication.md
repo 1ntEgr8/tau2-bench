@@ -82,7 +82,9 @@ tau2 submit validate ./packages/<name> --historical-voice-v2 \
   --results $R/leaderboard/<provider>
 ```
 
-`--benchmark entity` builds `voice-v2-entity` the same way. Neither frame is
+`--benchmark entity` builds `voice-v2-entity` the same way. The package
+directories are `<name>_banking` and `<name>_entity`, so all three packages of
+one agent can use the same metadata file. Neither frame is
 judged (see `JUDGED_BENCHMARKS`), so neither package has
 `benchmark-diagnostics.json` and `--judges-root` is rejected. `validate` reads
 the frame from the package; a `--benchmark` given there must name the same one.

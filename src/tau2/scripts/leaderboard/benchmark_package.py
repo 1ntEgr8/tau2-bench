@@ -35,6 +35,8 @@ PACKAGE_FILE_NAMES = (SUBMISSION_FILE_NAME, DIAGNOSTICS_FILE_NAME, METADATA_FILE
 # "historical-voice-v2-2026-10-02": the frozen release export
 # (`trajectories/<lang>/<domain>/`) plus its saved judge verdicts.
 Evidence = Literal["matrix", "historical-voice-v2-2026-10-02"]
+# Package-name suffixes of the domain frames that fill an agent's voice-v2 row.
+DOMAIN_PACKAGE_SUFFIXES = {"voice-v2-banking": "banking", "voice-v2-entity": "entity"}
 # Release-export directories of frame domains whose names differ there; entity
 # scores the export's regular condition, the other intake conditions are extras.
 HISTORICAL_EXPORT_DIRS = {"banking_knowledge": "banking", "intake": "intake/regular"}
@@ -135,7 +137,7 @@ class BenchmarkPackage(BaseModel):
 
     @property
     def name(self) -> str:
-        return package_name(self.metadata)
+        return package_name(self.metadata, self.submission.frame.benchmark_version)
 
     def write(self, directory: Path) -> None:
         directory.mkdir(parents=True, exist_ok=True)
@@ -151,19 +153,27 @@ class BenchmarkPackage(BaseModel):
         )
 
 
-def package_name(metadata: SubmitterMetadata) -> str:
-    """``{model_name}_{model_organization}_{submission_date}``, slugified."""
+def package_name(
+    metadata: SubmitterMetadata, benchmark_version: str | None = None
+) -> str:
+    """``{model_name}_{model_organization}_{submission_date}[_{suffix}]``, slugified.
+
+    One agent's voice-v2 and domain packages share their display metadata so the
+    leaderboard groups them; a domain frame's suffix keeps their directories
+    apart. voice-v2 and text-v1 names take no suffix.
+    """
 
     def slug(value: str) -> str:
         return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
 
-    return "_".join(
-        (
-            slug(metadata.model_name),
-            slug(metadata.model_organization),
-            metadata.submission_date.isoformat(),
-        )
-    )
+    parts = [
+        slug(metadata.model_name),
+        slug(metadata.model_organization),
+        metadata.submission_date.isoformat(),
+    ]
+    if benchmark_version in DOMAIN_PACKAGE_SUFFIXES:
+        parts.append(DOMAIN_PACKAGE_SUFFIXES[benchmark_version])
+    return "_".join(parts)
 
 
 def load_package(directory: Path) -> BenchmarkPackage:
