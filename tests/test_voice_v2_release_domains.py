@@ -355,9 +355,11 @@ def test_domain_frames_take_no_judges(release_export, tmp_path):
 
 
 def test_unscored_call_is_an_explicit_error(tmp_path):
-    """An infrastructure error stays an error trial; the frame stays incomplete."""
+    """An infrastructure error stays an explicit error trial, outside the score."""
     frame = load_frame("banking")
     task = frame.cells[0].canonical_task_ids[3]
     _write_export(tmp_path, "banking", error_task=task)
-    with pytest.raises(ValueError, match="requires a complete matrix"):
-        _build("banking", tmp_path)
+    summary = _build("banking", tmp_path).submission.summary
+    owed = sum(len(cell.canonical_task_ids) for cell in frame.cells)
+    assert (summary.error_trials, summary.scored_trials) == (1, owed - 1)
+    assert summary.complete
