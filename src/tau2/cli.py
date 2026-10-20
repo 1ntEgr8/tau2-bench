@@ -5,7 +5,6 @@ from tau2.config import (
     DEFAULT_AGENT_IMPLEMENTATION,
     DEFAULT_AUDIO_NATIVE_MODELS,
     DEFAULT_AUDIO_NATIVE_PROVIDER,
-    DEFAULT_AVA_ZERO_BASE_URL,
     DEFAULT_INTEGRATION_DURATION_SECONDS,
     DEFAULT_INTERRUPTION_CHECK_INTERVAL_SECONDS,
     DEFAULT_LLM_AGENT,
@@ -288,36 +287,16 @@ def add_run_args(parser):
         default=None,
         help="Audio native model to use. If not specified, uses the default model for the selected provider. "
         "For elevenlabs, this is the required hosted agent ID; for ava_zero_pipecat, "
-        "it is the server-side agent ID.",
-    )
-    parser.add_argument(
-        "--ava-zero-transport",
-        choices=["websocket", "webrtc"],
-        default="websocket",
-        help=(
-            "How the ava_zero_pipecat provider reaches Ava Zero: 'websocket' "
-            "connects to a running server; 'webrtc' calls a hosted agent through "
-            "Pipecat's agent-server protocol (requires the live extra and "
-            "AVARTHA_API_KEY). "
-            "Default is 'websocket'."
-        ),
+        "it is only a label, since --ava-zero-base-url selects the agent.",
     )
     parser.add_argument(
         "--ava-zero-base-url",
-        default=DEFAULT_AVA_ZERO_BASE_URL,
-        help=(
-            "Base URL of a running Ava Zero server (ava_zero_pipecat provider), "
-            "or with --ava-zero-transport webrtc the hosted agent's URL, "
-            "https://<host>/inference/serverless/pipecat/v1/public/<agent_id>. "
-            f"Default is {DEFAULT_AVA_ZERO_BASE_URL}."
-        ),
-    )
-    parser.add_argument(
-        "--ava-zero-websocket-token-env",
         default=None,
         help=(
-            "Name of an environment variable holding a WebSocket token for the "
-            "Ava Zero server, if it requires one."
+            "URL of the hosted Ava Zero agent the ava_zero_pipecat provider calls, "
+            "https://<host>/inference/serverless/pipecat/v1/public/<agent_id>. "
+            "Required for that provider, which also needs the live extra and "
+            "AVARTHA_API_KEY."
         ),
     )
     parser.add_argument(
@@ -688,12 +667,14 @@ def main():
 
             ava_zero_config = None
             if args.audio_native_provider == "ava_zero_pipecat":
+                if not args.ava_zero_base_url:
+                    run_parser.error(
+                        "--ava-zero-base-url is required when "
+                        "--audio-native-provider ava_zero_pipecat"
+                    )
                 try:
                     ava_zero_config = AvaZeroPipecatConfig(
-                        transport=args.ava_zero_transport,
-                        base_url=args.ava_zero_base_url,
-                        agent=audio_native_model,
-                        websocket_token_env=args.ava_zero_websocket_token_env,
+                        base_url=args.ava_zero_base_url
                     )
                 except ValueError as exc:
                     run_parser.error(f"invalid Ava Zero configuration: {exc}")

@@ -16,7 +16,6 @@ from tau2.voice.audio_native.ava_zero_pipecat.discrete_time_adapter import (  # 
 )
 from tau2.voice.audio_native.ava_zero_pipecat.provider import (  # noqa: E402
     HARNESS_TOOLS_PROTOCOL,
-    AvaZeroPipecatProvider,
     ProviderErrorEvent,
     ToolCallEvent,
 )
@@ -30,18 +29,16 @@ AGENT_URL = "https://platform.example/inference/serverless/pipecat/v1/public/age
 
 
 def webrtc_config(**overrides):
-    return AvaZeroPipecatConfig(transport="webrtc", base_url=AGENT_URL, **overrides)
+    return AvaZeroPipecatConfig(base_url=AGENT_URL, **overrides)
 
 
-def test_adapter_selects_the_provider_for_the_transport():
-    websocket = DiscreteTimeAvaZeroPipecatAdapter(tick_duration_ms=200)
-    webrtc = DiscreteTimeAvaZeroPipecatAdapter(
+def test_adapter_calls_the_hosted_agent():
+    adapter = DiscreteTimeAvaZeroPipecatAdapter(
         tick_duration_ms=200, ava_zero_config=webrtc_config()
     )
 
-    assert type(websocket.provider) is AvaZeroPipecatProvider
-    assert isinstance(webrtc.provider, AvaZeroWebRTCProvider)
-    assert webrtc.provider.url == AGENT_URL
+    assert isinstance(adapter.provider, AvaZeroWebRTCProvider)
+    assert adapter.provider.url == AGENT_URL
 
 
 def test_start_body_opts_into_caller_tools_and_carries_the_policy():
@@ -215,9 +212,7 @@ def test_call_starts_negotiates_boots_and_exchanges_tools(monkeypatch):
     monkeypatch.setattr(webrtc_module, "RTCPeerConnection", make_peer)
 
     async def exercise():
-        provider = AvaZeroWebRTCProvider(
-            AvaZeroPipecatConfig(transport="webrtc", base_url=AGENT_URL + "/")
-        )
+        provider = AvaZeroWebRTCProvider(AvaZeroPipecatConfig(base_url=AGENT_URL + "/"))
         await provider.connect(system_prompt="Retail policy")
         await provider.register_tools([{"name": "get_order", "inputSchema": {}}])
         channel = peers[0].channel

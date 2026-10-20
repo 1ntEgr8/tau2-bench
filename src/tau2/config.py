@@ -214,15 +214,13 @@ DEFAULT_ELEVENLABS_CONVERSATION_BASE_URL = (
 )
 
 # =============================================================================
-# AVA ZERO (Pipecat RTVI WebSocket to an already-running server)
+# AVA ZERO (hosted agent over Pipecat SmallWebRTC)
 # =============================================================================
-DEFAULT_AVA_ZERO_MODEL = "ava-zero"  # server-side agent ID
-DEFAULT_AVA_ZERO_BASE_URL = "ws://localhost:7860"
-DEFAULT_AVA_ZERO_INPUT_SAMPLE_RATE = 16000  # fixed by the Pipecat RTVI bridge
-DEFAULT_AVA_ZERO_OUTPUT_SAMPLE_RATE = 24000  # default; each frame may override
+DEFAULT_AVA_ZERO_MODEL = "ava-zero"  # recorded label; the URL selects the agent
+DEFAULT_AVA_ZERO_INPUT_SAMPLE_RATE = 16000  # caller audio track rate
+DEFAULT_AVA_ZERO_OUTPUT_SAMPLE_RATE = 24000  # agent audio is resampled to this
 DEFAULT_AVA_ZERO_BOOT_TIMEOUT_SECONDS = 45.0
 DEFAULT_AVA_ZERO_TOOL_REGISTRATION_TIMEOUT_SECONDS = 20.0
-DEFAULT_AVA_ZERO_COST_REPORT_TIMEOUT_SECONDS = 5.0
 DEFAULT_AVA_ZERO_BOOT_ATTEMPTS = 3
 
 # =============================================================================

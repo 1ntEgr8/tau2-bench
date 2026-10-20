@@ -259,7 +259,7 @@ class DiscreteTimeAudioNativeAgent(FullDuplexAgent[DiscreteTimeAgentState]):
                 Only used when provider="livekit". Ignored for other providers.
                 Can be a CascadedConfig instance or None to use defaults.
             audio_taps_dir: Directory to save audio taps. Only used when audio_taps_dir is not None.
-            ava_zero_config: Connection settings for an Ava Zero server. Only
+            ava_zero_config: Connection settings for a hosted Ava Zero agent. Only
                 used when provider="ava_zero_pipecat".
         """
         self.tools = tools

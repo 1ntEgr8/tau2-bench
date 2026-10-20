@@ -1,4 +1,4 @@
-"""Discrete-time adapter for the Ava Zero voice agent over Pipecat RTVI."""
+"""Discrete-time adapter for a hosted Ava Zero voice agent over Pipecat RTVI."""
 
 from __future__ import annotations
 
@@ -243,7 +243,7 @@ def _mcp_tool_schema(tool: Tool) -> dict[str, Any]:
 
 
 class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
-    """Bridge tau2 telephony ticks to Ava Zero's RTVI WebSocket."""
+    """Bridge tau2 telephony ticks to a hosted Ava Zero agent's call."""
 
     def __init__(
         self,
@@ -257,17 +257,15 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
     ):
         if reasoning_effort is not None:
             raise ValueError(
-                "Ava Zero reasoning is configured on the Ava Zero server; "
+                "Ava Zero reasoning is configured on the hosted agent; "
                 "--reasoning-effort is not supported"
             )
 
-        config = ava_zero_config or AvaZeroPipecatConfig(
-            agent=model or DEFAULT_AVA_ZERO_MODEL
-        )
-        if model is not None and model != config.agent:
+        # An injected provider already carries its call settings.
+        config = ava_zero_config or (provider.config if provider is not None else None)
+        if config is None:
             raise ValueError(
-                f"audio-native model {model!r} conflicts with "
-                f"Ava Zero agent {config.agent!r}"
+                "Ava Zero needs the hosted agent's URL (ava_zero_config.base_url)"
             )
 
         if audio_format is not None and audio_format != TELEPHONY_AUDIO_FORMAT:
@@ -283,7 +281,7 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
             audio_format=audio_format,
             send_audio_instant=send_audio_instant,
         )
-        self.model = config.agent
+        self.model = model or DEFAULT_AVA_ZERO_MODEL
         self.reasoning_effort = reasoning_effort
         self.ava_zero_config = config
 
@@ -323,18 +321,15 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
 
     @property
     def provider(self) -> AvaZeroPipecatProvider:
-        """Get the provider for the configured transport, creating it lazily."""
+        """Get the provider, creating it lazily."""
 
         if self._provider is None:
-            if self.ava_zero_config.transport == "webrtc":
-                # aiortc ships in the live extra; only WebRTC calls need it.
-                from tau2.voice.audio_native.ava_zero_pipecat.webrtc import (
-                    AvaZeroWebRTCProvider,
-                )
+            # aiortc ships in the live extra; only a real call needs it.
+            from tau2.voice.audio_native.ava_zero_pipecat.webrtc import (
+                AvaZeroWebRTCProvider,
+            )
 
-                self._provider = AvaZeroWebRTCProvider(self.ava_zero_config)
-            else:
-                self._provider = AvaZeroPipecatProvider(self.ava_zero_config)
+            self._provider = AvaZeroWebRTCProvider(self.ava_zero_config)
         return self._provider
 
     @property
@@ -375,7 +370,7 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
             self._connected = True
             logger.info(
                 "DiscreteTimeAvaZeroPipecatAdapter connected "
-                f"(agent={self.model}, tick={self.tick_duration_ms}ms)"
+                f"({self.ava_zero_config.base_url}, tick={self.tick_duration_ms}ms)"
             )
         except Exception as exc:
             if (
@@ -385,7 +380,7 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
             ):
                 try:
                     self._bg_loop.run_coroutine(
-                        self._provider.disconnect(request_cost_report=False),
+                        self._provider.disconnect(),
                         timeout=DEFAULT_AUDIO_NATIVE_DISCONNECT_TIMEOUT,
                     )
                 except Exception as cleanup_exc:
@@ -405,7 +400,7 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
                 await self.provider.connect(system_prompt=system_prompt)
                 break
             except AvaZeroBootError as exc:
-                await self.provider.disconnect(request_cost_report=False)
+                await self.provider.disconnect()
                 if attempt == self.ava_zero_config.boot_attempts:
                     logger.error(
                         f"Ava Zero boot failed {attempt} time(s), giving up: {exc}"
@@ -428,10 +423,7 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
             try:
                 self._bg_loop.run_coroutine(
                     self._async_disconnect(),
-                    timeout=(
-                        DEFAULT_AUDIO_NATIVE_DISCONNECT_TIMEOUT
-                        + self.ava_zero_config.cost_report_timeout_seconds
-                    ),
+                    timeout=DEFAULT_AUDIO_NATIVE_DISCONNECT_TIMEOUT,
                 )
             except Exception as exc:
                 logger.warning(f"Error disconnecting Ava Zero: {exc}")

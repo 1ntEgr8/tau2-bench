@@ -8,53 +8,45 @@ from tau2.evaluator.evaluator import EvaluationType
 from tau2.runner.controller import ControllerRun
 from tau2.voice.audio_native.ava_zero_pipecat.config import AvaZeroPipecatConfig
 
+AGENT_URL = "https://platform.example/inference/serverless/pipecat/v1/public/agent-1"
 
-def test_defaults_target_a_local_server_and_default_agent():
-    config = AvaZeroPipecatConfig()
 
-    assert config.base_url == "ws://localhost:7860"
-    assert config.agent == "ava-zero"
-    assert config.websocket_token_env is None
+def test_the_hosted_agent_url_is_required():
+    with pytest.raises(ValidationError):
+        AvaZeroPipecatConfig()
+    assert AvaZeroPipecatConfig(base_url=AGENT_URL + "/").base_url == AGENT_URL
+
+
+def test_the_agent_url_must_be_http():
+    with pytest.raises(ValidationError, match="http\\(s\\) URL"):
+        AvaZeroPipecatConfig(base_url="ws://localhost:7860")
 
 
 def test_unknown_fields_are_rejected():
     with pytest.raises(ValidationError):
-        AvaZeroPipecatConfig(unknown_option="value")
+        AvaZeroPipecatConfig(base_url=AGENT_URL, unknown_option="value")
 
 
-def test_agent_id_must_be_a_plain_identifier():
-    with pytest.raises(ValidationError):
-        AvaZeroPipecatConfig(agent="agent?token=1")
+def test_audio_native_config_needs_the_agent_settings():
+    with pytest.raises(ValidationError, match="hosted agent's URL"):
+        AudioNativeConfig(provider="ava_zero_pipecat")
 
 
-def test_audio_native_config_resolves_ava_zero_defaults():
-    config = AudioNativeConfig(provider="ava_zero_pipecat")
-
-    assert config.model == "ava-zero"
-    assert config.ava_zero_config.agent == "ava-zero"
-
-
-def test_audio_native_config_takes_model_from_supplied_config():
+def test_audio_native_config_records_the_ava_zero_label():
     config = AudioNativeConfig(
         provider="ava_zero_pipecat",
-        ava_zero_config=AvaZeroPipecatConfig(agent="custom-agent"),
+        ava_zero_config=AvaZeroPipecatConfig(base_url=AGENT_URL),
     )
 
-    assert config.model == "custom-agent"
-
-
-def test_audio_native_config_rejects_conflicting_agent_ids():
-    with pytest.raises(ValidationError, match="must match"):
-        AudioNativeConfig(
-            provider="ava_zero_pipecat",
-            model="one",
-            ava_zero_config=AvaZeroPipecatConfig(agent="two"),
-        )
+    assert config.model == "ava-zero"
 
 
 def test_ava_zero_config_is_rejected_for_other_providers():
     with pytest.raises(ValidationError, match="only valid"):
-        AudioNativeConfig(provider="openai", ava_zero_config=AvaZeroPipecatConfig())
+        AudioNativeConfig(
+            provider="openai",
+            ava_zero_config=AvaZeroPipecatConfig(base_url=AGENT_URL),
+        )
 
 
 def test_config_survives_controller_worker_serialization():
@@ -63,8 +55,7 @@ def test_config_survives_controller_worker_serialization():
         audio_native_config=AudioNativeConfig(
             provider="ava_zero_pipecat",
             ava_zero_config=AvaZeroPipecatConfig(
-                base_url="wss://ava-zero.example",
-                websocket_token_env="AVA_ZERO_TOKEN",
+                base_url=AGENT_URL, boot_timeout_seconds=30.0
             ),
         ),
     )
@@ -83,32 +74,3 @@ def test_config_survives_controller_worker_serialization():
     assert restored.audio_native_config.ava_zero_config == (
         config.audio_native_config.ava_zero_config
     )
-
-
-AGENT_URL = "https://platform.example/inference/serverless/pipecat/v1/public/agent-1"
-
-
-def test_websocket_is_the_default_transport():
-    assert AvaZeroPipecatConfig().transport == "websocket"
-
-
-def test_webrtc_needs_the_hosted_agent_url():
-    config = AvaZeroPipecatConfig(transport="webrtc", base_url=AGENT_URL)
-
-    assert config.base_url == AGENT_URL
-    with pytest.raises(ValidationError, match="http\\(s\\) URL"):
-        AvaZeroPipecatConfig(transport="webrtc")
-    with pytest.raises(ValidationError, match="http\\(s\\) URL"):
-        AvaZeroPipecatConfig(transport="webrtc", base_url="ws://localhost:7860")
-
-
-def test_websocket_token_is_rejected_for_webrtc():
-    with pytest.raises(ValidationError, match="websocket transport"):
-        AvaZeroPipecatConfig(
-            transport="webrtc", base_url=AGENT_URL, websocket_token_env="TOKEN"
-        )
-
-
-def test_unknown_transport_is_rejected():
-    with pytest.raises(ValidationError):
-        AvaZeroPipecatConfig(transport="sip")

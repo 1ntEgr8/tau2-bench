@@ -23,10 +23,12 @@ from tau2.voice.audio_native.ava_zero_pipecat.provider import (
     TranscriptEvent,
 )
 
+AGENT_URL = "https://platform.example/inference/serverless/pipecat/v1/public/agent-1"
+
 
 class FakeProvider:
     def __init__(self, events_by_tick=(), boot_failures=0):
-        self.config = AvaZeroPipecatConfig(cost_report_timeout_seconds=0.01)
+        self.config = AvaZeroPipecatConfig(base_url=AGENT_URL)
         self.events_by_tick = deque(events_by_tick)
         self.boot_failures = boot_failures
         self.connect_attempts = 0
@@ -35,7 +37,6 @@ class FakeProvider:
         self.tool_results = []
         self.registered = None
         self.session_id = "session-test"
-        self.cost_report = {"total_cost_usd": 0.1}
         self.is_connected = False
         self.reset_count = 0
 
@@ -64,7 +65,7 @@ class FakeProvider:
     async def receive_events_for_duration(self, _duration):
         return self.events_by_tick.popleft() if self.events_by_tick else []
 
-    async def disconnect(self, request_cost_report=True):
+    async def disconnect(self):
         self.is_connected = False
 
     def reset_for_retry(self):
@@ -84,37 +85,30 @@ def make_lookup_tool():
     return Tool(lookup)
 
 
-def test_factory_constructs_ava_zero_with_defaults():
-    adapter, model = create_adapter("ava_zero_pipecat", tick_duration_ms=20)
-
-    assert isinstance(adapter, DiscreteTimeAvaZeroPipecatAdapter)
-    assert model == "ava-zero"
-    assert adapter.ava_zero_config.base_url == "ws://localhost:7860"
-
-
-def test_factory_uses_agent_from_supplied_config_when_model_is_omitted():
-    config = AvaZeroPipecatConfig(agent="custom-agent")
+def test_factory_constructs_ava_zero_for_a_hosted_agent():
+    config = AvaZeroPipecatConfig(base_url=AGENT_URL)
 
     adapter, model = create_adapter(
         "ava_zero_pipecat", tick_duration_ms=20, ava_zero_config=config
     )
 
-    assert model == "custom-agent"
-    assert adapter.model == "custom-agent"
+    assert isinstance(adapter, DiscreteTimeAvaZeroPipecatAdapter)
+    assert model == "ava-zero"
+    assert adapter.model == "ava-zero"
     assert adapter.ava_zero_config is config
 
 
-def test_model_conflict_and_reasoning_effort_are_rejected():
-    with pytest.raises(ValueError, match="conflicts"):
-        DiscreteTimeAvaZeroPipecatAdapter(
-            tick_duration_ms=20,
-            model="one",
-            ava_zero_config=AvaZeroPipecatConfig(agent="two"),
-        )
-    with pytest.raises(ValueError, match="configured on the Ava Zero server"):
+def test_the_hosted_agent_url_is_required():
+    with pytest.raises(ValueError, match="hosted agent's URL"):
+        create_adapter("ava_zero_pipecat", tick_duration_ms=20)
+
+
+def test_reasoning_effort_is_rejected():
+    with pytest.raises(ValueError, match="configured on the hosted agent"):
         DiscreteTimeAvaZeroPipecatAdapter(
             tick_duration_ms=20,
             reasoning_effort="high",
+            ava_zero_config=AvaZeroPipecatConfig(base_url=AGENT_URL),
         )
 
 
@@ -169,7 +163,7 @@ def test_audio_transcript_tool_and_result_round_trip():
 
 def test_boot_failure_retries_before_registering_tools():
     provider = FakeProvider(boot_failures=1)
-    config = AvaZeroPipecatConfig(boot_attempts=2)
+    config = AvaZeroPipecatConfig(base_url=AGENT_URL, boot_attempts=2)
     adapter = DiscreteTimeAvaZeroPipecatAdapter(
         tick_duration_ms=20,
         ava_zero_config=config,
@@ -720,6 +714,7 @@ def test_non_telephony_audio_format_is_rejected():
             audio_format=AudioFormat(
                 encoding=AudioEncoding.PCM_S16LE, sample_rate=16000, channels=1
             ),
+            ava_zero_config=AvaZeroPipecatConfig(base_url=AGENT_URL),
         )
 
 

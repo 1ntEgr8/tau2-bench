@@ -114,8 +114,15 @@ PROVIDERS = [
     pytest.param(
         "ava_zero_pipecat",
         marks=pytest.mark.skipif(
-            not os.environ.get("AVA_ZERO_PIPECAT_TEST_ENABLED"),
-            reason="AVA_ZERO_PIPECAT_TEST_ENABLED not set (requires an Ava Zero server)",
+            not (
+                os.environ.get("AVA_ZERO_PIPECAT_TEST_ENABLED")
+                and os.environ.get("TAU2_AVA_ZERO_BASE_URL")
+                and os.environ.get("AVARTHA_API_KEY")
+            ),
+            reason=(
+                "AVA_ZERO_PIPECAT_TEST_ENABLED, TAU2_AVA_ZERO_BASE_URL (a hosted "
+                "agent's URL), and AVARTHA_API_KEY are required"
+            ),
         ),
     ),
     pytest.param(
@@ -396,10 +403,8 @@ def adapter(provider_name: str):
         )
 
         ava_zero_config = AvaZeroPipecatConfig(
-            base_url=os.environ.get("TAU2_AVA_ZERO_BASE_URL", "ws://localhost:7860"),
-            agent=os.environ.get("TAU2_AVA_ZERO_AGENT", "ava-zero"),
+            base_url=os.environ["TAU2_AVA_ZERO_BASE_URL"]
         )
-        model = ava_zero_config.agent
 
     if provider_name in CASCADED_CONFIG_ALIASES:
         from tau2.voice.audio_native.livekit.config import CASCADED_CONFIGS

@@ -3,10 +3,9 @@
 A hosted agent is served through Pipecat's agent-server protocol:
 ``POST {agent_url}/start`` admits a call, ``POST
 {agent_url}/sessions/{id}/api/offer`` opens one Opus audio track plus a data
-channel, and RTVI runs on that channel. The RTVI messages, boot verdict and
-``avartha-harness-tools/1`` tool exchange are the ones the WebSocket transport
-uses, so this provider changes only the transport of
-:class:`AvaZeroPipecatProvider`.
+channel, and RTVI runs on that channel. The RTVI session itself (boot verdict,
+``avartha-harness-tools/1`` tool exchange, routing) is
+:class:`AvaZeroPipecatProvider`; this module carries it over the call.
 """
 
 from __future__ import annotations
@@ -17,7 +16,6 @@ import json
 import os
 from fractions import Fraction
 from typing import Any, Optional
-from urllib.parse import urlsplit
 
 import httpx
 import numpy as np
@@ -36,7 +34,7 @@ try:
     from av.audio.resampler import AudioResampler
 except ImportError as exc:  # pragma: no cover - depends on installed extras
     raise ImportError(
-        "The ava_zero_pipecat webrtc transport requires aiortc. "
+        "The ava_zero_pipecat provider requires aiortc. "
         "Install tau2 with the live extra: uv sync --extra live"
     ) from exc
 
@@ -46,15 +44,17 @@ from tau2.config import (
 )
 from tau2.voice.audio_native.ava_zero_pipecat.config import AvaZeroPipecatConfig
 from tau2.voice.audio_native.ava_zero_pipecat.provider import (
+    RTVI_MESSAGE_LABEL,
+    RTVI_PROTOCOL_VERSION,
     AgentAudioEvent,
     AvaZeroPipecatProvider,
 )
 
-# Received frames whose peak is at or below this are the digital silence the
-# server's track sends between utterances. The WebSocket transport sends no
-# audio then, and the adapter treats any agent audio as speech.
 # The hosted agent's API key, sent as a bearer token to /start.
 AVARTHA_API_KEY_ENV = "AVARTHA_API_KEY"
+# Received frames whose peak is at or below this are the digital silence the
+# agent's track sends between utterances. They are dropped, because the
+# adapter treats any agent audio as speech.
 _SILENCE_PEAK = 8
 # How long a hang-up waits for the server to end the call before closing the
 # peer anyway. Closing at once can drop the queued disconnect-bot, and the
@@ -140,20 +140,9 @@ def is_digital_silence(pcm: bytes) -> bool:
 class AvaZeroWebRTCProvider(AvaZeroPipecatProvider):
     """Exchange audio, transcripts and tool calls with a hosted agent."""
 
-    def __init__(
-        self,
-        config: Optional[AvaZeroPipecatConfig] = None,
-        *,
-        base_url: Optional[str] = None,
-    ):
-        super().__init__(config, base_url=base_url)
-        agent_url = base_url or self.config.base_url
-        if urlsplit(agent_url).scheme not in {"http", "https"}:
-            raise ValueError(
-                "The Ava Zero webrtc transport needs the agent's http(s) URL, "
-                f"got {agent_url!r}"
-            )
-        self.url = agent_url.rstrip("/")
+    def __init__(self, config: AvaZeroPipecatConfig):
+        super().__init__(config)
+        self.url = config.base_url.rstrip("/")
         self._peer: Optional[RTCPeerConnection] = None
         self._channel: Any = None
         self._track: Optional[_CallerAudioTrack] = None
@@ -171,7 +160,7 @@ class AvaZeroWebRTCProvider(AvaZeroPipecatProvider):
         api_key = os.getenv(AVARTHA_API_KEY_ENV)
         if not api_key:
             raise ValueError(
-                f"The Ava Zero webrtc transport needs {AVARTHA_API_KEY_ENV}."
+                f"Set {AVARTHA_API_KEY_ENV} to call a hosted Ava Zero agent."
             )
         return {"Authorization": f"Bearer {api_key}"}
 
@@ -181,7 +170,6 @@ class AvaZeroWebRTCProvider(AvaZeroPipecatProvider):
         if self.is_connected:
             raise RuntimeError("Ava Zero WebRTC call is already connected")
         self._reset_session_state()
-        self._load_protocol()
         headers = self._headers()
         async with httpx.AsyncClient(
             timeout=self.config.connect_timeout_seconds
@@ -234,11 +222,11 @@ class AvaZeroWebRTCProvider(AvaZeroPipecatProvider):
         )
         await self._send_message(
             {
-                "label": self._message_label,
+                "label": RTVI_MESSAGE_LABEL,
                 "type": "client-ready",
                 "id": "tau2-0",
                 "data": {
-                    "version": self._protocol_version,
+                    "version": RTVI_PROTOCOL_VERSION,
                     "about": {"library": "tau2"},
                 },
             }
@@ -310,13 +298,9 @@ class AvaZeroWebRTCProvider(AvaZeroPipecatProvider):
             )
         self._track.append(audio_data)
 
-    async def request_cost_report(self) -> None:
-        """The WebRTC agent server serves no cost report."""
-
-    async def disconnect(self, request_cost_report: bool = True) -> None:
+    async def disconnect(self) -> None:
         """Hang up and close the peer connection and reader."""
 
-        del request_cost_report
         if self._peer is None:
             return
         self._closing = True
@@ -333,7 +317,7 @@ class AvaZeroWebRTCProvider(AvaZeroPipecatProvider):
                 channel.send(
                     json.dumps(
                         {
-                            "label": self._message_label,
+                            "label": RTVI_MESSAGE_LABEL,
                             "type": "disconnect-bot",
                             "id": "tau2-bye",
                         }

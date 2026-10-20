@@ -1,36 +1,28 @@
-"""Pipecat RTVI WebSocket client for the Ava Zero voice agent."""
+"""Pipecat RTVI session with a hosted Ava Zero agent.
+
+``AvaZeroPipecatProvider`` holds everything that does not depend on how the
+call is carried: the boot verdict, the tool exchange, output acknowledgement
+and routing of RTVI messages into events. The call itself is a WebRTC
+connection, in ``webrtc.py``, kept apart because aiortc ships in the optional
+live extra.
+"""
 
 from __future__ import annotations
 
 import asyncio
-import os
 from dataclasses import dataclass
 from typing import Any, ClassVar, Optional
-from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-import httpx
-import websockets
 from loguru import logger
 
-from tau2.config import DEFAULT_AVA_ZERO_OUTPUT_SAMPLE_RATE
 from tau2.utils.errors import NonRetryableError
 from tau2.voice.audio_native.ava_zero_pipecat.config import AvaZeroPipecatConfig
 
-# Wire identifier of the tool-exchange protocol the server must acknowledge.
+# Wire identifier of the tool-exchange protocol the agent must acknowledge.
 HARNESS_TOOLS_PROTOCOL = "avartha-harness-tools/1"
-_AUTH_QUERY_PARAMETERS = frozenset(
-    {
-        "access_token",
-        "api_key",
-        "apikey",
-        "auth",
-        "authorization",
-        "key",
-        "sig",
-        "signature",
-        "token",
-    }
-)
+# Pipecat RTVI message label and the protocol version tau2 announces.
+RTVI_MESSAGE_LABEL = "rtvi-ai"
+RTVI_PROTOCOL_VERSION = "2.0.0"
 
 
 @dataclass
@@ -150,206 +142,42 @@ class AvaZeroBootError(RuntimeError):
 
 
 class AvaZeroProtocolError(NonRetryableError):
-    """The Ava Zero server does not support this harness tool protocol."""
-
-
-def build_websocket_url(
-    config: AvaZeroPipecatConfig,
-    base_url: Optional[str] = None,
-    session_id: Optional[str] = None,
-) -> str:
-    """Build the direct Pipecat WebSocket URL for one call."""
-
-    raw_base = base_url or os.getenv("TAU2_AVA_ZERO_BASE_URL") or config.base_url
-    parts = urlsplit(raw_base)
-    scheme = {"http": "ws", "https": "wss"}.get(parts.scheme, parts.scheme)
-    if scheme not in {"ws", "wss"}:
-        raise ValueError(
-            f"Ava Zero base_url must use http(s) or ws(s), got {raw_base!r}"
-        )
-
-    path = parts.path.rstrip("/")
-    if not path.endswith("/ws-client"):
-        path = f"{path}/ws-client" if path else "/ws-client"
-
-    query = dict(parse_qsl(parts.query, keep_blank_values=True))
-    query["agent"] = config.agent
-    if session_id:
-        query["session_id"] = session_id
-    if config.websocket_token_env:
-        token = os.getenv(config.websocket_token_env)
-        if not token:
-            raise ValueError(
-                "websocket_token_env names an environment variable that is not set: "
-                f"{config.websocket_token_env}"
-            )
-        query["token"] = token
-
-    return urlunsplit((scheme, parts.netloc, path, urlencode(query), ""))
-
-
-def _redact_websocket_url(url: str) -> str:
-    """Remove authentication values before a WebSocket URL reaches logs."""
-
-    parts = urlsplit(url)
-    query = [
-        (key, "REDACTED" if key.lower() in _AUTH_QUERY_PARAMETERS else value)
-        for key, value in parse_qsl(parts.query, keep_blank_values=True)
-    ]
-    return urlunsplit(
-        (parts.scheme, parts.netloc, parts.path, urlencode(query), parts.fragment)
-    )
+    """The Ava Zero agent does not support this harness tool protocol."""
 
 
 class AvaZeroPipecatProvider:
-    """Exchange audio, transcripts, and tool calls with Ava Zero."""
+    """Exchange transcripts, tool calls and boot state with Ava Zero.
 
-    def __init__(
-        self,
-        config: Optional[AvaZeroPipecatConfig] = None,
-        *,
-        base_url: Optional[str] = None,
-    ):
-        self.config = config or AvaZeroPipecatConfig()
-        self._base_url = base_url
-        self.url = build_websocket_url(self.config, base_url)
+    Subclasses carry the call: ``connect``, ``send_audio``, ``disconnect`` and
+    ``_send_message``.
+    """
 
-        self._ws: Any = None
-        self._serializer: Any = None
-        self._input_audio_frame: Any = None
-        self._input_transport_frame: Any = None
-        self._output_audio_frame: Any = None
-        self._output_transport_frame: Any = None
-        self._message_label: Optional[str] = None
-        self._protocol_version: Optional[str] = None
+    def __init__(self, config: AvaZeroPipecatConfig):
+        self.config = config
 
         self._queue: asyncio.Queue[Any] = asyncio.Queue()
         self._reader: Optional[asyncio.Task[None]] = None
         self._registered = asyncio.Event()
         self._registration_error: Optional[RuntimeError] = None
         self._session_error: Optional[RuntimeError] = None
-        self._cost_received = asyncio.Event()
         self._boot_settled = asyncio.Event()
         self._message_id = 0
         self._delivered_outputs: set[str] = set()
 
         self.session_id: Optional[str] = None
-        self.cost_report: Optional[dict[str, Any]] = None
         self.boot_ready: Optional[bool] = None
         self.boot_error: Optional[str] = None
 
     @property
     def is_connected(self) -> bool:
-        """Whether the provider currently owns an open WebSocket."""
+        """Whether the provider currently owns a call."""
 
-        return self._ws is not None
-
-    def _load_protocol(self) -> None:
-        if self._serializer is not None:
-            return
-        try:
-            from pipecat.frames.frames import (
-                InputAudioRawFrame,
-                InputTransportMessageFrame,
-                OutputAudioRawFrame,
-                OutputTransportMessageFrame,
-            )
-            from pipecat.processors.frameworks.rtvi import models as rtvi_models
-            from pipecat.serializers.protobuf import ProtobufFrameSerializer
-        except ImportError as exc:
-            raise RuntimeError(
-                "The ava_zero_pipecat provider requires Pipecat. "
-                "Install tau2 with the voice extra: uv sync --extra voice"
-            ) from exc
-
-        self._serializer = ProtobufFrameSerializer()
-        self._input_audio_frame = InputAudioRawFrame
-        self._input_transport_frame = InputTransportMessageFrame
-        self._output_audio_frame = OutputAudioRawFrame
-        self._output_transport_frame = OutputTransportMessageFrame
-        self._message_label = rtvi_models.MESSAGE_LABEL
-        self._protocol_version = rtvi_models.PROTOCOL_VERSION
-
-    def _http_base_url(self) -> str:
-        """Return the product HTTP origin corresponding to the RTVI endpoint."""
-
-        raw_base = (
-            self._base_url
-            or os.getenv("TAU2_AVA_ZERO_BASE_URL")
-            or self.config.base_url
-        )
-        parts = urlsplit(raw_base)
-        scheme = {"ws": "http", "wss": "https"}.get(parts.scheme, parts.scheme)
-        if scheme not in {"http", "https"}:
-            raise ValueError(
-                f"Ava Zero base_url must use http(s) or ws(s), got {raw_base!r}"
-            )
-        path = parts.path.rstrip("/")
-        if path.endswith("/ws-client"):
-            path = path[: -len("/ws-client")]
-        return urlunsplit((scheme, parts.netloc, path, "", "")).rstrip("/")
-
-    async def _create_session(self, system_prompt: str) -> str:
-        """Install the Tau policy through the product configuration boundary."""
-
-        payload = {
-            "title": "Tau2 evaluation",
-            "agent": {
-                "base_agent_id": self.config.agent,
-                "prompt": system_prompt,
-                "tools": [],
-                "capabilities": [],
-                "chat_artifacts_enabled": False,
-            },
-        }
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.post(
-                f"{self._http_base_url()}/api/sessions",
-                json=payload,
-            )
-            response.raise_for_status()
-            session_id = response.json().get("id")
-        if not isinstance(session_id, str) or not session_id:
-            raise RuntimeError("Ava Zero session API returned no session id")
-        return session_id
+        raise NotImplementedError
 
     async def connect(self, system_prompt: str = "") -> None:
-        """Connect, announce RTVI readiness, and wait for a healthy boot."""
+        """Start a call, announce RTVI readiness and wait for a healthy boot."""
 
-        if self.is_connected:
-            raise RuntimeError("Ava Zero WebSocket is already connected")
-        self._reset_session_state()
-        self._load_protocol()
-        public_session_id = await self._create_session(system_prompt)
-        self.url = build_websocket_url(
-            self.config,
-            self._base_url,
-            session_id=public_session_id,
-        )
-        connect = websockets.connect(self.url, max_size=None)
-        self._ws = await asyncio.wait_for(
-            connect,
-            timeout=self.config.connect_timeout_seconds,
-        )
-        self._reader = asyncio.create_task(
-            self._read_loop(),
-            name="tau2-ava-zero-reader",
-        )
-        await self._send_message(
-            {
-                "label": self._message_label,
-                "type": "client-ready",
-                "id": "tau2-0",
-                "data": {
-                    "version": self._protocol_version,
-                    "about": {"library": "tau2"},
-                },
-            }
-        )
-        logger.info(
-            f"Ava Zero connected and client-ready ({_redact_websocket_url(self.url)})"
-        )
-        await self._await_boot()
+        raise NotImplementedError
 
     async def register_tools(
         self,
@@ -382,20 +210,9 @@ class AvaZeroPipecatProvider:
         logger.info(f"Ava Zero registered {len(schemas)} tool(s)")
 
     async def send_audio(self, audio_data: bytes, sample_rate: int) -> None:
-        """Send one mono PCM16 audio frame."""
+        """Send one mono PCM16 chunk of caller audio."""
 
-        if self._session_error:
-            raise self._session_error
-        if not audio_data or self._ws is None:
-            return
-        frame = self._output_audio_frame(
-            audio=audio_data,
-            sample_rate=sample_rate,
-            num_channels=1,
-        )
-        payload = await self._serializer.serialize(frame)
-        if payload:
-            await self._ws.send(payload)
+        raise NotImplementedError
 
     async def send_tool_result(
         self,
@@ -435,57 +252,23 @@ class AvaZeroPipecatProvider:
             events.append(event)
         return events
 
-    async def request_cost_report(self) -> None:
-        """Best-effort retrieval of Ava Zero's per-session cost report."""
+    async def disconnect(self) -> None:
+        """Hang up and release the call."""
 
-        if self._ws is None or self.cost_report is not None or self._session_error:
-            return
-        try:
-            await self._client_message("get_cost_report", {})
-            await asyncio.wait_for(
-                self._cost_received.wait(),
-                timeout=self.config.cost_report_timeout_seconds,
-            )
-        except TimeoutError:
-            logger.warning("Ava Zero returned no cost_report before disconnect")
-        except Exception as exc:
-            logger.warning(f"Ava Zero cost_report request failed: {exc!r}")
-
-    async def disconnect(self, request_cost_report: bool = True) -> None:
-        """Request final metadata and close the socket and reader."""
-
-        if self._ws is None:
-            return
-        if request_cost_report:
-            await self.request_cost_report()
-        websocket, self._ws = self._ws, None
-        try:
-            await websocket.close()
-        except Exception as exc:
-            logger.debug(f"Ava Zero WebSocket close failed: {exc!r}")
-        if self._reader is not None:
-            self._reader.cancel()
-            try:
-                await self._reader
-            except (asyncio.CancelledError, Exception):
-                pass
-            self._reader = None
+        raise NotImplementedError
 
     def _reset_session_state(self) -> None:
-        """Clear state owned by one WebSocket session."""
+        """Clear state owned by one call."""
 
-        self._ws = None
         self._reader = None
         self._queue = asyncio.Queue()
         self._registered = asyncio.Event()
         self._registration_error = None
         self._session_error = None
-        self._cost_received = asyncio.Event()
         self._boot_settled = asyncio.Event()
         self._message_id = 0
         self._delivered_outputs = set()
         self.session_id = None
-        self.cost_report = None
         self.boot_ready = None
         self.boot_error = None
 
@@ -523,51 +306,18 @@ class AvaZeroPipecatProvider:
             self._boot_settled.set()
 
     async def _send_message(self, message: dict[str, Any]) -> None:
-        if self._session_error:
-            raise self._session_error
-        if self._ws is None:
-            raise RuntimeError("Ava Zero WebSocket is not connected")
-        frame = self._output_transport_frame(message=message)
-        payload = await self._serializer.serialize(frame)
-        await self._ws.send(payload)
+        raise NotImplementedError
 
     async def _client_message(self, message_type: str, data: dict[str, Any]) -> None:
         self._message_id += 1
         await self._send_message(
             {
-                "label": self._message_label,
+                "label": RTVI_MESSAGE_LABEL,
                 "type": "client-message",
                 "id": f"tau2-{self._message_id}",
                 "data": {"t": message_type, "d": data},
             }
         )
-
-    async def _read_loop(self) -> None:
-        try:
-            async for raw in self._ws:
-                if isinstance(raw, str):
-                    continue
-                frame = await self._serializer.deserialize(raw)
-                if isinstance(frame, self._input_audio_frame):
-                    await self._queue.put(
-                        AgentAudioEvent(
-                            audio=bytes(frame.audio),
-                            sample_rate=(
-                                frame.sample_rate or DEFAULT_AVA_ZERO_OUTPUT_SAMPLE_RATE
-                            ),
-                        )
-                    )
-                elif isinstance(frame, self._input_transport_frame):
-                    if await self._accept_output(frame.message):
-                        self._route_message(frame.message)
-            if self._ws is not None:
-                self._fail_session("Ava Zero WebSocket closed before disconnect")
-        except asyncio.CancelledError:
-            raise
-        except Exception as exc:
-            if self._ws is not None:
-                logger.warning(f"Ava Zero provider reader failed: {exc!r}")
-                self._fail_session(f"Ava Zero WebSocket failed: {exc}")
 
     async def _accept_output(self, message: Any) -> bool:
         """Acknowledge a reliable caller output and route each one only once.
@@ -609,11 +359,10 @@ class AvaZeroPipecatProvider:
         self._session_error = RuntimeError(message)
         self._boot_settled.set()
         self._registered.set()
-        self._cost_received.set()
         self._queue.put_nowait(ProviderErrorEvent(message))
 
     def _route_message(self, message: Any) -> None:
-        if not isinstance(message, dict) or message.get("label") != self._message_label:
+        if not isinstance(message, dict) or message.get("label") != RTVI_MESSAGE_LABEL:
             return
 
         message_type = message.get("type")
@@ -637,16 +386,12 @@ class AvaZeroPipecatProvider:
                     self._registration_error = AvaZeroProtocolError(
                         "Incompatible Ava Zero tool protocol: "
                         f"expected {HARNESS_TOOLS_PROTOCOL!r}, received {received} "
-                        f"in {inner_type}. Point --ava-zero-base-url at a server "
+                        f"in {inner_type}. Point --ava-zero-base-url at an agent "
                         f"that supports {HARNESS_TOOLS_PROTOCOL}."
                     )
                     self._registered.set()
                     return
-            if inner_type == "cost_report":
-                report = data.get("data")
-                self.cost_report = report if isinstance(report, dict) else {}
-                self._cost_received.set()
-            elif inner_type == "session_boot":
+            if inner_type == "session_boot":
                 self._note_boot(data)
             elif inner_type == "tools_registered":
                 self._registered.set()

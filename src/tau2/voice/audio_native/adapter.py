@@ -409,7 +409,7 @@ def create_adapter(
         cascaded_config: Configuration for cascaded providers (livekit).
         live_config: Frontend and delegated backend configuration for OpenAI Live.
         trace_path: Optional private protocol trace for OpenAI Live.
-        ava_zero_config: Connection settings for an Ava Zero server.
+        ava_zero_config: Connection settings for a hosted Ava Zero agent.
 
     Returns:
         Tuple of (adapter, resolved_model).
@@ -423,9 +423,7 @@ def create_adapter(
 
     # --- Resolve model default ---
     if model is None:
-        if provider == "ava_zero_pipecat" and ava_zero_config is not None:
-            model = ava_zero_config.agent
-        elif provider == "livekit":
+        if provider == "livekit":
             from tau2.voice.audio_native.livekit.config import CascadedConfig
 
             config = cascaded_config or CascadedConfig()

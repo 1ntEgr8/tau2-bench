@@ -1,9 +1,7 @@
 import asyncio
-from urllib.parse import parse_qs, urlsplit
 
 import pytest
 
-from tau2.voice.audio_native.ava_zero_pipecat import provider as provider_module
 from tau2.voice.audio_native.ava_zero_pipecat.config import AvaZeroPipecatConfig
 from tau2.voice.audio_native.ava_zero_pipecat.provider import (
     HARNESS_TOOLS_PROTOCOL,
@@ -11,167 +9,35 @@ from tau2.voice.audio_native.ava_zero_pipecat.provider import (
     AgentPlaybackEvent,
     AgentStartedSpeakingEvent,
     AgentWordEvent,
-    AvaZeroBootError,
     AvaZeroPipecatProvider,
     AvaZeroProtocolError,
     ProviderErrorEvent,
     SpeechEvent,
     ToolCallEvent,
     TranscriptEvent,
-    build_websocket_url,
 )
 
+AGENT_URL = "https://platform.example/inference/serverless/pipecat/v1/public/agent-1"
 
-def test_websocket_url_carries_agent_session_and_token(monkeypatch):
-    monkeypatch.setenv("AVA_ZERO_TOKEN", "secret")
-    config = AvaZeroPipecatConfig(
-        base_url="https://voice.example/root?existing=yes",
-        agent="ava-zero",
-        websocket_token_env="AVA_ZERO_TOKEN",
-    )
 
-    parts = urlsplit(build_websocket_url(config, session_id="session_1"))
-    assert (parts.scheme, parts.netloc, parts.path) == (
-        "wss",
-        "voice.example",
-        "/root/ws-client",
-    )
-    assert parse_qs(parts.query) == {
-        "existing": ["yes"],
-        "agent": ["ava-zero"],
-        "session_id": ["session_1"],
-        "token": ["secret"],
-    }
+def make_provider(**overrides):
+    return AvaZeroPipecatProvider(AvaZeroPipecatConfig(base_url=AGENT_URL, **overrides))
+
+
+async def deliver(provider, message):
+    """Route one RTVI message the way a transport's reader does."""
+
+    if await provider._accept_output(message):
+        provider._route_message(message)
 
 
 def test_unsupported_config_fields_are_rejected():
     with pytest.raises(ValueError):
-        AvaZeroPipecatConfig(session_id="preconfigured")
-
-
-def test_connect_log_redacts_websocket_authentication(monkeypatch):
-    placeholder_token = "placeholder-websocket-secret"
-    monkeypatch.setenv("AVA_ZERO_TOKEN", placeholder_token)
-    messages = []
-
-    class WebSocket:
-        async def close(self):
-            return None
-
-    async def websocket_connect(*_args, **_kwargs):
-        return WebSocket()
-
-    async def send_message(_message):
-        return None
-
-    async def read_loop():
-        return None
-
-    async def await_boot():
-        return None
-
-    async def create_session(_system_prompt):
-        return "session-1"
-
-    provider = AvaZeroPipecatProvider(
-        AvaZeroPipecatConfig(
-            base_url="wss://voice.example?api_key=base-secret",
-            websocket_token_env="AVA_ZERO_TOKEN",
-        )
-    )
-    monkeypatch.setattr(provider, "_create_session", create_session)
-    provider._message_label = "rtvi-ai"
-    provider._protocol_version = "2.0.0"
-    monkeypatch.setattr(provider, "_load_protocol", lambda: None)
-    monkeypatch.setattr(provider, "_send_message", send_message)
-    monkeypatch.setattr(provider, "_read_loop", read_loop)
-    monkeypatch.setattr(provider, "_await_boot", await_boot)
-    monkeypatch.setattr(provider_module.websockets, "connect", websocket_connect)
-    monkeypatch.setattr(provider_module.logger, "info", messages.append)
-
-    async def exercise():
-        await provider.connect()
-        await provider.disconnect(request_cost_report=False)
-
-    asyncio.run(exercise())
-
-    logged = "\n".join(messages)
-    assert placeholder_token not in logged
-    assert "base-secret" not in logged
-    assert "token=REDACTED" in logged
-    assert "api_key=REDACTED" in logged
-
-
-def test_websocket_url_requires_named_token(monkeypatch):
-    monkeypatch.delenv("MISSING_AVA_ZERO_TOKEN", raising=False)
-    with pytest.raises(ValueError, match="not set"):
-        build_websocket_url(
-            AvaZeroPipecatConfig(websocket_token_env="MISSING_AVA_ZERO_TOKEN")
-        )
-
-
-def test_connect_resets_state_from_the_completed_session(monkeypatch):
-    class WebSocket:
-        async def close(self):
-            return None
-
-    async def websocket_connect(*_args, **_kwargs):
-        return WebSocket()
-
-    async def read_loop():
-        return None
-
-    async def create_session(_system_prompt):
-        return "public-session"
-
-    provider = AvaZeroPipecatProvider(
-        AvaZeroPipecatConfig(
-            base_url="wss://voice.example",
-            boot_timeout_seconds=0.01,
-        )
-    )
-    monkeypatch.setattr(provider, "_create_session", create_session)
-    provider._message_label = "rtvi-ai"
-    provider._protocol_version = "2.0.0"
-    connection_number = 0
-
-    async def send_message(_message):
-        if connection_number == 1:
-            provider._note_boot({"ready": True})
-
-    async def connect():
-        nonlocal connection_number
-        connection_number += 1
-        await provider.connect()
-
-    monkeypatch.setattr(provider, "_load_protocol", lambda: None)
-    monkeypatch.setattr(provider, "_send_message", send_message)
-    monkeypatch.setattr(provider, "_read_loop", read_loop)
-    monkeypatch.setattr(provider_module.websockets, "connect", websocket_connect)
-
-    async def exercise():
-        await connect()
-        provider.session_id = "completed-session"
-        provider.cost_report = {"total_cost_usd": 0.25}
-        provider._queue.put_nowait(TranscriptEvent("stale"))
-        await provider.disconnect(request_cost_report=False)
-
-        assert provider.session_id == "completed-session"
-        assert provider.cost_report == {"total_cost_usd": 0.25}
-
-        with pytest.raises(AvaZeroBootError, match="never settled"):
-            await connect()
-        assert provider.session_id is None
-        assert provider.cost_report is None
-        assert provider._queue.empty()
-        await provider.disconnect(request_cost_report=False)
-
-    asyncio.run(exercise())
+        AvaZeroPipecatConfig(base_url=AGENT_URL, session_id="preconfigured")
 
 
 def test_route_message_tracks_handshakes_metadata_and_events():
-    provider = AvaZeroPipecatProvider()
-    provider._message_label = "rtvi-ai"
+    provider = make_provider()
 
     def server(data):
         provider._route_message(
@@ -188,12 +54,6 @@ def test_route_message_tracks_handshakes_metadata_and_events():
             "id": "call-1",
             "name": "lookup",
             "arguments": {"id": "A-1"},
-        }
-    )
-    server(
-        {
-            "type": "cost_report",
-            "data": {"currency": "USD", "total_cost_usd": 0.25},
         }
     )
     provider._route_message(
@@ -224,8 +84,6 @@ def test_route_message_tracks_handshakes_metadata_and_events():
     assert provider.boot_ready is True
     assert provider._boot_settled.is_set()
     assert provider._registered.is_set()
-    assert provider.cost_report["total_cost_usd"] == 0.25
-    assert provider._cost_received.is_set()
     events = [provider._queue.get_nowait() for _ in range(8)]
     assert events == [
         ToolCallEvent("call-1", "lookup", {"id": "A-1"}),
@@ -240,8 +98,7 @@ def test_route_message_tracks_handshakes_metadata_and_events():
 
 
 def test_registration_error_settles_waiter_and_preserves_message():
-    provider = AvaZeroPipecatProvider()
-    provider._message_label = "rtvi-ai"
+    provider = make_provider()
     provider._route_message(
         {
             "label": "rtvi-ai",
@@ -267,8 +124,7 @@ def test_registration_error_settles_waiter_and_preserves_message():
 )
 def test_registration_rejects_incompatible_server_immediately(protocol, message_type):
     async def exercise():
-        provider = AvaZeroPipecatProvider()
-        provider._message_label = "rtvi-ai"
+        provider = make_provider()
         # A previous successful registration must not satisfy this handshake.
         provider._registered.set()
 
@@ -301,13 +157,11 @@ def test_registration_rejects_incompatible_server_immediately(protocol, message_
 
 def test_registration_waits_for_a_new_acknowledgement():
     async def exercise():
-        provider = AvaZeroPipecatProvider(
-            AvaZeroPipecatConfig(tool_registration_timeout_seconds=0.01)
-        )
+        provider = make_provider(tool_registration_timeout_seconds=0.01)
         provider._registered.set()
 
         async def client_message(*args):
-            pass  # The current server never acknowledges registration.
+            pass  # The agent never acknowledges registration.
 
         provider._client_message = client_message
         with pytest.raises(RuntimeError, match="did not acknowledge"):
@@ -316,55 +170,9 @@ def test_registration_waits_for_a_new_acknowledgement():
     asyncio.run(exercise())
 
 
-def test_create_session_installs_policy_outside_tool_registration(monkeypatch):
-    captured = {}
-
-    class Response:
-        def raise_for_status(self):
-            return None
-
-        def json(self):
-            return {"id": "public-session"}
-
-    class Client:
-        def __init__(self, timeout):
-            captured["timeout"] = timeout
-
-        async def __aenter__(self):
-            return self
-
-        async def __aexit__(self, *_args):
-            return None
-
-        async def post(self, url, json):
-            captured["url"] = url
-            captured["json"] = json
-            return Response()
-
-    monkeypatch.setattr(provider_module.httpx, "AsyncClient", Client)
-    provider = AvaZeroPipecatProvider(
-        AvaZeroPipecatConfig(base_url="ws://voice.example", agent="ava-zero")
-    )
-
-    session_id = asyncio.run(provider._create_session("Retail policy"))
-
-    assert session_id == "public-session"
-    assert captured["url"] == "http://voice.example/api/sessions"
-    assert captured["json"]["agent"] == {
-        "base_agent_id": "ava-zero",
-        "prompt": "Retail policy",
-        "tools": [],
-        "capabilities": [],
-        "chat_artifacts_enabled": False,
-    }
-
-
 def test_tool_registration_and_results_use_versioned_harness_mcp():
     async def exercise():
-        provider = AvaZeroPipecatProvider(
-            AvaZeroPipecatConfig(tool_registration_timeout_seconds=0.1)
-        )
-        provider._message_label = "rtvi-ai"
+        provider = make_provider(tool_registration_timeout_seconds=0.1)
         messages = []
 
         async def client_message(message_type, data):
@@ -423,8 +231,7 @@ def test_tool_registration_and_results_use_versioned_harness_mcp():
 
 
 def test_boot_error_only_settles_when_terminal():
-    provider = AvaZeroPipecatProvider()
-    provider._message_label = "rtvi-ai"
+    provider = make_provider()
     provider._route_message(
         {
             "label": "rtvi-ai",
@@ -445,8 +252,7 @@ def test_boot_error_only_settles_when_terminal():
 @pytest.mark.parametrize("stage", ["boot", "registration", "before_registration"])
 def test_fatal_rtvi_error_wakes_handshakes_with_original_cause(stage):
     async def exercise():
-        provider = AvaZeroPipecatProvider()
-        provider._message_label = "rtvi-ai"
+        provider = make_provider()
         detail = "Daily model limit reached: 1,000,000 uncached input tokens/day."
 
         def fail():
@@ -478,31 +284,10 @@ def test_fatal_rtvi_error_wakes_handshakes_with_original_cause(stage):
         assert isinstance(event, ProviderErrorEvent)
         assert detail in event.message
         with pytest.raises(RuntimeError, match="Daily model limit reached"):
-            await provider.send_audio(b"audio", 16000)
+            await provider.register_tools([])
         provider.reset_for_retry()
         assert provider._session_error is None
         assert provider._queue.empty()
-
-    asyncio.run(exercise())
-
-
-def test_clean_remote_close_wakes_registration_instead_of_timing_out():
-    async def exercise():
-        provider = AvaZeroPipecatProvider()
-
-        class ClosedSocket:
-            async def __aiter__(self):
-                if False:
-                    yield
-
-        provider._ws = ClosedSocket()
-
-        async def client_message(*args):
-            await provider._read_loop()
-
-        provider._client_message = client_message
-        with pytest.raises(RuntimeError, match="WebSocket closed before disconnect"):
-            await asyncio.wait_for(provider.register_tools([]), timeout=0.2)
 
     asyncio.run(exercise())
 
@@ -534,34 +319,22 @@ def test_reliable_outputs_are_acknowledged_and_routed_once():
     started = {"label": "rtvi-ai", "type": "bot-started-speaking"}
 
     async def exercise():
-        provider = AvaZeroPipecatProvider()
-        provider._load_protocol()
+        provider = make_provider()
         messages = [playback, started, playback, artifact, playback, started]
-
-        class Serializer:
-            async def deserialize(self, raw):
-                return provider._input_transport_frame(message=messages[raw[0]])
-
-        class Socket:
-            async def __aiter__(self):
-                for index in range(len(messages)):
-                    yield bytes([index])
-
         sent = []
 
         async def client_message(message_type, data):
             sent.append((message_type, data))
 
-        provider._serializer = Serializer()
         provider._client_message = client_message
 
         async def read_events():
-            provider._ws = Socket()
-            await provider._read_loop()
+            for message in messages:
+                await deliver(provider, message)
             events = []
             while not provider._queue.empty():
                 events.append(provider._queue.get_nowait())
-            return [e for e in events if not isinstance(e, ProviderErrorEvent)]
+            return events
 
         first = await read_events()
         acked = list(sent)
@@ -579,22 +352,3 @@ def test_reliable_outputs_are_acknowledged_and_routed_once():
     assert acked == [("output_ack", {"event_id": "playback-final:u3"})] * 3
     # A new session has not delivered anything yet.
     assert again == first
-
-
-def test_pinned_pipecat_protobuf_round_trip():
-    async def round_trip():
-        provider = AvaZeroPipecatProvider()
-        provider._load_protocol()
-        outgoing = provider._output_audio_frame(
-            audio=b"\x00\x00" * 160,
-            sample_rate=16000,
-            num_channels=1,
-        )
-        wire = await provider._serializer.serialize(outgoing)
-        incoming = await provider._serializer.deserialize(wire)
-        return provider, incoming
-
-    provider, incoming = asyncio.run(round_trip())
-
-    assert provider._message_label == "rtvi-ai"
-    assert provider._protocol_version == "2.0.0"

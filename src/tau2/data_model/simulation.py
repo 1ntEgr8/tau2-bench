@@ -98,7 +98,7 @@ class AudioNativeConfig(BaseModel):
 
     ava_zero_config: Optional[AvaZeroPipecatConfig] = Field(
         default=None,
-        description="Server connection settings for the ava_zero_pipecat provider",
+        description="Hosted agent connection settings for the ava_zero_pipecat provider",
     )
 
     model: str = Field(
@@ -151,19 +151,15 @@ class AudioNativeConfig(BaseModel):
 
     @model_validator(mode="after")
     def validate_ava_zero_config(self):
-        """Keep the Ava Zero agent ID and the generic model field in sync."""
+        """Require the hosted agent's settings for the Ava Zero provider."""
         if self.provider == "ava_zero_pipecat":
-            default_model = DEFAULT_AUDIO_NATIVE_MODELS[DEFAULT_AUDIO_NATIVE_PROVIDER]
             if self.ava_zero_config is None:
-                if self.model == default_model:
-                    self.model = DEFAULT_AUDIO_NATIVE_MODELS["ava_zero_pipecat"]
-                self.ava_zero_config = AvaZeroPipecatConfig(agent=self.model)
-            elif self.model == default_model:
-                self.model = self.ava_zero_config.agent
-            elif self.ava_zero_config.agent != self.model:
                 raise ValueError(
-                    "ava_zero_config.agent must match audio_native_config.model"
+                    "ava_zero_pipecat needs ava_zero_config with the hosted agent's URL"
                 )
+            default_model = DEFAULT_AUDIO_NATIVE_MODELS[DEFAULT_AUDIO_NATIVE_PROVIDER]
+            if self.model == default_model:
+                self.model = DEFAULT_AUDIO_NATIVE_MODELS["ava_zero_pipecat"]
         elif self.ava_zero_config is not None:
             raise ValueError(
                 "ava_zero_config is only valid when provider='ava_zero_pipecat'"
