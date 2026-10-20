@@ -90,11 +90,12 @@ class AudioNativeConfig(BaseModel):
         "nova",
         "qwen",
         "avartha_pipecat",
+        "phonic",
         "livekit",
         "launa",
     ] = Field(
         default=DEFAULT_AUDIO_NATIVE_PROVIDER,
-        description="Audio native API provider: 'openai' (OpenAI Realtime), 'openai_live' (OpenAI Live), 'gemini' (Gemini Live), 'xai' (xAI Grok Voice Agent), 'nova' (Amazon Nova Sonic), 'qwen' (Alibaba Qwen Omni), 'avartha_pipecat' (hosted Avartha agent over Pipecat SmallWebRTC), 'launa' (Salesforce Launa), or 'livekit' (LiveKit cascaded STT→LLM→TTS)",
+        description="Audio native API provider: 'openai' (OpenAI Realtime), 'openai_live' (OpenAI Live), 'gemini' (Gemini Live), 'xai' (xAI Grok Voice Agent), 'nova' (Amazon Nova Sonic), 'qwen' (Alibaba Qwen Omni), 'avartha_pipecat' (hosted Avartha agent over Pipecat SmallWebRTC), 'phonic' (Phonic 1), 'launa' (Salesforce Launa), or 'livekit' (LiveKit cascaded STT→LLM→TTS)",
     )
 
     transcription_language: Optional[str] = Field(
