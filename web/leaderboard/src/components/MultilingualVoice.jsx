@@ -78,8 +78,15 @@ function Space({ rows, onSelect, selected, focused, onClearFocus }) {
           {axes.map((axis, index) => {
             const location = index === 0 ? [.5, 0, 0] : index === 1 ? [0, 1, 0] : [1, 0, .5]
             const [x, y] = project(location)
-            // The vertical axis's label sits centred above its top, kept inside the view.
-            return <text key={axis.key} x={index === 1 ? Math.min(Math.max(x, 130), 670) : x + (index === 2 ? 34 : 0)} y={index === 0 ? Math.max(...vertices.map(vertex => project(vertex)[1])) + 48 : y + (index === 1 ? -22 : 36)} textAnchor={index === 2 ? 'start' : 'middle'} fill="#505050" className="mv-cube-axis">{axis.label} (%) ↑</text>
+            // The vertical axis's label sits above its top tick, right-aligned
+            // with the ticks and on two lines, so it stays left of the cube.
+            if (index === 1) {
+              const [first, ...rest] = axis.label.split(' ')
+              return <text key={axis.key} x={x - 15} y={y - 40} textAnchor="end" fill="#505050" className="mv-cube-axis">
+                <tspan x={x - 15}>{first}</tspan><tspan x={x - 15} dy="1.25em">{[...rest, '(%) ↑'].join(' ')}</tspan>
+              </text>
+            }
+            return <text key={axis.key} x={x + (index === 2 ? 34 : 0)} y={index === 0 ? Math.max(...vertices.map(vertex => project(vertex)[1])) + 48 : y + 36} textAnchor={index === 2 ? 'start' : 'middle'} fill="#505050" className="mv-cube-axis">{axis.label} (%) ↑</text>
           })}
           {active?.experience != null && active?.interaction != null && <g stroke={active.color} strokeWidth="1.6" strokeDasharray="4 5" opacity=".6">
             {line(coordinates(active), [coordinates(active)[0], 0, coordinates(active)[2]])}
