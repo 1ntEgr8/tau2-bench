@@ -972,7 +972,7 @@ options:
                         Max retries when a user simulator hallucination is detected
                         (full-duplex only). Set to 0 to disable.
 
-τ-Entity (formerly elicitation; intake only):
+τ-entity (formerly elicitation; intake only):
   --elicitation-strategy {agent_directed,scaffolded}
                         Collection strategy. Default: agent_directed; scaffolded
                         selects the prescribed-protocol ablation.
@@ -1254,7 +1254,7 @@ options:
                         Existing ordinary seed-42 regular results to reuse read-only
                         in crossed mode.
 
-τ-Entity (formerly elicitation; intake only):
+τ-entity (formerly elicitation; intake only):
   --elicitation-strategy {agent_directed,scaffolded}
                         Collection strategy. Default: agent_directed; scaffolded
                         selects the prescribed-protocol ablation.
