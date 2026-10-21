@@ -208,28 +208,36 @@ export default function MultilingualVoice({ submissionTypeFilters, showStandard 
   const [open, setOpen] = useState(null)
   const [breakdown, setBreakdown] = useState('task')
   const used = new Set()
-  const rows = (packages || []).map((pkg, index) => {
+  const colors = (packages || []).map((pkg, index) => {
     const own = providerColors[pkg.metadata.agent_provider]
     const color = own && !used.has(own) ? own : palette[index % palette.length]
     used.add(color)
-    return {
-      id: pkg.dir, pkg, color,
-      name: pkg.metadata.model_name,
-      org: pkg.metadata.model_organization,
-      submissionType: pkg.metadata.submission_type || 'standard',
-      ...Object.fromEntries(metrics.map(([key]) => [key, scoreFor(pkg, key, 'all', domain)])),
-    }
-  }).filter(row => (row.submissionType === 'custom' ? showCustom : showStandard) && (row.pkg.submission || row.task != null))
+    return color
+  })
+  const rowsFor = scope => (packages || []).map((pkg, index) => ({
+    id: pkg.dir, pkg, color: colors[index],
+    name: pkg.metadata.model_name,
+    org: pkg.metadata.model_organization,
+    submissionType: pkg.metadata.submission_type || 'standard',
+    ...Object.fromEntries(metrics.map(([key]) => [key, scoreFor(pkg, key, 'all', scope)])),
+  })).filter(row => (row.submissionType === 'custom' ? showCustom : showStandard) && (row.pkg.submission || row.task != null))
+  const rows = rowsFor(domain)
   // Banking and Intake have task completion only, so their other columns are hidden.
   const extraDomain = domain === 'banking_knowledge' || domain === 'intake'
   const shown = extraDomain ? metrics.filter(([key]) => key === 'task') : metrics
   const sortKey = shown.some(([key]) => key === sort) ? sort : 'task'
   const mapKey = shown.some(([key]) => key === mapMetric) ? mapMetric : 'task'
   const ranked = [...rows].sort((a, b) => a[sortKey] == null ? b[sortKey] == null ? 0 : 1 : b[sortKey] == null ? -1 : b[sortKey] - a[sortKey])
-  const charted = [...rows].filter(row => row.task != null).sort((a, b) => b.task - a.task)
+  const byTask = list => list.filter(row => row.task != null).sort((a, b) => b.task - a.task)
+  const charted = byTask(rows)
+  // The 3D explorer always shows Overall; the domain toggle drives the
+  // leaderboard and the language map only.
+  const spaceRows = byTask(rowsFor('all'))
+  const panelRows = view === 'space' ? spaceRows : charted
+  const panelLabel = view === 'space' || domain === 'all' ? '' : `${domainLabel} `
   const [picked, setPicked] = useState(null)
   const [focused, setFocused] = useState(false)
-  const selected = charted.some(row => row.id === picked) ? picked : charted[0]?.id
+  const selected = spaceRows.some(row => row.id === picked) ? picked : spaceRows[0]?.id
   const selectModel = id => {
     setFocused(!(focused && selected === id))
     setPicked(id)
@@ -241,12 +249,11 @@ export default function MultilingualVoice({ submissionTypeFilters, showStandard 
   return <section className="mv" aria-label="Multilingual voice benchmark">
     <div className="mv-toolbar"><div className="mv-view-tabs" aria-label="Chart views">{[['space', '01', '3D explorer'], ['languages', '02', 'Language map']].map(([id, number, label]) => <button key={id} aria-pressed={view === id} className={view === id ? 'active' : ''} onClick={() => setView(id)}><span>{number}</span>{label}</button>)}</div></div>
     <div className="mv-main-panel">
-      {view === 'space' && <div className="mv-panel-heading"><h2>Three dimensions of a good conversation.</h2><span className="mv-core-note">{domain === 'all' ? 'Core domains only · Airline, Retail, Telecom' : extraDomain ? `${domainLabel}: task completion only` : `${domainLabel} only`}</span></div>}
+      {view === 'space' && <div className="mv-panel-heading"><h2>Three dimensions of a good conversation.</h2><span className="mv-core-note">Core domains only · Airline, Retail, Telecom</span></div>}
       {loading ? <div className="mv-cube-empty"><span>Loading</span><h3>Loading submissions…</h3></div>
-        : !charted.length ? <div className="mv-cube-empty"><span>Not yet evaluated</span><h3>No {domain === 'all' ? '' : `${domainLabel} `}results yet.</h3><p>Submitted packages appear here once they are added to the leaderboard.</p></div>
+        : !panelRows.length ? <div className="mv-cube-empty"><span>Not yet evaluated</span><h3>No {panelLabel}results yet.</h3><p>Submitted packages appear here once they are added to the leaderboard.</p></div>
         : view === 'languages' ? <LanguageMap rows={charted} metrics={shown} metric={mapKey} setMetric={setMapMetric} domain={domain} />
-        : extraDomain ? <div className="mv-cube-empty"><span>Task completion only</span><h3>{domainLabel} is scored on task completion.</h3><p>Interaction and Generation quality cover the three core domains. {domainLabel} scores are ranked in the leaderboard below and shown in the language map.</p></div>
-        : <Space rows={charted} onSelect={selectModel} selected={selected} focused={focused} onClearFocus={() => setFocused(false)} />}
+        : <Space rows={spaceRows} onSelect={selectModel} selected={selected} focused={focused} onClearFocus={() => setFocused(false)} />}
       <div className="mv-panel-footer"><span><strong>{calls.toLocaleString()}</strong> scored calls</span><span><strong>{coreParts.length}</strong> {coreParts.length === 1 ? 'submission' : 'submissions'}</span><span><strong>3</strong> core domains</span></div>
     </div>
     <div className="mv-leaderboard-heading"><h2>Leaderboard</h2><div className="mv-leaderboard-controls"><DomainToggle domain={domain} setDomain={setDomain} />{submissionTypeFilters}</div></div>

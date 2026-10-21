@@ -134,11 +134,17 @@ test('package-driven explorer, breakdowns, language map and homepage', async ({ 
   await page.getByRole('button', { name: 'Close breakdown', exact: true }).click()
   await expect(page.locator('.mv-detail')).toHaveCount(0)
 
-  // A domain scopes all three scores.
+  // A domain scopes all three leaderboard scores; the 3D explorer stays on Overall.
+  const pointA = page.locator('.mv-cube-point').first()
+  const overallPoint = await pointA.getAttribute('aria-label')
   await page.locator('.mv-domain-toggle').getByRole('button', { name: /Airline/ }).click()
   await expect(rowA.locator('td[data-metric="interaction"]')).toContainText(percent(pooled(a, 'interaction', cell => cell.domain === 'airline')))
+  await expect(page.locator('.mv-core-note')).toHaveText('Core domains only · Airline, Retail, Telecom')
+  assert.equal(await page.locator('.mv-cube-point').count(), 2)
+  assert.equal(await pointA.getAttribute('aria-label'), overallPoint)
   await page.locator('.mv-domain-toggle').getByRole('button', { name: /Banking/ }).click()
-  await expect(page.locator('.mv-main-panel .mv-cube-empty')).toContainText('No Banking results yet')
+  await expect(page.locator('.mv-main-panel .mv-cube-empty')).toHaveCount(0)
+  assert.equal(await page.locator('.mv-cube-point').count(), 2)
   // Banking is scored on task completion only: its other columns are hidden.
   await expect(page.locator('.mv-scores > .metrics-table-container > table > thead th')).toHaveCount(5)
   await expect(rowA.locator('td[data-metric]')).toHaveCount(1)
