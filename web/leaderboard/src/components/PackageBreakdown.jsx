@@ -1,5 +1,5 @@
 import { heatScale, percent } from '../data/multilingual/metrics'
-import { CORE_DOMAINS, LANGUAGES, domainScore, interactionComponent, packageQuality, qualityCounts, toPercent } from '../data/voiceV2Packages'
+import { CORE_DOMAINS, LANGUAGES, PASS3_DOMAINS, domainScore, interactionComponent, packageQuality, qualityCounts, toPercent } from '../data/voiceV2Packages'
 import './MultilingualVoice.css'
 
 // Breakdown of one submitted voice-v2 package and any banking or entity
@@ -57,7 +57,7 @@ export default function PackageBreakdown({ pkg, metric = 'task', onMetricChange,
   const parts = [pkg.submission && pkg, ...Object.values(pkg.extras || {})].filter(Boolean)
   const languages = [...new Set(parts.flatMap(part => part.submission.frame.cells.map(cell => cell.language)))]
   const domains = summary ? Object.keys(summary.by_domain) : []
-  const domainRow = domain => ({ key: domain, label: label(domainName, domain), extra: extraDomains.includes(domain), value: language => domainScore(pkg, domain, language) })
+  const domainRow = domain => ({ key: domain, label: PASS3_DOMAINS.includes(domain) ? `${label(domainName, domain)} (pass^3)` : label(domainName, domain), extra: extraDomains.includes(domain), value: language => domainScore(pkg, domain, language) })
   const columns = [...languages.map(key => ({ key, label: label(languageName, key) })), { key: 'all', label: 'Overall' }]
   const taskRows = [
     ...domains.filter(domain => !extraDomains.includes(domain)).map(domainRow),

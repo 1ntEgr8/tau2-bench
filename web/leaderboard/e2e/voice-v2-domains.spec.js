@@ -25,6 +25,11 @@ const submission = (version, domains, score) => {
     },
   }
 }
+// Crossed Pass^3 sidecar: Intake's leaderboard score, distinct from pass@1.
+const pass3 = score => {
+  const cells = languages.map((language, l) => ({ language, domain: 'intake', score: score(l) }))
+  return { schema_version: 'benchmark-pass3-v1', benchmark_version: 'voice-v2-entity', frame_revision: 'voice-v2-entity-rev', cells, score: mean(cells.map(cell => cell.score)) }
+}
 const core = submission('voice-v2', ['airline', 'retail', 'telecom'], (l, d) => (40 + 5 * l + 10 * d) / 100)
 const packages = {
   fixture_core: { 'benchmark-metadata.json': metadata('fixture-live', 'gemini'), 'benchmark-submission.json': core },
@@ -33,7 +38,7 @@ const packages = {
   // Same agent as fixture_core: fills its Banking row.
   fixture_banking: { 'benchmark-metadata.json': metadata('fixture-live', 'gemini'), 'benchmark-submission.json': submission('voice-v2-banking', ['banking_knowledge'], l => (10 + l) / 100) },
   // No voice-v2 package for this agent: shown only under Intake.
-  fixture_entity: { 'benchmark-metadata.json': metadata('fixture-entity-only', 'xai'), 'benchmark-submission.json': submission('voice-v2-entity', ['intake'], l => (60 + 2 * l) / 100) },
+  fixture_entity: { 'benchmark-metadata.json': metadata('fixture-entity-only', 'xai'), 'benchmark-submission.json': submission('voice-v2-entity', ['intake'], l => (60 + 2 * l) / 100), 'benchmark-pass3.json': pass3(l => (20 + l) / 100) },
 }
 const percent = value => `${(100 * value).toFixed(1)}%`
 
@@ -77,17 +82,19 @@ test('banking fills the matching voice-v2 row', async ({ page }) => {
   await expect(detail).toContainText('Submitted 2 packages')
 })
 
-test('an entity package without voice-v2 appears only under Intake', async ({ page }) => {
+test('an entity package without voice-v2 appears only under Intake, scored by Pass^3', async ({ page }) => {
   await page.goto('/leaderboard?benchmark=voice')
   const table = page.locator('.mv-leaderboard-table')
   await expect(table.locator('tr[data-package="fixture_entity"]')).toHaveCount(0)
   await selectDomain(page, 'Intake')
+  await expect(table.locator('thead .mv-metric-header')).toHaveText(['Task completion (pass^3) ↑ •'])
   const row = table.locator('tr[data-package="fixture_entity"]')
-  await expect(row.locator('td[data-metric="task"]')).toContainText(percent(packages.fixture_entity['benchmark-submission.json'].summary.score))
+  await expect(row.locator('td[data-metric="task"]')).toContainText(percent(packages.fixture_entity['benchmark-pass3.json'].score))
   await expect(table.locator('tr[data-package="fixture_core"] td[data-metric="task"]')).toHaveText('—')
   await row.locator('.mv-model-trigger').click()
   const detail = page.locator('.mv-leaderboard-table .mv-detail')
-  await expect(detail.locator('tr[data-factor="intake"] td[data-language="en"]')).toHaveText('60.0%')
+  await expect(detail.locator('tr[data-factor="intake"] td[data-language="en"]')).toHaveText('20.0%')
+  await expect(detail.locator('tr[data-factor="intake"] th')).toContainText('Intake (pass^3)')
   await expect(detail.locator('tr[data-factor="all"] td[data-language="all"]')).toHaveText('—')
   await selectDomain(page, 'Airline')
   await expect(row).toHaveCount(0)

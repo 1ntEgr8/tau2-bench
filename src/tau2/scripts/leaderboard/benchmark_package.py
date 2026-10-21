@@ -9,6 +9,9 @@ A package is three or four files in one directory:
 - ``benchmark-quality.json``: voice-v2 only; call-level Interaction and
   Experience (Generation quality) per scored call
   (``tau2.scripts.leaderboard.benchmark_quality.BenchmarkQuality``).
+- ``benchmark-pass3.json``: voice-v2-entity only; each task's outcome in the
+  three crossed conditions and the Pass^3 score the leaderboard shows
+  (``tau2.scripts.leaderboard.benchmark_pass3.BenchmarkPass3``).
 - ``benchmark-metadata.json``: who submitted what (``PackageMetadata``).
 
 ``tau2 submit prepare`` writes a package from a saved matrix; the maintainer-only
@@ -27,6 +30,12 @@ from tau2.data_model.benchmark import BenchmarkSubmission
 from tau2.judges import submission as judge_submission
 from tau2.judges.submission import DIAGNOSTICS_FILE_NAME, BenchmarkDiagnostics
 from tau2.metrics.benchmark import validate_submission
+from tau2.scripts.leaderboard.benchmark_pass3 import (
+    PASS3_BENCHMARKS,
+    PASS3_FILE_NAME,
+    BenchmarkPass3,
+    check_pass3,
+)
 from tau2.scripts.leaderboard.benchmark_quality import (
     QUALITY_BENCHMARKS,
     QUALITY_FILE_NAME,
@@ -41,6 +50,7 @@ PACKAGE_FILE_NAMES = (
     SUBMISSION_FILE_NAME,
     DIAGNOSTICS_FILE_NAME,
     QUALITY_FILE_NAME,
+    PASS3_FILE_NAME,
     METADATA_FILE_NAME,
 )
 
@@ -52,8 +62,13 @@ Evidence = Literal["matrix", "historical-voice-v2-2026-10-02"]
 # Package-name suffixes of the domain frames that fill an agent's voice-v2 row.
 DOMAIN_PACKAGE_SUFFIXES = {"voice-v2-banking": "banking", "voice-v2-entity": "entity"}
 # Release-export directories of frame domains whose names differ there; entity
-# scores the export's regular condition, the other intake conditions are extras.
+# scores the export's regular condition; Pass^3 adds the other two conditions.
 HISTORICAL_EXPORT_DIRS = {"banking_knowledge": "banking", "intake": "intake/regular"}
+# Export directories of the non-regular crossed Pass^3 conditions, by label.
+HISTORICAL_PASS3_DIRS = {
+    "channel_heavy": "intake/channel-heavy",
+    "speech_heavy": "intake/speech-heavy",
+}
 
 
 class PackageContact(BaseModel):
@@ -121,6 +136,7 @@ class BenchmarkPackage(BaseModel):
     submission: BenchmarkSubmission
     diagnostics: BenchmarkDiagnostics | None
     quality: BenchmarkQuality | None = None
+    pass3: BenchmarkPass3 | None = None
 
     def check(self) -> "BenchmarkPackage":
         """Recompute the reward summary and cross-check the package files."""
@@ -153,6 +169,10 @@ class BenchmarkPackage(BaseModel):
             raise ValueError(f"{frame.benchmark_version} carries no call quality")
         if self.quality is not None:
             check_quality(self.quality, frame)
+        if self.pass3 is not None:
+            if frame.benchmark_version not in PASS3_BENCHMARKS:
+                raise ValueError(f"{frame.benchmark_version} carries no Pass^3")
+            check_pass3(self.pass3, frame, self.submission.trials)
         voice = frame.benchmark_version.startswith("voice")
         if voice != (self.metadata.agent_provider is not None):
             raise ValueError("agent_provider is required for voice and only for voice")
@@ -174,6 +194,10 @@ class BenchmarkPackage(BaseModel):
         if self.quality is not None:
             (directory / QUALITY_FILE_NAME).write_text(
                 self.quality.model_dump_json(indent=2) + "\n"
+            )
+        if self.pass3 is not None:
+            (directory / PASS3_FILE_NAME).write_text(
+                self.pass3.model_dump_json(indent=2) + "\n"
             )
         (directory / METADATA_FILE_NAME).write_text(
             self.metadata.model_dump_json(indent=2) + "\n"
@@ -210,6 +234,7 @@ def load_package(directory: Path) -> BenchmarkPackage:
             raise ValueError(f"Package {directory} lacks {name}")
     diagnostics_path = directory / DIAGNOSTICS_FILE_NAME
     quality_path = directory / QUALITY_FILE_NAME
+    pass3_path = directory / PASS3_FILE_NAME
     return BenchmarkPackage(
         metadata=PackageMetadata.model_validate_json(
             (directory / METADATA_FILE_NAME).read_text()
@@ -224,6 +249,9 @@ def load_package(directory: Path) -> BenchmarkPackage:
         else None,
         quality=BenchmarkQuality.model_validate_json(quality_path.read_text())
         if quality_path.is_file()
+        else None,
+        pass3=BenchmarkPass3.model_validate_json(pass3_path.read_text())
+        if pass3_path.is_file()
         else None,
     ).check()
 

@@ -13,7 +13,9 @@ behavior.
 - **Task completion** comes from `benchmark-submission.json`: pass@1 with each
   language–domain cell weighted equally. Overall covers Airline, Retail and
   Telecom; banking and entity packages fill Banking and Intake on the same
-  agent's row.
+  agent's row. Intake is the exception: it shows crossed Pass^3 from the entity
+  package's `benchmark-pass3.json` (tasks passed in all three voice
+  conditions), labelled pass^3, and “—” for a package without the file.
 - **Interaction** and **Generation quality** come from the optional
   `benchmark-quality.json` (`voice-v2-interaction-call-v1` and
   `voice-v2-experience-call-v1`): passed / (passed + failed) calls, pooled over

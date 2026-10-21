@@ -8,6 +8,8 @@ Writes, under web/leaderboard/public/submissions/:
 - ``schema.json``: 1.x and voice-v1 ``submission.json`` (``Submission``).
 - ``schema_benchmark_metadata.json``: the 2.0 package's
   ``benchmark-metadata.json`` (``PackageMetadata``).
+- ``schema_benchmark_pass3.json``: the voice-v2-entity package's
+  ``benchmark-pass3.json`` (``BenchmarkPass3``).
 - ``schema_benchmark_quality.json``: the voice-v2 package's
   ``benchmark-quality.json`` (``BenchmarkQuality``). The package's other files
   are ``BenchmarkSubmission`` and ``BenchmarkDiagnostics`` exports.
@@ -23,6 +25,7 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from tau2.scripts.leaderboard.benchmark_package import PackageMetadata
+from tau2.scripts.leaderboard.benchmark_pass3 import BenchmarkPass3
 from tau2.scripts.leaderboard.benchmark_quality import BenchmarkQuality
 from tau2.scripts.leaderboard.submission import Submission
 
@@ -36,6 +39,7 @@ SUBMISSIONS_DIR = (
 SCHEMA_PATH = SUBMISSIONS_DIR / "schema.json"
 METADATA_SCHEMA_PATH = SUBMISSIONS_DIR / "schema_benchmark_metadata.json"
 QUALITY_SCHEMA_PATH = SUBMISSIONS_DIR / "schema_benchmark_quality.json"
+PASS3_SCHEMA_PATH = SUBMISSIONS_DIR / "schema_benchmark_pass3.json"
 
 
 def _schema(model: type[BaseModel], title: str, description: str) -> str:
@@ -79,6 +83,18 @@ def generate_quality_schema() -> str:
     )
 
 
+def generate_pass3_schema() -> str:
+    """Generate the voice-v2-entity package crossed Pass^3 schema."""
+    return _schema(
+        BenchmarkPass3,
+        "Tau2-Bench 2.0 Package Crossed Pass^3",
+        "benchmark-pass3.json in a voice-v2-entity leaderboard package: each "
+        "task's outcome in the three crossed voice conditions and the Pass^3 "
+        "score. Auto-generated from src/tau2/scripts/leaderboard/benchmark_pass3.py "
+        "— do not edit by hand.",
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -92,6 +108,7 @@ def main():
         SCHEMA_PATH: generate_schema(),
         METADATA_SCHEMA_PATH: generate_metadata_schema(),
         QUALITY_SCHEMA_PATH: generate_quality_schema(),
+        PASS3_SCHEMA_PATH: generate_pass3_schema(),
     }
     if args.check:
         stale = [

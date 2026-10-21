@@ -13,10 +13,11 @@ const FILES = {
   submission: 'benchmark-submission.json',
   diagnostics: 'benchmark-diagnostics.json',
   quality: 'benchmark-quality.json',
+  pass3: 'benchmark-pass3.json',
 }
 // Files a package may omit. A missing one loads as null; some static servers
 // answer a missing file with the HTML index, which is treated the same way.
-const OPTIONAL = new Set(['diagnostics', 'quality'])
+const OPTIONAL = new Set(['diagnostics', 'quality', 'pass3'])
 
 export const LANGUAGES = [
   { id: 'en', name: 'English' }, { id: 'es', name: 'Spanish' }, { id: 'pt', name: 'Portuguese' },
@@ -27,6 +28,9 @@ export const CORE_DOMAINS = ['airline', 'retail', 'telecom']
 // Domain benchmarks score domains outside the voice-v2 Overall. Their packages
 // attach to the same agent's voice-v2 row; they never change its Overall.
 export const DOMAIN_BENCHMARKS = { 'voice-v2-banking': 'banking_knowledge', 'voice-v2-entity': 'intake' }
+// Domains scored by crossed Pass^3 (benchmark-pass3.json) instead of pass@1:
+// a task passes only if it passes in all three voice conditions.
+export const PASS3_DOMAINS = ['intake']
 
 const providerLogo = { gemini: 'Google__G__logo.svg.png', openai: 'openai.svg', openai_live: 'openai.svg', xai: 'xai-logo.svg' }
 export const toPercent = value => (value == null ? null : 100 * value)
@@ -111,9 +115,16 @@ export function useVoiceV2Packages() {
 // package does not cover that language or has no voice-v2 Overall.
 export const packageScore = (pkg, language) => pkg.submission && toPercent(language === 'all' ? pkg.submission.summary.score : pkg.submission.summary.by_language[language]?.score)
 
-// Pass@1 (percent) for one domain and language or 'all', from the domain's own
-// package when it has one, else from the voice-v2 package.
+// Task completion (percent) for one domain and language or 'all', from the
+// domain's own package when it has one, else from the voice-v2 package.
+// Pass@1, except crossed Pass^3 for PASS3_DOMAINS; null if a Pass^3 domain's
+// package carries no benchmark-pass3.json.
 export function domainScore(pkg, domain, language = 'all') {
+  if (PASS3_DOMAINS.includes(domain)) {
+    const pass3 = pkg.extras?.[domain]?.pass3
+    if (!pass3) return null
+    return toPercent(language === 'all' ? pass3.score : pass3.cells.find(cell => cell.language === language && cell.domain === domain)?.score)
+  }
   const summary = pkg.extras?.[domain]?.submission.summary || pkg.submission?.summary
   if (!summary) return null
   if (language === 'all') return toPercent(summary.by_domain[domain]?.score)

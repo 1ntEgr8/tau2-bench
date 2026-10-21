@@ -89,7 +89,13 @@ Generation quality columns. voice-v2 packages are listed in the manifest's
 `voice_v2_submissions` array and are the rows of the τ³-Voice **τ-i18n
 (Multilingual)** leaderboard.
 voice-v2-banking and voice-v2-entity packages (`benchmark-submission.json` and
-`benchmark-metadata.json` only) go in `voice_v2_domain_submissions`. Each fills
+`benchmark-metadata.json`, plus `benchmark-pass3.json` for entity) go in
+`voice_v2_domain_submissions`. Intake is scored by crossed Pass^3: the share of
+tasks passed in all three voice conditions (regular, heavy channel, heavy
+speech; `tau2.runner.pass3`). `benchmark-pass3.json` holds each task's three
+outcomes; `benchmark-submission.json` keeps the regular condition's rewards.
+The review tool uploads the other two conditions to
+`pass3/<language>/intake/<condition>/`. Each fills
 the Banking or Intake row of the voice-v2 package with the same model name,
 organization, agent provider, agent model and submission type, and never
 changes its Overall. Without a matching voice-v2 package it is shown only

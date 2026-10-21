@@ -36,13 +36,22 @@ from tau2.data_model.judges import (
 from tau2.data_model.simulation import SimulationRun
 from tau2.judges.submission import JUDGED_BENCHMARKS, export_diagnostics
 from tau2.metrics.benchmark import summarize
+from tau2.runner.pass3 import CROSSED_CONDITIONS, STABLE_INFO_FIELDS
 from tau2.runner.presets import binding_revision, load_cell_language, load_frame
 from tau2.scripts.leaderboard.benchmark_package import (
     HISTORICAL_EXPORT_DIRS,
+    HISTORICAL_PASS3_DIRS,
     BenchmarkPackage,
     PackageMetadata,
     SubmitterMetadata,
     load_package,
+)
+from tau2.scripts.leaderboard.benchmark_pass3 import (
+    PASS3_BENCHMARKS,
+    BenchmarkPass3,
+    Pass3Task,
+    summarize_cell,
+    summarize_pass3,
 )
 from tau2.scripts.leaderboard.benchmark_quality import (
     QUALITY_BENCHMARKS,
@@ -116,10 +125,14 @@ def _cell_dir(root: Path, language: str, domain: str) -> Path:
 
 
 def _validate_simulation_files(
-    root: Path, simulations: list[dict], language: str, domain: str
+    root: Path,
+    simulations: list[dict],
+    language: str,
+    domain: str,
+    directory: Path | None = None,
 ) -> None:
     """Check the directory payloads against the canonical result index."""
-    sim_dir = _cell_dir(root, language, domain) / "simulations"
+    sim_dir = (directory or _cell_dir(root, language, domain)) / "simulations"
     indexed_ids = {entry["id"] for entry in simulations}
     file_ids = {path.stem for path in sim_dir.glob("*.json")}
     if indexed_ids != file_ids:
@@ -305,6 +318,78 @@ def _derived_cell(
         raise ValueError(f"{label}: only the regular speech condition is scored")
     _check_calls(simulations, mapped, set(cell.canonical_task_ids), label)
     return mapped, _recorded_conditions(info, language, label)
+
+
+def _historical_pass3(
+    root: Path, official: BenchmarkFrame, regular: dict[tuple[str, str], tuple]
+) -> BenchmarkPass3:
+    """Crossed Pass^3 from the export's three intake conditions per cell.
+
+    ``regular`` maps each cell to its checked regular results, task mapping and
+    results path. The other two conditions must be the catalog's (seed and
+    effect modes), share every stable run setting and the task list with the
+    regular run, and hold one trial-0 call per frame task, as
+    ``tau2.runner.pass3.summarize_crossed_pass3`` requires.
+    """
+    cells = []
+    for cell in official.cells:
+        language, domain = cell.language, cell.domain
+        regular_data, mapping, regular_path = regular[(language, domain)]
+        outcomes: dict[str, list[bool | None]] = defaultdict(list)
+        sources = {}
+        for condition in CROSSED_CONDITIONS:
+            label = f"{language}/{domain}/{condition.label}"
+            if condition.label == "regular":
+                data, path = regular_data, regular_path
+            else:
+                directory = (
+                    root
+                    / "trajectories"
+                    / language
+                    / HISTORICAL_PASS3_DIRS[condition.label]
+                )
+                path = directory / "results.json"
+                data = json.loads(path.read_text())
+                _validate_simulation_files(
+                    root, data["simulation_index"], language, domain, directory
+                )
+            info = data["info"]
+            if (
+                info.get("seed") != condition.seed
+                or info.get("voice_sampling_seed") is not None
+                or info.get("num_trials") != 1
+                or info.get("pass3_condition")
+                not in (
+                    (None, "regular")
+                    if condition.label == "regular"
+                    else (condition.label,)
+                )
+                or info.get("channel_effects_mode") != condition.channel_effects_mode
+                or info.get("speech_effects_mode") != condition.speech_effects_mode
+            ):
+                raise ValueError(f"{label}: effects do not match the Pass^3 catalog")
+            if (
+                any(
+                    info.get(field) != regular_data["info"].get(field)
+                    for field in STABLE_INFO_FIELDS
+                )
+                or data["tasks"] != regular_data["tasks"]
+            ):
+                raise ValueError(f"{label}: run settings or tasks differ from regular")
+            _check_calls(
+                data["simulation_index"], mapping, set(cell.canonical_task_ids), label
+            )
+            for sim in data["simulation_index"]:
+                outcomes[mapping[str(sim["task_id"])]].append(
+                    None if sim["reward"] is None else sim["reward"] == 1.0
+                )
+            sources[condition.label] = file_sha256(path)
+        tasks = [
+            Pass3Task(canonical_task_id=task_id, passes=tuple(outcomes[task_id]))
+            for task_id in cell.canonical_task_ids
+        ]
+        cells.append(summarize_cell(language, domain, sources, tasks))
+    return summarize_pass3(official, cells)
 
 
 def _condition_fingerprint(conditions: dict) -> str:
@@ -496,6 +581,7 @@ def build_historical_package(
     caller_models: set[str] = set()
     conditions: set[str] = set()
     scored_by_cell: dict[tuple[str, str], list[str]] = {}
+    regular_cells: dict[tuple[str, str], tuple] = {}
     for cell in official.cells:
         language, domain = cell.language, cell.domain
         results_path = _cell_dir(source_root, language, domain) / "results.json"
@@ -518,6 +604,7 @@ def build_historical_package(
         conditions.add(fingerprint)
         _validate_simulation_files(source_root, simulations, language, domain)
         sources[f"{language}/{domain}"] = file_sha256(results_path)
+        regular_cells[(language, domain)] = (data, task_mapping, results_path)
         trials.extend(
             TaskTrial(
                 language=language,
@@ -560,6 +647,9 @@ def build_historical_package(
         else None,
         quality=_historical_quality(source_root, official, scored_by_cell, verdicts)
         if judged and official.benchmark_version in QUALITY_BENCHMARKS
+        else None,
+        pass3=_historical_pass3(source_root, official, regular_cells)
+        if official.benchmark_version in PASS3_BENCHMARKS
         else None,
     ).check()
 
@@ -620,6 +710,8 @@ def validate_historical_package(
         raise ValueError("Judge diagnostics differ from the saved release verdicts")
     if expected.quality != package.quality:
         raise ValueError("Call quality differs from the saved release calls")
+    if expected.pass3 != package.pass3:
+        raise ValueError("Pass^3 differs from the saved release calls")
     if expected.metadata != package.metadata:
         raise ValueError("Recorded agent identity differs from the saved export")
     return package

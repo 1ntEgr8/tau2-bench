@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
 import { frontier, percent, mean, heatScale } from '../data/multilingual/metrics'
 import PackageBreakdown from './PackageBreakdown'
-import { CORE_DOMAINS, LANGUAGES, domainScore, packageLogo, packageQuality, packageScore, useVoiceV2Packages } from '../data/voiceV2Packages'
+import { CORE_DOMAINS, LANGUAGES, PASS3_DOMAINS, domainScore, packageLogo, packageQuality, packageScore, useVoiceV2Packages } from '../data/voiceV2Packages'
 import './MultilingualVoice.css'
 
 const metrics = [['task', 'Task completion'], ['interaction', 'Interaction'], ['experience', 'Generation quality']]
@@ -224,7 +224,9 @@ export default function MultilingualVoice({ submissionTypeFilters, showStandard 
   const rows = rowsFor(domain)
   // Banking and Intake have task completion only, so their other columns are hidden.
   const extraDomain = domain === 'banking_knowledge' || domain === 'intake'
-  const shown = extraDomain ? metrics.filter(([key]) => key === 'task') : metrics
+  // Intake's task completion is crossed Pass^3; the header says so.
+  const shown = (extraDomain ? metrics.filter(([key]) => key === 'task') : metrics)
+    .map(([key, label]) => key === 'task' && PASS3_DOMAINS.includes(domain) ? [key, `${label} (pass^3)`] : [key, label])
   const sortKey = shown.some(([key]) => key === sort) ? sort : 'task'
   const mapKey = shown.some(([key]) => key === mapMetric) ? mapMetric : 'task'
   const ranked = [...rows].sort((a, b) => a[sortKey] == null ? b[sortKey] == null ? 0 : 1 : b[sortKey] == null ? -1 : b[sortKey] - a[sortKey])
@@ -272,7 +274,7 @@ export default function MultilingualVoice({ submissionTypeFilters, showStandard 
       </div>
     </div>
     <div className="mv-factor-notes">
-      <p className="mv-footnote"><strong>Task completion</strong>: pass@1 over the frame, each language–domain cell weighted equally; Overall covers Airline, Retail and Telecom. <strong>Interaction</strong>: share of calls with fewer than two of five conversational failures (non-response, more than three interruptions, more than three selectivity errors, a monologue, a tool-use error). <strong>Generation quality</strong>: share of calls where at most 25% of the agent’s judged utterances have a naturalness or speech-fidelity issue. Calls whose judgments are incomplete, and infrastructure errors, are left out of both.</p>
+      <p className="mv-footnote"><strong>Task completion</strong>: pass@1 over the frame, each language–domain cell weighted equally; Overall covers Airline, Retail and Telecom. Intake is scored by pass^3: the share of tasks passed in all three voice conditions (regular, heavy channel noise, heavy speech effects). <strong>Interaction</strong>: share of calls with fewer than two of five conversational failures (non-response, more than three interruptions, more than three selectivity errors, a monologue, a tool-use error). <strong>Generation quality</strong>: share of calls where at most 25% of the agent’s judged utterances have a naturalness or speech-fidelity issue. Calls whose judgments are incomplete, and infrastructure errors, are left out of both.</p>
     </div>
     {packageErrors.length > 0 && <p className="mv-footnote" role="alert">Skipped submissions: {packageErrors.join('; ')}</p>}
     <nav className="mv-paper-links" aria-label="Research papers"><span>Papers</span>{[
