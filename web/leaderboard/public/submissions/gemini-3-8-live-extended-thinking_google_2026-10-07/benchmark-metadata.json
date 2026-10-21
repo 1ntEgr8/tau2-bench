@@ -15,5 +15,5 @@
   "agent_provider": "gemini",
   "agent_model": "gemini-3.8-live-extended-thinking",
   "evidence": "historical-voice-v2-2026-10-02",
-  "trajectories": null
+  "trajectories": "s3://sierra-tau-bench-public/submissions/gemini-3-8-live-extended-thinking_google_2026-10-07"
 }

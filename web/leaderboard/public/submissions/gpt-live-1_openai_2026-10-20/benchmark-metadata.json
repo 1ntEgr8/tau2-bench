@@ -15,5 +15,5 @@
   "agent_provider": "openai_live",
   "agent_model": "gpt-live-1",
   "evidence": "historical-voice-v2-2026-10-02",
-  "trajectories": null
+  "trajectories": "s3://sierra-tau-bench-public/submissions/gpt-live-1_openai_2026-10-20"
 }

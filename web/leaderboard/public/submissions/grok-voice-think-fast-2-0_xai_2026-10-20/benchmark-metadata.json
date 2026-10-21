@@ -15,5 +15,5 @@
   "agent_provider": "xai",
   "agent_model": "grok-voice-think-fast-2.0",
   "evidence": "historical-voice-v2-2026-10-02",
-  "trajectories": null
+  "trajectories": "s3://sierra-tau-bench-public/submissions/grok-voice-think-fast-2-0_xai_2026-10-20"
 }
