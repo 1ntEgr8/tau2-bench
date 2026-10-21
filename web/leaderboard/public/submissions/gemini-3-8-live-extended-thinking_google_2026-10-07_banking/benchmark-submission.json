@@ -1033,7 +1033,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "60c666367e4dac518f1267585a1d2630bf9658f055d035b70c38d82c8a957181",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "en",
@@ -1083,7 +1083,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "60c666367e4dac518f1267585a1d2630bf9658f055d035b70c38d82c8a957181",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "en",
@@ -1323,7 +1323,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "60c666367e4dac518f1267585a1d2630bf9658f055d035b70c38d82c8a957181",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "en",
@@ -2473,7 +2473,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "fb6fe63bc5e0c40ca4ea40af9b49840507cd78118e3265e873401781454a441c",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "es",
@@ -2803,7 +2803,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "c43b593f92739f6895fd7d0cae6ca58162b79ea001397b1c54468164f4cc5a46",
       "status": "scored",
-      "reward": 0.0
+      "reward": 1.0
     },
     {
       "language": "pt",
@@ -3143,7 +3143,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "c43b593f92739f6895fd7d0cae6ca58162b79ea001397b1c54468164f4cc5a46",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "pt",
@@ -3553,7 +3553,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "2738ed649df360d4a7c2f7e224d23dc6674f5d9d7fde3844157ac5ad0d02f8f5",
       "status": "scored",
-      "reward": 0.0
+      "reward": 1.0
     },
     {
       "language": "hi",
@@ -3673,7 +3673,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "2738ed649df360d4a7c2f7e224d23dc6674f5d9d7fde3844157ac5ad0d02f8f5",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "hi",
@@ -3893,7 +3893,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "2738ed649df360d4a7c2f7e224d23dc6674f5d9d7fde3844157ac5ad0d02f8f5",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "hi",
@@ -4113,7 +4113,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "2738ed649df360d4a7c2f7e224d23dc6674f5d9d7fde3844157ac5ad0d02f8f5",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "hi",
@@ -4153,7 +4153,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "2738ed649df360d4a7c2f7e224d23dc6674f5d9d7fde3844157ac5ad0d02f8f5",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "hi",
@@ -4263,7 +4263,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "2738ed649df360d4a7c2f7e224d23dc6674f5d9d7fde3844157ac5ad0d02f8f5",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "hi",
@@ -4383,7 +4383,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "2738ed649df360d4a7c2f7e224d23dc6674f5d9d7fde3844157ac5ad0d02f8f5",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "hi",
@@ -4573,7 +4573,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "f03cab00d095c2cc297e25050c2a5ab80c58973dd039bf609cdc780d0f200e90",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "zh",
@@ -4583,7 +4583,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "f03cab00d095c2cc297e25050c2a5ab80c58973dd039bf609cdc780d0f200e90",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "zh",
@@ -4753,7 +4753,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "f03cab00d095c2cc297e25050c2a5ab80c58973dd039bf609cdc780d0f200e90",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "zh",
@@ -4763,7 +4763,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "f03cab00d095c2cc297e25050c2a5ab80c58973dd039bf609cdc780d0f200e90",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "zh",
@@ -4833,7 +4833,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "f03cab00d095c2cc297e25050c2a5ab80c58973dd039bf609cdc780d0f200e90",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "zh",
@@ -4903,7 +4903,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "f03cab00d095c2cc297e25050c2a5ab80c58973dd039bf609cdc780d0f200e90",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "zh",
@@ -4983,7 +4983,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "f03cab00d095c2cc297e25050c2a5ab80c58973dd039bf609cdc780d0f200e90",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "zh",
@@ -5183,7 +5183,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "f03cab00d095c2cc297e25050c2a5ab80c58973dd039bf609cdc780d0f200e90",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "zh",
@@ -5293,7 +5293,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "f03cab00d095c2cc297e25050c2a5ab80c58973dd039bf609cdc780d0f200e90",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "zh",
@@ -5743,7 +5743,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "b5bd40d7f95c9ba02b0d9c4ba74b6a41bbe75f4408a702101a790663b123d887",
       "status": "scored",
-      "reward": 0.0
+      "reward": 1.0
     },
     {
       "language": "ko",
@@ -5763,7 +5763,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "b5bd40d7f95c9ba02b0d9c4ba74b6a41bbe75f4408a702101a790663b123d887",
       "status": "scored",
-      "reward": 0.0
+      "reward": 1.0
     },
     {
       "language": "ko",
@@ -5813,7 +5813,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "b5bd40d7f95c9ba02b0d9c4ba74b6a41bbe75f4408a702101a790663b123d887",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "ko",
@@ -5823,7 +5823,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "b5bd40d7f95c9ba02b0d9c4ba74b6a41bbe75f4408a702101a790663b123d887",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "ko",
@@ -5883,7 +5883,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "b5bd40d7f95c9ba02b0d9c4ba74b6a41bbe75f4408a702101a790663b123d887",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "ko",
@@ -5903,7 +5903,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "b5bd40d7f95c9ba02b0d9c4ba74b6a41bbe75f4408a702101a790663b123d887",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "ko",
@@ -5923,7 +5923,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "b5bd40d7f95c9ba02b0d9c4ba74b6a41bbe75f4408a702101a790663b123d887",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "ko",
@@ -5943,7 +5943,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "b5bd40d7f95c9ba02b0d9c4ba74b6a41bbe75f4408a702101a790663b123d887",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "ko",
@@ -5993,7 +5993,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "b5bd40d7f95c9ba02b0d9c4ba74b6a41bbe75f4408a702101a790663b123d887",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "ko",
@@ -6103,7 +6103,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "b5bd40d7f95c9ba02b0d9c4ba74b6a41bbe75f4408a702101a790663b123d887",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "ko",
@@ -6183,7 +6183,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "b5bd40d7f95c9ba02b0d9c4ba74b6a41bbe75f4408a702101a790663b123d887",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "ko",
@@ -6223,7 +6223,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "b5bd40d7f95c9ba02b0d9c4ba74b6a41bbe75f4408a702101a790663b123d887",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "ko",
@@ -6253,7 +6253,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "b5bd40d7f95c9ba02b0d9c4ba74b6a41bbe75f4408a702101a790663b123d887",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "ko",
@@ -6303,7 +6303,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "b5bd40d7f95c9ba02b0d9c4ba74b6a41bbe75f4408a702101a790663b123d887",
       "status": "scored",
-      "reward": 0.0
+      "reward": 1.0
     },
     {
       "language": "ko",
@@ -6323,7 +6323,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "b5bd40d7f95c9ba02b0d9c4ba74b6a41bbe75f4408a702101a790663b123d887",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "ko",
@@ -6343,7 +6343,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "b5bd40d7f95c9ba02b0d9c4ba74b6a41bbe75f4408a702101a790663b123d887",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "ko",
@@ -6373,7 +6373,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "b5bd40d7f95c9ba02b0d9c4ba74b6a41bbe75f4408a702101a790663b123d887",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "ko",
@@ -6393,7 +6393,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "b5bd40d7f95c9ba02b0d9c4ba74b6a41bbe75f4408a702101a790663b123d887",
       "status": "scored",
-      "reward": 0.0
+      "reward": 1.0
     },
     {
       "language": "ko",
@@ -6413,7 +6413,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "b5bd40d7f95c9ba02b0d9c4ba74b6a41bbe75f4408a702101a790663b123d887",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "ko",
@@ -6423,7 +6423,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "b5bd40d7f95c9ba02b0d9c4ba74b6a41bbe75f4408a702101a790663b123d887",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "ko",
@@ -6433,7 +6433,7 @@
       "condition_fingerprint": "7dfcad8d3e134d6f70324ad39b8b6d63ed7ae84fa2b82537febf981344bb6b46",
       "binding_revision": "b5bd40d7f95c9ba02b0d9c4ba74b6a41bbe75f4408a702101a790663b123d887",
       "status": "scored",
-      "reward": 1.0
+      "reward": 0.0
     },
     {
       "language": "ko",
@@ -6466,8 +6466,8 @@
     "unscored_trials": 0,
     "missing_trials": 0,
     "complete": true,
-    "score": 0.3917525773195876,
-    "observed_score": 0.3917525773195876,
+    "score": 0.3384879725085911,
+    "observed_score": 0.3384879725085911,
     "by_language": {
       "en": {
         "expected_trials": 97,
@@ -6476,8 +6476,8 @@
         "unscored_trials": 0,
         "missing_trials": 0,
         "complete": true,
-        "score": 0.3711340206185567,
-        "observed_score": 0.3711340206185567
+        "score": 0.3402061855670103,
+        "observed_score": 0.3402061855670103
       },
       "es": {
         "expected_trials": 97,
@@ -6486,8 +6486,8 @@
         "unscored_trials": 0,
         "missing_trials": 0,
         "complete": true,
-        "score": 0.32989690721649484,
-        "observed_score": 0.32989690721649484
+        "score": 0.31958762886597936,
+        "observed_score": 0.31958762886597936
       },
       "pt": {
         "expected_trials": 97,
@@ -6506,8 +6506,8 @@
         "unscored_trials": 0,
         "missing_trials": 0,
         "complete": true,
-        "score": 0.4536082474226804,
-        "observed_score": 0.4536082474226804
+        "score": 0.4020618556701031,
+        "observed_score": 0.4020618556701031
       },
       "zh": {
         "expected_trials": 97,
@@ -6516,8 +6516,8 @@
         "unscored_trials": 0,
         "missing_trials": 0,
         "complete": true,
-        "score": 0.3917525773195876,
-        "observed_score": 0.3917525773195876
+        "score": 0.29896907216494845,
+        "observed_score": 0.29896907216494845
       },
       "ko": {
         "expected_trials": 97,
@@ -6526,8 +6526,8 @@
         "unscored_trials": 0,
         "missing_trials": 0,
         "complete": true,
-        "score": 0.4329896907216495,
-        "observed_score": 0.4329896907216495
+        "score": 0.29896907216494845,
+        "observed_score": 0.29896907216494845
       }
     },
     "by_domain": {
@@ -6538,8 +6538,8 @@
         "unscored_trials": 0,
         "missing_trials": 0,
         "complete": true,
-        "score": 0.3917525773195876,
-        "observed_score": 0.3917525773195876
+        "score": 0.3384879725085911,
+        "observed_score": 0.3384879725085911
       }
     },
     "cells": [
@@ -6552,8 +6552,8 @@
         "unscored_trials": 0,
         "missing_trials": 0,
         "complete": true,
-        "score": 0.3711340206185567,
-        "observed_score": 0.3711340206185567
+        "score": 0.3402061855670103,
+        "observed_score": 0.3402061855670103
       },
       {
         "language": "es",
@@ -6564,8 +6564,8 @@
         "unscored_trials": 0,
         "missing_trials": 0,
         "complete": true,
-        "score": 0.32989690721649484,
-        "observed_score": 0.32989690721649484
+        "score": 0.31958762886597936,
+        "observed_score": 0.31958762886597936
       },
       {
         "language": "pt",
@@ -6588,8 +6588,8 @@
         "unscored_trials": 0,
         "missing_trials": 0,
         "complete": true,
-        "score": 0.4536082474226804,
-        "observed_score": 0.4536082474226804
+        "score": 0.4020618556701031,
+        "observed_score": 0.4020618556701031
       },
       {
         "language": "zh",
@@ -6600,8 +6600,8 @@
         "unscored_trials": 0,
         "missing_trials": 0,
         "complete": true,
-        "score": 0.3917525773195876,
-        "observed_score": 0.3917525773195876
+        "score": 0.29896907216494845,
+        "observed_score": 0.29896907216494845
       },
       {
         "language": "ko",
@@ -6612,19 +6612,19 @@
         "unscored_trials": 0,
         "missing_trials": 0,
         "complete": true,
-        "score": 0.4329896907216495,
-        "observed_score": 0.4329896907216495
+        "score": 0.29896907216494845,
+        "observed_score": 0.29896907216494845
       }
     ]
   },
   "selection": null,
   "requested": null,
   "sources": {
-    "en/banking_knowledge": "ae628dba6ababaf7fa45c2e711fe9b77d7e59db41f3364b983346c3a6165cf95",
-    "es/banking_knowledge": "c7395eab2f7304f33ec427132a4ddb0510d5613ef0a322c32778a90aaca78be2",
-    "pt/banking_knowledge": "5233029dc502bd763a4f21c67dee4b742702f71aa0de59ab7ed5f26a2af97b55",
-    "hi/banking_knowledge": "f0bfaad80f3b860317375f04a1d3786d70dfb6b0f4bb01a3517f143cf99256ac",
-    "zh/banking_knowledge": "a39b9eadd1590bcfa4ae6e79e41b06b8d3154fbd39feaca21f103f4ebbf2fa3b",
-    "ko/banking_knowledge": "4516c72c4319bcab5cc329c0640138f9d3ec692ac045086fc6403488fbc05455"
+    "en/banking_knowledge": "74a6516bf70632b15e20fde9244c518b58073bb12c8ede697ed0e0f082bac339",
+    "es/banking_knowledge": "50787d851341d624ba6f0e50370f610a06ae8a19b40620639b27d05379fbbcf3",
+    "pt/banking_knowledge": "f4213c1c44db6b3155bd6cb1bf75980936082cc613acdf4d7cdc52a06f672825",
+    "hi/banking_knowledge": "0372296ac696f3176fbdfb2e867a3b4aa46ae0e8b16a62814fb37ef78a632174",
+    "zh/banking_knowledge": "f1a7fea4bcad2f5ec573c2da545457e1f7d1be262f2f21a48af7974a61a5b1ee",
+    "ko/banking_knowledge": "ceb5b57876d64e9a8af6a755a6a98bf1f489ef91aacd3d4e298625c91129db74"
   }
 }
