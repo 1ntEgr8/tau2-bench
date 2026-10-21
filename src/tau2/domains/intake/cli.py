@@ -14,7 +14,7 @@ from tau2.data_model.elicitation import (
 
 def add_intake_run_args(parser: argparse.ArgumentParser) -> None:
     """Register the intake strategy ablation and caller stimulus overrides."""
-    group = parser.add_argument_group("τ-entity (formerly elicitation; intake only)")
+    group = parser.add_argument_group("τ-Entity (formerly elicitation; intake only)")
     group.add_argument(
         "--elicitation-strategy",
         choices=[strategy.value for strategy in ElicitationStrategy],

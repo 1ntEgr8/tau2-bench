@@ -8,7 +8,7 @@ benchmark generation:
 |---|---|---|---|
 | `text-v1` (2.0 text, 18 cells) | `benchmark-submission.json` | 2.0 | [2.0 benchmarks](#20-benchmarks-text-v1-voice-v2-banking-and-entity) |
 | `voice-v2` (2.0 voice, τ-i18n, 18 cells) | `benchmark-submission.json` + `benchmark-diagnostics.json` + `benchmark-quality.json` | 2.0 | [2.0 benchmarks](#20-benchmarks-text-v1-voice-v2-banking-and-entity) |
-| `voice-v2-banking` / `voice-v2-entity` (6 languages) | `benchmark-submission.json` | 2.0 (Banking, Intake) | [Banking and τ-entity](#banking-and-τ-entity-voice) |
+| `voice-v2-banking` / `voice-v2-entity` (6 languages) | `benchmark-submission.json` | 2.0 (Banking, Intake) | [Banking and τ-Entity](#banking-and-τ-entity-voice) |
 | `voice-v1` (English voice, 3 domains) | `submission.json` | English voice | [voice-v1](#voice-v1-english-voice) |
 | 1.x text or voice (v1.0.1) | `submission.json` | 1.x | [1.x submissions](#1x-submissions) |
 
@@ -101,7 +101,7 @@ tau2 submit validate ./submissions/<name> --results data/simulations/voice-run
 `{model_name}_{model_organization}_{submission_date}` in lowercase letters,
 numbers and hyphens. voice-v2 and text-v1 names have no suffix. Banking and
 entity packages add `_banking` or `_entity`, so that one agent's three packages
-can share their metadata (see [Banking and τ-entity](#banking-and-τ-entity-voice)).
+can share their metadata (see [Banking and τ-Entity](#banking-and-τ-entity-voice)).
 
 `prepare` refuses unless every cell's rewards are complete and every applicable
 judge measure in every cell has a usable saved verdict. It reads saved results
@@ -163,7 +163,7 @@ The leaderboard has no 2.0 text tab yet. Text-v1 packages validate the same
 way, but `manifest.json` has no entry for them; open an issue before submitting
 one.
 
-### Banking and τ-entity (voice)
+### Banking and τ-Entity (voice)
 
 `voice-v2-banking` (`--benchmark banking`, 582 calls) and `voice-v2-entity`
 (`--benchmark entity`, 1200 calls) cover all six languages. Each is its own

@@ -22,7 +22,7 @@ def test_entity_branding_preserves_legacy_cli_identifiers():
 
     parser = argparse.ArgumentParser()
     add_intake_run_args(parser)
-    assert "τ-entity (formerly elicitation; intake only)" in parser.format_help()
+    assert "τ-Entity (formerly elicitation; intake only)" in parser.format_help()
     args = parser.parse_args(["--elicitation-strategy", "scaffolded"])
     assert args.elicitation_strategy == "scaffolded"
 

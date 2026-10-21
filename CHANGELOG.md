@@ -108,7 +108,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`voice-v2-banking` and `voice-v2-entity` packages under
   `voice_v2_domain_submissions`). Evidence is uploaded to
   `s3://sierra-tau-bench-public/submissions/<name>/trajectories/<language>/<domain>/`.
-- `intake` domain (τ-entity): exact entity capture on outbound calls, 200
+- `intake` domain (τ-Entity): exact entity capture on outbound calls, 200
   tasks, agent-directed (voice) by default with a `scaffolded` ablation that
   also runs in text. See `docs/elicitation.md`.
 - Multilingual text and voice runs: `--language` selects a language pack

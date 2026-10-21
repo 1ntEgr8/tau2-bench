@@ -108,6 +108,6 @@ seeds. The released benchmarks are scored at one trial (pass@1);
 
 The multilingual voice benchmark (`voice-v2`). Older docs and identifiers call it τ-Multilingual or "multilingual".
 
-## τ-entity
+## τ-Entity
 
-The entity-capture benchmark on the `intake` domain. Older docs and identifiers call it "elicitation". See [τ-entity](elicitation.md).
+The entity-capture benchmark on the `intake` domain. Older docs and identifiers call it "elicitation". See [τ-Entity](elicitation.md).

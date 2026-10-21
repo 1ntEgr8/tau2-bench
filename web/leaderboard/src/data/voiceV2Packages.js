@@ -18,11 +18,13 @@ const FILES = {
 // Files a package may omit, requested only for the frames that can carry them
 // (benchmark_package.py). A missing one loads as null; some static servers
 // answer a missing file with the HTML index, which is treated the same way.
+// Diagnostics are the largest file and only feed a breakdown, so they load on
+// demand (loadDiagnostics), not with the package.
 const OPTIONAL_BY_FRAME = {
-  'voice-v2': ['diagnostics', 'quality'],
+  'voice-v2': ['quality'],
   'voice-v2-entity': ['pass3'],
 }
-const OPTIONAL = new Set(Object.values(OPTIONAL_BY_FRAME).flat())
+const OPTIONAL = new Set(['diagnostics', ...Object.values(OPTIONAL_BY_FRAME).flat()])
 
 export const LANGUAGES = [
   { id: 'en', name: 'English' }, { id: 'es', name: 'Spanish' }, { id: 'pt', name: 'Portuguese' },
@@ -59,9 +61,19 @@ async function loadPackage(dir, accepts) {
   const { summary, frame } = pkg.submission
   if (!accepts(frame.benchmark_version) || !summary.complete) throw new Error(`${dir}: not a complete ${frame.benchmark_version} package of this list`)
   const optional = OPTIONAL_BY_FRAME[frame.benchmark_version] || []
-  Object.assign(pkg, Object.fromEntries([...OPTIONAL].map(key => [key, null])))
+  Object.assign(pkg, Object.fromEntries([...OPTIONAL].filter(key => key !== 'diagnostics').map(key => [key, null])))
   Object.assign(pkg, Object.fromEntries(await Promise.all(optional.map(key => loadFile(dir, key)))))
   return { dir, ...pkg }
+}
+
+// A voice-v2 package's benchmark-diagnostics.json, fetched once per package
+// when a breakdown first needs it; resolves to null if the package has none.
+const diagnosticsCache = new Map()
+export function loadDiagnostics(dir) {
+  if (!diagnosticsCache.has(dir)) {
+    diagnosticsCache.set(dir, loadFile(dir, 'diagnostics').then(([, value]) => value, () => null))
+  }
+  return diagnosticsCache.get(dir)
 }
 
 // One submitted system: the same model, organization, agent and submission type.
@@ -86,7 +98,7 @@ export function groupPackages(cores, domainPackages) {
     const domain = DOMAIN_BENCHMARKS[pkg.submission.frame.benchmark_version]
     const key = agentKey(pkg)
     const core = byAgent.get(key)
-    const row = core || standalone.get(key) || { dir: pkg.dir, metadata: pkg.metadata, submission: null, diagnostics: null, extras: {} }
+    const row = core || standalone.get(key) || { dir: pkg.dir, metadata: pkg.metadata, submission: null, extras: {} }
     if (row.extras[domain]) {
       errors.push(`${pkg.dir}: duplicate ${domain} package for ${row.dir}`)
       continue

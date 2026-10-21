@@ -161,7 +161,7 @@ test('package-driven explorer, breakdowns, language map and homepage', async ({ 
   await expect(page.locator('.mv-heatmap [data-model="fixture_b"] [data-language="es"]')).toHaveText(percent(100 * 44 / 48))
   await expect(page.locator('.mv-heatmap [data-model="fixture_c"] [data-language="all"]')).toHaveText('—')
   await page.locator('.mv-main-panel').screenshot({ path: testInfo.outputPath('tau-i18n-language-map.png') })
-  assert.deepEqual(await page.locator('.mv-paper-links a[href^="https://arxiv.org/abs/"]').allInnerTexts(), ['τ-i18n ↗', 'τ-entity ↗', 'τ-Voice ↗'])
+  assert.deepEqual(await page.locator('.mv-paper-links a[href^="https://arxiv.org/abs/"]').allInnerTexts(), ['τ-i18n ↗', 'τ-Entity ↗', 'τ-Voice ↗'])
 
   // Mobile.
   await page.getByRole('button', { name: '3D explorer', exact: true }).click()

@@ -11,7 +11,8 @@ export const SITE_ORIGIN = 'https://taubench.com'
 // leaderboard: coding harnesses building customer-service agents. Linked from
 // the nav's Leaderboards menu and the announcement banner.
 export const HYPER_TAU_URL = 'https://sierra-research.github.io/hyper-tau-bench/'
-export const TAU_ENTITY_URL = 'https://arxiv.org/abs/2609.13602'
+// The announcement banner opens the voice leaderboard on its Intake (τ-Entity) tab.
+export const TAU_ENTITY_PATH = '/leaderboard?benchmark=voice&domain=intake'
 
 // Entries of the nav's Leaderboards menu, in display order. In-site entries
 // carry an app path; the external entry carries an absolute href.

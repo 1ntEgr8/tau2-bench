@@ -46,6 +46,8 @@ test.beforeEach(async ({ page }) => {
 })
 
 test('multilingual leaderboard ranks submitted packages', async ({ page }) => {
+  const diagnosticsRequests = []
+  page.on('request', request => request.url().endsWith('/benchmark-diagnostics.json') && diagnosticsRequests.push(request.url()))
   await page.goto('/leaderboard?benchmark=voice')
   const table = page.locator('.mv-leaderboard-table')
   await expect(table.locator('tr.model-row')).toHaveCount(1)
@@ -59,7 +61,9 @@ test('multilingual leaderboard ranks submitted packages', async ({ page }) => {
   await expect(detail.locator('tr[data-factor="all"] td[data-language="ko"]')).toHaveText('65.0%')
   await expect(detail.locator('tr.mv-extra-row')).toHaveCount(2)
   await expect(detail.locator('.v2-meta')).toHaveCount(0)
-  // Judge diagnostics sit under Generation quality; this package has no quality file.
+  // Judge diagnostics sit under Generation quality and load only once it opens;
+  // this package has no quality file.
+  expect(diagnosticsRequests).toEqual([])
   await detail.locator('.mv-breakdown-tabs').getByRole('button', { name: /Generation quality/ }).click()
   await expect(detail).toContainText('does not include Generation quality scores')
   // Only the judges Generation quality is built from are shown.

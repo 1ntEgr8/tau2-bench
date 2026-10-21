@@ -249,7 +249,7 @@ make clean
 - [CLI Reference](cli-reference.md) — all `tau2` commands and options
 - [Agent Developer Guide](../src/tau2/agent/README.md) — build and evaluate your own agent
 - [Domain Documentation](../src/tau2/domains/README.md) — understand the available domains
-- [τ-entity](elicitation.md) — the `intake` benchmark and its scaffolded strategy ablation
+- [τ-Entity](elicitation.md) — the `intake` benchmark and its scaffolded strategy ablation
 - [Communication Modes](../src/tau2/orchestrator/README.md) — half-duplex and full-duplex orchestration
 - [Task Schema & Evaluation](evaluation.md) — how a task is scored, what `actions`/`communicate_info`/`reward_basis` actually do
 - [Knowledge Retrieval](../src/tau2/knowledge/README.md) — retrieval pipeline setup and configuration for banking_knowledge domain

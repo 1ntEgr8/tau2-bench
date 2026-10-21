@@ -136,3 +136,14 @@ test('the language map view survives a reload and leaves with the τ-i18n view',
   await page.getByRole('button', { name: 'English only' }).click()
   await expect(page).not.toHaveURL(/view=/)
 })
+
+test('?domain=intake opens the Intake tab and the URL follows the tab', async ({ page }) => {
+  await page.goto('/leaderboard?benchmark=voice&domain=intake')
+  const table = page.locator('.mv-leaderboard-table')
+  await expect(page.locator('.mv-domain-toggle button.active')).toContainText('Intake')
+  await expect(table.locator('tr[data-package="fixture_entity"]')).toHaveCount(1)
+  await selectDomain(page, 'Airline')
+  await expect(page).toHaveURL(/[?&]domain=airline/)
+  await selectDomain(page, 'Overall')
+  await expect(page).not.toHaveURL(/domain=/)
+})
