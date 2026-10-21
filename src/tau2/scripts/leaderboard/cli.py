@@ -160,6 +160,15 @@ def run_verify_trajectories(args):
     verify_trajectories(args.paths, VerificationMode.PUBLIC)
 
 
+def _quiet_package_logs() -> None:
+    """2.0 packages re-read every call; per-call metric debug logs are noise."""
+    import sys
+
+    from loguru import logger
+
+    logger.configure(handlers=[{"sink": sys.stderr, "level": "WARNING"}])
+
+
 def run_prepare_submission(args):
     """Run the prepare submission command."""
     from tau2.metrics.benchmark import IncompleteSubmissionError
@@ -172,6 +181,8 @@ def run_prepare_submission(args):
         from tau2.scripts.leaderboard.voice_v2_publication import (
             prepare_historical_package,
         )
+
+        _quiet_package_logs()
 
         prepare_historical_package(
             Path(args.input_paths[0]),
@@ -199,6 +210,8 @@ def run_prepare_submission(args):
         from tau2.scripts.leaderboard.prepare_submission import (
             prepare_benchmark_submission,
         )
+
+        _quiet_package_logs()
 
         try:
             prepare_benchmark_submission(
@@ -233,6 +246,8 @@ def run_validate_submission(args):
             validate_historical_package,
         )
 
+        _quiet_package_logs()
+
         package = validate_historical_package(
             directory, args.results, args.judges_root, args.benchmark
         )
@@ -246,6 +261,8 @@ def run_validate_submission(args):
         from tau2.scripts.leaderboard.prepare_submission import (
             validate_benchmark_submission,
         )
+
+        _quiet_package_logs()
 
         try:
             package = validate_benchmark_submission(

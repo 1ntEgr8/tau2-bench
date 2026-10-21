@@ -48,6 +48,7 @@ from rich.console import Console
 from tau2.data_model.simulation import Results as TrajectoryResults
 from tau2.metrics.voice_interaction_metrics import NoVoiceTicksError
 from tau2.scripts.leaderboard.benchmark_package import (
+    HISTORICAL_PASS3_DIRS,
     PACKAGE_FILE_NAMES,
     BenchmarkPackage,
     evidence_cells,
@@ -401,7 +402,8 @@ def _package_uploads(
     ``trajectories/``. For the historical export, its ``correction.json`` goes
     to ``source_correction.json`` and saved verdicts to
     ``judges/<agent_provider>/<language>/``, the layout of the 2026-10-09 Gemini
-    upload.
+    upload. An entity package's other two crossed Pass^3 conditions go to
+    ``pass3/<language>/intake/<condition>/``.
     """
     cells = [(cell.language, cell.domain) for cell in package.submission.frame.cells]
     uploads = [
@@ -416,6 +418,16 @@ def _package_uploads(
             for path in sorted(source.glob("*.json"))
         )
     else:
+        # Crossed Pass^3 cites the other two intake conditions too.
+        if package.pass3 is not None:
+            uploads.extend(
+                (
+                    source / "trajectories" / language / directory,
+                    f"pass3/{language}/{directory}/",
+                )
+                for language, _ in cells
+                for directory in HISTORICAL_PASS3_DIRS.values()
+            )
         if (source / "correction.json").is_file():
             uploads.append((source / "correction.json", "source_correction.json"))
         languages = dict.fromkeys(language for language, _ in cells)

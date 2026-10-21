@@ -13,9 +13,11 @@ from pathlib import Path
 import pytest
 
 from tau2.data_model.simulation import RewardInfo, SimulationRun
+from tau2.runner.pass3 import CROSSED_CONDITIONS
 from tau2.runner.presets import load_cell_language, load_frame
 from tau2.scripts.leaderboard.benchmark_package import (
     HISTORICAL_EXPORT_DIRS,
+    HISTORICAL_PASS3_DIRS,
     SubmitterMetadata,
     load_package,
 )
@@ -54,6 +56,7 @@ def _cell_results(language: str, domain: str, task_ids: list[str]) -> tuple:
     info = {
         "benchmark": None,
         "git_commit": "0" * 40,
+        "seed": 42,
         "language": language,
         "pack_extension": loaded.pack_extension,
         "environment_info": {"domain_name": domain},
@@ -93,45 +96,81 @@ def _cell_results(language: str, domain: str, task_ids: list[str]) -> tuple:
     return info, [{"id": local[task_id]} for task_id in task_ids], local
 
 
+def _pass3_reward(condition: str, position: int) -> float:
+    """Regular passes odd positions; heavy channel also fails every third."""
+    if condition == "regular":
+        return float(position % 2)
+    return 0.0 if condition == "channel_heavy" and position % 3 == 0 else 1.0
+
+
 def _write_export(source: Path, benchmark: str, error_task: str | None) -> None:
     for cell in load_frame(benchmark).cells:
         language, domain = cell.language, cell.domain
-        directory = source / "trajectories" / language / HISTORICAL_EXPORT_DIRS[domain]
         info, tasks, local = _cell_results(language, domain, cell.canonical_task_ids)
-        index = []
-        for position, task_id in enumerate(cell.canonical_task_ids):
-            errored = (language, task_id) == ("es", error_task)
-            reward = None if errored else float(position % 2)
-            termination = "infrastructure_error" if errored else "agent_stop"
-            simulation_id = f"{language}-{task_id}"
-            simulation = SimulationRun(
-                id=simulation_id,
-                task_id=local[task_id],
-                trial=0,
-                timestamp="2026-10-02T00:00:00",
-                start_time="2026-10-02T00:00:00",
-                end_time="2026-10-02T00:00:01",
-                duration=1,
-                termination_reason=termination,
-                reward_info=None if errored else RewardInfo(reward=reward),
-            )
-            _write_json(
-                directory / "simulations" / f"{simulation_id}.json",
-                simulation.model_dump(mode="json"),
-            )
-            index.append(
-                {
-                    "id": simulation_id,
-                    "task_id": local[task_id],
-                    "trial": 0,
-                    "reward": reward,
-                    "termination_reason": termination,
-                }
-            )
-        _write_json(
-            directory / "results.json",
-            {"info": info, "tasks": tasks, "simulation_index": index},
+        # Entity cells also hold the other two crossed Pass^3 conditions.
+        conditions = (
+            CROSSED_CONDITIONS if domain == "intake" else CROSSED_CONDITIONS[:1]
         )
+        for condition in conditions:
+            _write_condition(source, cell, info, tasks, local, condition, error_task)
+
+
+def _write_condition(source, cell, info, tasks, local, condition, error_task):
+    """One condition's results and simulations; the regular one is the frame's."""
+    language, domain = cell.language, cell.domain
+    regular = condition.label == "regular"
+    directory = (
+        source
+        / "trajectories"
+        / language
+        / (
+            HISTORICAL_EXPORT_DIRS[domain]
+            if regular
+            else HISTORICAL_PASS3_DIRS[condition.label]
+        )
+    )
+    if not regular:
+        info = {
+            **info,
+            "seed": condition.seed,
+            "pass3_condition": condition.label,
+            "channel_effects_mode": condition.channel_effects_mode,
+            "speech_effects_mode": condition.speech_effects_mode,
+        }
+    index = []
+    for position, task_id in enumerate(cell.canonical_task_ids):
+        errored = (language, task_id) == ("es", error_task)
+        reward = None if errored else _pass3_reward(condition.label, position)
+        termination = "infrastructure_error" if errored else "agent_stop"
+        simulation_id = f"{language}-{task_id}"
+        simulation = SimulationRun(
+            id=simulation_id,
+            task_id=local[task_id],
+            trial=0,
+            timestamp="2026-10-02T00:00:00",
+            start_time="2026-10-02T00:00:00",
+            end_time="2026-10-02T00:00:01",
+            duration=1,
+            termination_reason=termination,
+            reward_info=None if errored else RewardInfo(reward=reward),
+        )
+        _write_json(
+            directory / "simulations" / f"{simulation_id}.json",
+            simulation.model_dump(mode="json"),
+        )
+        index.append(
+            {
+                "id": simulation_id,
+                "task_id": local[task_id],
+                "trial": 0,
+                "reward": reward,
+                "termination_reason": termination,
+            }
+        )
+    _write_json(
+        directory / "results.json",
+        {"info": info, "tasks": tasks, "simulation_index": index},
+    )
 
 
 @pytest.fixture(scope="module", params=sorted(DOMAINS))
@@ -198,6 +237,9 @@ def test_domain_export_round_trips_as_a_package(release_export, tmp_path):
     frame = load_frame(benchmark)
     assert package.submission.frame == frame
     assert package.diagnostics is None
+    # Call quality is defined for the core voice-v2 frame only.
+    assert package.quality is None
+    assert not (output / name / "benchmark-quality.json").exists()
     assert package.metadata.evidence == "historical-voice-v2-2026-10-02"
     assert (package.metadata.agent_provider, package.metadata.agent_model) == (
         "openai_live",
@@ -213,6 +255,20 @@ def test_domain_export_round_trips_as_a_package(release_export, tmp_path):
     assert set(package.submission.sources) == {
         f"{cell.language}/{cell.domain}" for cell in frame.cells
     }
+    # Entity's leaderboard score is crossed Pass^3; banking carries none.
+    pass3_file = output / name / "benchmark-pass3.json"
+    if benchmark == "entity":
+        tasks = len(frame.cells[0].canonical_task_ids)
+        passed = sum(
+            _pass3_reward("regular", position) == 1.0
+            and _pass3_reward("channel_heavy", position) == 1.0
+            for position in range(tasks)
+        )
+        assert pass3_file.exists()
+        assert package.pass3.passed_all == passed * len(frame.cells)
+        assert package.pass3.score == pytest.approx(passed / tasks)
+    else:
+        assert package.pass3 is None and not pass3_file.exists()
     # Validation reads the frame from the package; no --benchmark needed.
     _submit("validate", output / name, "--historical-voice-v2", "--results", source)
     with pytest.raises(ValueError, match="packages"):
@@ -325,6 +381,67 @@ def test_non_regular_condition_is_rejected(release_export, tmp_path):
     copy = _edit_cell(source, benchmark, "es", tmp_path, heavy)
     with pytest.raises(ValueError, match="regular speech condition"):
         _build(benchmark, copy)
+
+
+def _edit_condition(source: Path, label: str, language: str, tmp_path: Path, edit):
+    """Copy the export and apply ``edit`` to one non-regular Pass^3 condition."""
+    copy = tmp_path / "export"
+    shutil.copytree(source, copy)
+    path = copy / "trajectories" / language / HISTORICAL_PASS3_DIRS[label]
+    data = json.loads((path / "results.json").read_text())
+    edit(data)
+    (path / "results.json").write_text(json.dumps(data))
+    return copy
+
+
+def test_pass3_condition_must_match_the_catalog(release_export, tmp_path):
+    benchmark, source, _ = release_export
+    if benchmark != "entity":
+        pytest.skip("Pass^3 scores the entity frame only")
+
+    def wrong_seed(data):
+        data["info"]["seed"] = 42
+
+    copy = _edit_condition(source, "speech_heavy", "es", tmp_path, wrong_seed)
+    with pytest.raises(ValueError, match="Pass\\^3 catalog"):
+        _build(benchmark, copy)
+
+
+def test_pass3_condition_must_share_run_settings(release_export, tmp_path):
+    benchmark, source, _ = release_export
+    if benchmark != "entity":
+        pytest.skip("Pass^3 scores the entity frame only")
+
+    def other_caller(data):
+        data["info"]["user_info"] = {"llm": "another-caller"}
+
+    copy = _edit_condition(source, "channel_heavy", "ko", tmp_path, other_caller)
+    with pytest.raises(ValueError, match="differ from regular"):
+        _build(benchmark, copy)
+
+
+def test_pass3_edit_fails_validation(release_export, tmp_path):
+    benchmark, source, metadata = release_export
+    if benchmark != "entity":
+        pytest.skip("Pass^3 scores the entity frame only")
+    output = tmp_path / "out"
+    _submit(
+        "prepare",
+        source,
+        "--historical-voice-v2",
+        "--benchmark",
+        benchmark,
+        "--metadata-file",
+        metadata,
+        "--output",
+        output,
+    )
+    path = output / f"{NAME}_{benchmark}" / "benchmark-pass3.json"
+    data = json.loads(path.read_text())
+    data["cells"][0]["tasks"][1]["passes"][1] = False
+    path.write_text(json.dumps(data))
+    with pytest.raises(ValueError, match="Pass\\^3 counts differ"):
+        load_package(path.parent)
 
 
 def test_domain_frames_take_no_judges(release_export, tmp_path):

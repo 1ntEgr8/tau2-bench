@@ -235,6 +235,17 @@ test('static author and published blog pages link to community spotlight', async
   }
 })
 
+test('app routes load the favicon from the site root', async ({ page, request }) => {
+  // GitHub Pages redirects /leaderboard to /leaderboard/, where a relative
+  // icon href would resolve under the route.
+  for (const path of ['/', '/leaderboard/', '/progress/', '/blog/', '/trajectory-visualizer/']) {
+    await page.goto(path)
+    const href = await page.locator('link[rel="icon"]').getAttribute('href')
+    const icon = await request.get(new URL(href, page.url()).href)
+    expect(icon.status(), `${path} favicon ${href}`).toBe(200)
+  }
+})
+
 test('published static pages use the Sierra favicon', async ({ page }) => {
   for (const path of [
     '/authors/soham-ray.html',
@@ -444,11 +455,12 @@ test('τ^τ-bench entry opens the hyper-tau-bench site in a new tab', async ({ p
   await expect(hyper).toContainText('New')
 })
 
-test('announcement banner points at τ^τ-bench', async ({ page }) => {
+test('announcement banner links to the new benchmarks', async ({ page }) => {
   await page.goto('/')
   const banner = page.locator('.update-notification')
-  await expect(banner).toContainText('-bench is here')
-  await expect(banner.locator('.notification-link')).toHaveAttribute('href', HYPER_TAU_URL)
+  await expect(banner.getByRole('link', { name: /Agents building agents/ })).toHaveAttribute('href', HYPER_TAU_URL)
+  await expect(banner.getByRole('link', { name: /Voice agents across six languages/ })).toHaveAttribute('href', '/leaderboard?benchmark=voice')
+  await expect(banner.getByRole('link', { name: /Capturing entities over voice/ })).toHaveAttribute('href', 'https://arxiv.org/abs/2609.13602')
 })
 
 // ---------------------------------------------------------------------------

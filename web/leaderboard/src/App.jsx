@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-import { getViewFromPath, HYPER_TAU_URL, LEADERBOARD_MENU, PAGE_META, SITE_ORIGIN, VIEW_PATHS } from './routes'
+import { getViewFromPath, HYPER_TAU_URL, LEADERBOARD_MENU, TAU_ENTITY_URL, PAGE_META, SITE_ORIGIN, VIEW_PATHS } from './routes'
 import TrajectoryVisualizer from './components/TrajectoryVisualizer'
 import Leaderboard from './components/Leaderboard'
 import LeaderboardPreview from './components/LeaderboardPreview'
@@ -218,6 +218,7 @@ function App() {
                     >
                       <span className="nav-dropdown-item-label">
                         <span className="nav-dropdown-item-name">{renderBenchName(item.label)}</span>
+                        {item.badge && <span className="nav-dropdown-badge">{item.badge}</span>}
                       </span>
                       <span className="nav-dropdown-item-note">{item.note}</span>
                     </button>
@@ -238,10 +239,19 @@ function App() {
       <div className="update-notification">
         <div className="notification-container">
           <span className="notification-badge">NEW</span>
-          <span className="notification-text">
-            τ<sup>τ</sup>-bench is here: can coding agents <em>build</em> the customer-service agents τ-bench evaluates?{' '}
-            <a href={HYPER_TAU_URL} className="notification-link" target="_blank" rel="noopener noreferrer"><strong>Explore the τ<sup>τ</sup>-bench leaderboard →</strong></a>
-          </span>
+          <div className="notification-announcements">
+            <a href={HYPER_TAU_URL} className="notification-link" target="_blank" rel="noopener noreferrer">
+              <strong>τ<sup>τ</sup></strong><span>Agents building agents →</span>
+            </a>
+            <span className="notification-divider" aria-hidden="true" />
+            <a href="/leaderboard?benchmark=voice" className="notification-link">
+              <strong>τ-i18n</strong><span>Voice agents across six languages →</span>
+            </a>
+            <span className="notification-divider" aria-hidden="true" />
+            <a href={TAU_ENTITY_URL} className="notification-link" target="_blank" rel="noopener noreferrer">
+              <strong>τ-entity</strong><span>Capturing entities over voice →</span>
+            </a>
+          </div>
         </div>
       </div>
 

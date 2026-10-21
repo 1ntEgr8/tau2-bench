@@ -5,7 +5,8 @@ layout (`<language>-<domain>/` cells, `benchmark-frame.json`) and before some
 recorded condition fields existed, so `tau2 submit prepare <matrix-root>` cannot
 read them. A maintainer-only adapter reads the saved release exports and writes
 **the same package** a new submission produces: `benchmark-submission.json`,
-`benchmark-diagnostics.json` and `benchmark-metadata.json` (see
+`benchmark-diagnostics.json`, `benchmark-quality.json` and
+`benchmark-metadata.json` (see
 [What the 2.0 package contains](leaderboard-submission.md#what-the-20-package-contains)).
 The website and the review tooling treat both alike.
 
@@ -67,6 +68,24 @@ leaderboard; they never become failures. All verdicts must share one judge
 catalog revision. New submissions are stricter: `prepare` refuses unless every
 applicable measure is fully judged.
 
+Call quality (`benchmark-quality.json`) is computed the same way as for a new
+submission: Interaction from each scored call's saved ticks plus its saved
+`tool_use` verdict, Experience from its saved `naturalness` and
+`speech_fidelity` verdicts (see [Interaction](glossary.md#interaction) and
+[Generation quality](glossary.md#generation-quality)). A partial verdict
+leaves the affected component unknown or the call's Experience unscored. This
+includes units blocked by a missing Live transcript, which do not block judge
+diagnostics. Infrastructure-error calls carry no quality record. Outside Live
+runs the two judges number utterances differently. Pairing follows the agent
+chunk groups of the saved ticks (`utterance_alignment`), never ordinal
+position.
+
+For the 2026-10-02 export this reproduces the release's final pooled counts
+(`quality-scores.json`) for all three providers and nine core cells. No call
+is `excluded`. Earlier drafts excluded twelve Korean calls with an
+unresponsive period. Those calls were replaced before the final export, and
+the final scores keep the remaining unresponsive-period calls scored.
+
 ## Banking and entity packages
 
 The same export holds the release's banking and τ-entity (intake) calls:
@@ -86,7 +105,8 @@ tau2 submit validate ./packages/<name> --historical-voice-v2 \
 directories are `<name>_banking` and `<name>_entity`, so all three packages of
 one agent can use the same metadata file. Neither frame is
 judged (see `JUDGED_BENCHMARKS`), so neither package has
-`benchmark-diagnostics.json` and `--judges-root` is rejected. `validate` reads
+`benchmark-diagnostics.json` or `benchmark-quality.json`, and `--judges-root`
+is rejected. `validate` reads
 the frame from the package; a `--benchmark` given there must name the same one.
 
 These calls ran before the `voice-v2-banking` and `voice-v2-entity` manifests
