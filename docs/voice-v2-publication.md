@@ -88,7 +88,7 @@ the final scores keep the remaining unresponsive-period calls scored.
 
 ## Banking and entity packages
 
-The same export holds the release's banking and τ-entity (intake) calls:
+The same export holds the release's banking and τ-Entity (intake) calls:
 `trajectories/<language>/banking/` and
 `trajectories/<language>/intake/regular/`. The entity frame scores one trial
 of the regular condition; `intake/channel-heavy/` and `intake/speech-heavy/`

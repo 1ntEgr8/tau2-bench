@@ -460,7 +460,7 @@ test('announcement banner links to the new benchmarks', async ({ page }) => {
   const banner = page.locator('.update-notification')
   await expect(banner.getByRole('link', { name: /Agents building agents/ })).toHaveAttribute('href', HYPER_TAU_URL)
   await expect(banner.getByRole('link', { name: /Voice agents across six languages/ })).toHaveAttribute('href', '/leaderboard?benchmark=voice')
-  await expect(banner.getByRole('link', { name: /Capturing entities over voice/ })).toHaveAttribute('href', 'https://arxiv.org/abs/2609.13602')
+  await expect(banner.getByRole('link', { name: /Capturing entities over voice/ })).toHaveAttribute('href', '/leaderboard?benchmark=voice&domain=intake')
 })
 
 // ---------------------------------------------------------------------------

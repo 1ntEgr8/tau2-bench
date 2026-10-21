@@ -454,22 +454,17 @@ const Leaderboard = () => {
         }
       }
       
-      // Load current text submissions
-      for (const dir of currentDirs) {
-        await loadSubmission(dir, false, 'text')
-      }
+      // Fetch every submission in parallel, then keep manifest order
+      // (current text, legacy text, voice).
+      await Promise.all([
+        ...currentDirs.map(dir => loadSubmission(dir, false, 'text')),
+        ...legacyDirs.map(dir => loadSubmission(dir, true, 'text')),
+        ...voiceDirs.map(dir => loadSubmission(dir, false, 'voice')),
+      ])
+      const ordered = Object.fromEntries([...currentDirs, ...legacyDirs, ...voiceDirs]
+        .filter(dir => dir in loadedData).map(dir => [dir, loadedData[dir]]))
       
-      // Load legacy text submissions
-      for (const dir of legacyDirs) {
-        await loadSubmission(dir, true, 'text')
-      }
-      
-      // Load voice submissions
-      for (const dir of voiceDirs) {
-        await loadSubmission(dir, false, 'voice')
-      }
-      
-      setPassKData(loadedData)
+      setPassKData(ordered)
       setFullSubmissionData(fullSubmissions)
     } catch (error) {
       console.error('Error loading submission data:', error)

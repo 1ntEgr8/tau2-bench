@@ -9,7 +9,7 @@
 ## Benchmark naming
 
 Use **τ-i18n** (legacy name: **τ-Multilingual / multilingual**) and
-**τ-entity** (legacy name: **elicitation / τ-elicitation**) for user-facing
+**τ-Entity** (legacy name: **elicitation / τ-elicitation**) for user-facing
 benchmark names. Retain descriptive terms such as multilingual support and
 agent-directed elicitation, existing API/CLI identifiers (`multilingual`,
 `intake`, `--elicitation-strategy`), published paper titles, and historical

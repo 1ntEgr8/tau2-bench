@@ -15,9 +15,16 @@ const FILES = {
   quality: 'benchmark-quality.json',
   pass3: 'benchmark-pass3.json',
 }
-// Files a package may omit. A missing one loads as null; some static servers
+// Files a package may omit, requested only for the frames that can carry them
+// (benchmark_package.py). A missing one loads as null; some static servers
 // answer a missing file with the HTML index, which is treated the same way.
-const OPTIONAL = new Set(['diagnostics', 'quality', 'pass3'])
+// Diagnostics are the largest file and only feed a breakdown, so they load on
+// demand (loadDiagnostics), not with the package.
+const OPTIONAL_BY_FRAME = {
+  'voice-v2': ['quality'],
+  'voice-v2-entity': ['pass3'],
+}
+const OPTIONAL = new Set(['diagnostics', ...Object.values(OPTIONAL_BY_FRAME).flat()])
 
 export const LANGUAGES = [
   { id: 'en', name: 'English' }, { id: 'es', name: 'Spanish' }, { id: 'pt', name: 'Portuguese' },
@@ -35,20 +42,38 @@ export const PASS3_DOMAINS = ['intake']
 const providerLogo = { gemini: 'Google__G__logo.svg.png', openai: 'openai.svg', openai_live: 'openai.svg', xai: 'xai-logo.svg' }
 export const toPercent = value => (value == null ? null : 100 * value)
 
+async function loadFile(dir, key) {
+  const file = FILES[key]
+  const response = await fetch(`${SUBMISSIONS_BASE}/${dir}/${file}`, NO_CACHE)
+  if (!response.ok) {
+    if (OPTIONAL.has(key)) return [key, null]
+    throw new Error(`${dir}/${file}: HTTP ${response.status}`)
+  }
+  if (!OPTIONAL.has(key)) return [key, await response.json()]
+  try { return [key, await response.json()] } catch { return [key, null] }
+}
+
+// The required files first; the frame then names the optional files to request,
+// so a package is never probed for a file its frame cannot carry.
 async function loadPackage(dir, accepts) {
-  const entries = await Promise.all(Object.entries(FILES).map(async ([key, file]) => {
-    const response = await fetch(`${SUBMISSIONS_BASE}/${dir}/${file}`, NO_CACHE)
-    if (!response.ok) {
-      if (OPTIONAL.has(key)) return [key, null]
-      throw new Error(`${dir}/${file}: HTTP ${response.status}`)
-    }
-    if (!OPTIONAL.has(key)) return [key, await response.json()]
-    try { return [key, await response.json()] } catch { return [key, null] }
-  }))
-  const pkg = Object.fromEntries(entries)
+  const required = Object.keys(FILES).filter(key => !OPTIONAL.has(key))
+  const pkg = Object.fromEntries(await Promise.all(required.map(key => loadFile(dir, key))))
   const { summary, frame } = pkg.submission
   if (!accepts(frame.benchmark_version) || !summary.complete) throw new Error(`${dir}: not a complete ${frame.benchmark_version} package of this list`)
+  const optional = OPTIONAL_BY_FRAME[frame.benchmark_version] || []
+  Object.assign(pkg, Object.fromEntries([...OPTIONAL].filter(key => key !== 'diagnostics').map(key => [key, null])))
+  Object.assign(pkg, Object.fromEntries(await Promise.all(optional.map(key => loadFile(dir, key)))))
   return { dir, ...pkg }
+}
+
+// A voice-v2 package's benchmark-diagnostics.json, fetched once per package
+// when a breakdown first needs it; resolves to null if the package has none.
+const diagnosticsCache = new Map()
+export function loadDiagnostics(dir) {
+  if (!diagnosticsCache.has(dir)) {
+    diagnosticsCache.set(dir, loadFile(dir, 'diagnostics').then(([, value]) => value, () => null))
+  }
+  return diagnosticsCache.get(dir)
 }
 
 // One submitted system: the same model, organization, agent and submission type.
@@ -73,7 +98,7 @@ export function groupPackages(cores, domainPackages) {
     const domain = DOMAIN_BENCHMARKS[pkg.submission.frame.benchmark_version]
     const key = agentKey(pkg)
     const core = byAgent.get(key)
-    const row = core || standalone.get(key) || { dir: pkg.dir, metadata: pkg.metadata, submission: null, diagnostics: null, extras: {} }
+    const row = core || standalone.get(key) || { dir: pkg.dir, metadata: pkg.metadata, submission: null, extras: {} }
     if (row.extras[domain]) {
       errors.push(`${pkg.dir}: duplicate ${domain} package for ${row.dir}`)
       continue

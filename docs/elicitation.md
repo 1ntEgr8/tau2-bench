@@ -1,10 +1,10 @@
-# τ-entity: English entity-capture benchmark
+# τ-Entity: English entity-capture benchmark
 
-**τ-entity** is the current name for the benchmark previously called
+**τ-Entity** is the current name for the benchmark previously called
 **elicitation** or **τ-elicitation**. The `intake` domain, CLI flags, and recorded
 `elicitation` fields keep their existing names.
 
-The τ-entity benchmark measures whether a voice agent can collect an exact
+The τ-Entity benchmark measures whether a voice agent can collect an exact
 missing value during an outbound callback. The cover stories are a clinic, an
 auto service, and a hotel. These are record-capture tasks; the agent provides no
 medical, automotive, or travel advice.
@@ -101,7 +101,7 @@ Pin the provider, model, reasoning effort, caller model, speech complexity,
 seed, strategy, and complication settings when comparing runs. Use
 `tau2 run --help` for the flags supported by the checked-out runtime. The example
 explicitly requests caller model `gpt-5.5` with `xhigh` reasoning. Without
-explicit caller settings, τ-entity uses `gpt-5.5` with `low` reasoning and
+explicit caller settings, τ-Entity uses `gpt-5.5` with `low` reasoning and
 temperature zero.
 The default maximum voice duration is 240 seconds; override it explicitly
 with `--max-steps-seconds` when needed.

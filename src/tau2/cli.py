@@ -104,13 +104,13 @@ def add_run_args(parser):
         "--user-llm",
         type=str,
         default=None,
-        help=f"The LLM to use for the user. Default is {DEFAULT_LLM_USER}; τ-entity uses {DEFAULT_ELICITATION_LLM_USER}.",
+        help=f"The LLM to use for the user. Default is {DEFAULT_LLM_USER}; τ-Entity uses {DEFAULT_ELICITATION_LLM_USER}.",
     )
     parser.add_argument(
         "--user-llm-args",
         type=json.loads,
         default=None,
-        help=f"The arguments to pass to the LLM for the user. Default is '{{\"temperature\": {DEFAULT_LLM_TEMPERATURE_USER}}}'; the default τ-entity caller uses {json.dumps(DEFAULT_ELICITATION_LLM_ARGS_USER)}.",
+        help=f"The arguments to pass to the LLM for the user. Default is '{{\"temperature\": {DEFAULT_LLM_TEMPERATURE_USER}}}'; the default τ-Entity caller uses {json.dumps(DEFAULT_ELICITATION_LLM_ARGS_USER)}.",
     )
     parser.add_argument(
         "--task-set-name",
@@ -327,7 +327,7 @@ def add_run_args(parser):
         "--max-steps-seconds",
         type=int,
         default=None,
-        help=f"Maximum conversation duration in seconds. Default is {DEFAULT_MAX_STEPS_SECONDS}; τ-entity uses {DEFAULT_ELICITATION_MAX_STEPS_SECONDS}.",
+        help=f"Maximum conversation duration in seconds. Default is {DEFAULT_MAX_STEPS_SECONDS}; τ-Entity uses {DEFAULT_ELICITATION_MAX_STEPS_SECONDS}.",
     )
     parser.add_argument(
         "--speech-complexity",
@@ -576,7 +576,7 @@ def run_intro():
     domain_table.add_row("mock", "Lightweight test domain for development")
     domain_table.add_row(
         "intake",
-        "τ-entity: agent-directed voice elicitation; optional scaffolded ablation",
+        "τ-Entity: agent-directed voice elicitation; optional scaffolded ablation",
     )
     console.print(domain_table)
     console.print()
@@ -609,7 +609,7 @@ def run_intro():
     cmd_table.add_row("tau2 submit validate", "Validate a submission directory")
     cmd_table.add_row("tau2 check-data", "Verify data directory is set up correctly")
     cmd_table.add_row(
-        "tau2 intake-tasks", "Enumerate, reproduce, and verify frozen τ-entity tasks"
+        "tau2 intake-tasks", "Enumerate, reproduce, and verify frozen τ-Entity tasks"
     )
     cmd_table.add_row("tau2 start", "Start background servers")
     cmd_table.add_row("tau2 intro", "Show this page")
@@ -884,7 +884,7 @@ def main():
     from tau2.domains.intake.tasks.cli import add_intake_tasks_args
 
     add_intake_tasks_args(
-        subparsers.add_parser("intake-tasks", help="Generate and verify τ-entity tasks")
+        subparsers.add_parser("intake-tasks", help="Generate and verify τ-Entity tasks")
     )
 
     # Play command

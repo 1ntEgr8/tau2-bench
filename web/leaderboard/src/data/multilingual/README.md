@@ -1,7 +1,7 @@
 # τ-i18n Voice leaderboard
 
 τ-i18n is the current name for τ-Multilingual (the legacy “multilingual”
-benchmark); τ-entity was formerly “elicitation”. Internal identifiers and
+benchmark); τ-Entity was formerly “elicitation”. Internal identifiers and
 historical provenance keep their original names.
 
 The Voice leaderboard's τ-i18n view is built only from submitted 2.0 packages

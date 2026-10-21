@@ -78,7 +78,8 @@ function Space({ rows, onSelect, selected, focused, onClearFocus }) {
           {axes.map((axis, index) => {
             const location = index === 0 ? [.5, 0, 0] : index === 1 ? [0, 1, 0] : [1, 0, .5]
             const [x, y] = project(location)
-            return <text key={axis.key} x={x + (index === 1 ? -8 : index === 2 ? 34 : 0)} y={index === 0 ? Math.max(...vertices.map(vertex => project(vertex)[1])) + 48 : y + (index === 1 ? -22 : 36)} textAnchor={index === 1 ? 'end' : index === 2 ? 'start' : 'middle'} fill="#505050" className="mv-cube-axis">{axis.label} (%) ↑</text>
+            // The vertical axis's label sits centred above its top, kept inside the view.
+            return <text key={axis.key} x={index === 1 ? Math.min(Math.max(x, 130), 670) : x + (index === 2 ? 34 : 0)} y={index === 0 ? Math.max(...vertices.map(vertex => project(vertex)[1])) + 48 : y + (index === 1 ? -22 : 36)} textAnchor={index === 2 ? 'start' : 'middle'} fill="#505050" className="mv-cube-axis">{axis.label} (%) ↑</text>
           })}
           {active?.experience != null && active?.interaction != null && <g stroke={active.color} strokeWidth="1.6" strokeDasharray="4 5" opacity=".6">
             {line(coordinates(active), [coordinates(active)[0], 0, coordinates(active)[2]])}
@@ -178,7 +179,11 @@ function PackageRow({ row, index, columns, open, metric, onOpen, onClose }) {
 }
 
 export default function MultilingualVoice({ submissionTypeFilters, showStandard = true, showCustom = false }) {
-  const [domain, setDomain] = useState('all')
+  // ?domain= opens a domain tab (the banner links to Intake this way).
+  const [domain, setDomain] = useState(() => {
+    const requested = new URLSearchParams(window.location.search).get('domain')
+    return domainOptions.some(option => option.key === requested) ? requested : 'all'
+  })
   const domainLabel = domainOptions.find(option => option.key === domain).label.replace(/^\S+ /, '')
   const [view, setView] = useState(() => {
     const requested = new URLSearchParams(window.location.search).get('view')
@@ -189,16 +194,19 @@ export default function MultilingualVoice({ submissionTypeFilters, showStandard 
     const params = new URLSearchParams(window.location.search)
     if (view === 'languages') params.set('view', 'languages')
     else params.delete('view')
+    if (domain !== 'all') params.set('domain', domain)
+    else params.delete('domain')
     const next = `${window.location.pathname}?${params.toString()}`
     if (`${window.location.pathname}${window.location.search}` !== next) window.history.replaceState(null, '', next)
     // Leaving the τ-i18n view (English only, another benchmark) drops it.
     return () => {
       const left = new URLSearchParams(window.location.search)
-      if (!left.has('view')) return
+      if (!left.has('view') && !left.has('domain')) return
       left.delete('view')
+      left.delete('domain')
       window.history.replaceState(null, '', `${window.location.pathname}?${left.toString()}`)
     }
-  }, [view])
+  }, [view, domain])
   const [mapMetric, setMapMetric] = useState('task')
   const [sort, setSort] = useState('task')
   // Every row is a submitted package. Banking and entity packages fill their
@@ -279,7 +287,7 @@ export default function MultilingualVoice({ submissionTypeFilters, showStandard 
     {packageErrors.length > 0 && <p className="mv-footnote" role="alert">Skipped submissions: {packageErrors.join('; ')}</p>}
     <nav className="mv-paper-links" aria-label="Research papers"><span>Papers</span>{[
       ['τ-i18n', '2609.35820', 'τ-Multilingual: Benchmarking Voice Agents Across Languages'],
-      ['τ-entity', '2609.13602', 'τ-Elicitation: Benchmarking multi-turn entity extraction in voice agents'],
+      ['τ-Entity', '2609.13602', 'τ-Elicitation: Benchmarking multi-turn entity extraction in voice agents'],
       ['τ-Voice', '2603.13686', 'τ-Voice: Benchmarking Full-Duplex Voice Agents on Real-World Domains'],
     ].map(([label, id, title]) => <a key={id} href={`https://arxiv.org/abs/${id}`} title={title} target="_blank" rel="noopener noreferrer">{label} ↗</a>)}</nav>
   </section>

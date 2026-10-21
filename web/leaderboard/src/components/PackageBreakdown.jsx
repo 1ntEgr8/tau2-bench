@@ -1,5 +1,6 @@
+import { useEffect, useState } from 'react'
 import { heatScale, percent } from '../data/multilingual/metrics'
-import { CORE_DOMAINS, LANGUAGES, PASS3_DOMAINS, domainScore, interactionComponent, packageQuality, qualityCounts, toPercent } from '../data/voiceV2Packages'
+import { CORE_DOMAINS, LANGUAGES, PASS3_DOMAINS, domainScore, interactionComponent, loadDiagnostics, packageQuality, qualityCounts, toPercent } from '../data/voiceV2Packages'
 import './MultilingualVoice.css'
 
 // Breakdown of one submitted voice-v2 package and any banking or entity
@@ -64,7 +65,16 @@ export default function PackageBreakdown({ pkg, metric = 'task', onMetricChange,
     { key: 'all', label: 'Overall', value: language => summary ? toPercent(language === 'all' ? summary.score : summary.by_language[language]?.score) : null },
     ...extraDomains.map(domainRow),
   ]
-  const judged = measureTable(pkg.diagnostics)
+  // Judge diagnostics load when Generation quality is first opened.
+  const [diagnostics, setDiagnostics] = useState(undefined)
+  const wantsDiagnostics = metric === 'experience' && Boolean(pkg.submission)
+  useEffect(() => {
+    if (!wantsDiagnostics) return
+    let cancelled = false
+    loadDiagnostics(pkg.dir).then(value => { if (!cancelled) setDiagnostics(value) })
+    return () => { cancelled = true }
+  }, [wantsDiagnostics, pkg.dir])
+  const judged = measureTable(diagnostics)
   // Only the two judge measures Generation quality is built from are shown;
   // the other diagnostics (tool use, language checks) are left out.
   const qualityMeasures = ['naturalness', 'speech_fidelity'].filter(measure => judged.measures.includes(measure))
@@ -102,7 +112,8 @@ export default function PackageBreakdown({ pkg, metric = 'task', onMetricChange,
       <Heatmap title="Interaction failures" rowLabel="Failure" rows={componentRows} columns={coreColumns} kind="failure" note="Share of calls with the failure · lower is better" />
     </> : <p className="mv-footnote">This submission does not include Interaction scores.</p>)}
     {metric === 'experience' && (pkg.quality ? <Heatmap title="Generation quality by language" rowLabel="Domain" rows={qualityRows('experience')} columns={coreColumns} note="Share of scored calls that pass · higher is better" /> : <p className="mv-footnote">This submission does not include Generation quality scores.</p>)}
-    {metric === 'experience' && pkg.diagnostics && <Heatmap title="Generation quality judges" rowLabel="Judge" rows={judgeRows} columns={columns} note="Share of judged utterances without an issue · higher is better" />}
+    {metric === 'experience' && pkg.submission && diagnostics === undefined && <p className="mv-footnote">Loading judge diagnostics…</p>}
+    {metric === 'experience' && diagnostics && <Heatmap title="Generation quality judges" rowLabel="Judge" rows={judgeRows} columns={columns} note="Share of judged utterances without an issue · higher is better" />}
     <div className="mv-factor-notes">
       {metric === 'interaction' && pkg.quality && <p className="mv-footnote">A call fails Interaction with two or more of the five failures: no response, more than three interruptions, more than three selectivity errors, a monologue, or a tool-use error. It passes when it could not reach two even if every unknown check failed; otherwise it is unscored. {overall('interaction').unscored + overall('interaction').excluded} of {Object.values(overall('interaction')).reduce((a, b) => a + b, 0)} calls are unscored or excluded.</p>}
       {metric === 'experience' && pkg.quality && <p className="mv-footnote">A call passes Generation quality when at most 25% of the agent’s judged utterances have a naturalness or speech-fidelity issue. Calls with incomplete judgments are unscored. {overall('experience').unscored + overall('experience').excluded} of {Object.values(overall('experience')).reduce((a, b) => a + b, 0)} calls are unscored or excluded.</p>}

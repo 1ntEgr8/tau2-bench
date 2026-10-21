@@ -17,7 +17,7 @@ under `data/tau2/benchmarks/`. Five ship with 2.0:
 | `voice-v2` (τ-i18n) | `voice.json` | voice | en, es, pt, hi, zh, ko | airline, retail, telecom; 50 frozen tasks each | 900 |
 | `voice-v1` | `voice-v1.json` | voice | en | airline 50, retail 114, telecom 114 | 278 |
 | `voice-v2-banking` | `banking.json` | voice | en, es, pt, hi, zh, ko | banking_knowledge; all 97 tasks | 582 |
-| `voice-v2-entity` (τ-entity) | `entity.json` | voice | en, es, pt, hi, zh, ko | intake; all 200 tasks | 1200 |
+| `voice-v2-entity` (τ-Entity) | `entity.json` | voice | en, es, pt, hi, zh, ko | intake; all 200 tasks | 1200 |
 
 - `text-v1` and `voice-v2` cover the same 18 [cells](glossary.md#cell)
   (6 languages × 3 domains) and the same frozen task subsets (`airline_50`,
@@ -125,7 +125,7 @@ tau2 run --audio-native --benchmark voice-v1 \
 `--domain` selects whole domains. `--num-tasks` and `--task-ids` are rejected;
 for an English sample use `--benchmark none --language en`.
 
-## Run banking and τ-entity
+## Run banking and τ-Entity
 
 ```bash
 # All 97 banking tasks in all six languages: 582 calls.
@@ -180,7 +180,7 @@ tau2 run --audio-native --benchmark none --domain banking_knowledge \
   --retrieval-config bm25 --num-tasks 2
 ```
 
-The released τ-entity frame is `--benchmark entity`. Its default
+The released τ-Entity frame is `--benchmark entity`. Its default
 agent-directed strategy is voice-only. The scaffolded ablation is a custom run
 and also runs in text:
 
@@ -189,7 +189,7 @@ tau2 run --audio-native --benchmark none --domain intake --num-tasks 2
 tau2 run --domain intake --elicitation-strategy scaffolded --num-tasks 2
 ```
 
-See [τ-entity](elicitation.md) for its task set and defaults.
+See [τ-Entity](elicitation.md) for its task set and defaults.
 
 ## Defaults
 

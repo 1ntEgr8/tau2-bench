@@ -26,9 +26,9 @@ What's new:
 - **Voice in every language.** Full-duplex voice runs with realtime agents
   (OpenAI, Gemini, xAI and others) against a simulated caller who speaks the
   language.
-- **New `intake` domain** (τ-entity): capturing names, addresses and other
+- **New `intake` domain** (τ-Entity): capturing names, addresses and other
   entities exactly on an outbound call, over 200 tasks. See
-  [τ-entity](docs/elicitation.md).
+  [τ-Entity](docs/elicitation.md).
 - **`banking_knowledge` in voice.** The retrieval domain from v1.0 now also runs
   as a custom voice run (`--audio-native --benchmark none`).
 - **Judges.** `tau2 judges` scores naturalness, speech fidelity, tool use and
@@ -133,7 +133,7 @@ Each domain specifies:
 
 **Available domains**: `mock` · `airline` · `retail` · `telecom` · `banking_knowledge` · `intake`
 
-[τ-entity](docs/elicitation.md) uses `--domain intake` to evaluate exact entity capture in outbound calls over 200 tasks. Agent-directed elicitation is the default; `--elicitation-strategy scaffolded` selects the scaffolded ablation.
+[τ-Entity](docs/elicitation.md) uses `--domain intake` to evaluate exact entity capture in outbound calls over 200 tasks. Agent-directed elicitation is the default; `--elicitation-strategy scaffolded` selects the scaffolded ablation.
 
 | Mode | Description |
 |------|-------------|
@@ -141,9 +141,9 @@ Each domain specifies:
 | **Voice (full-duplex)** | End-to-end audio via realtime providers (OpenAI, Gemini, xAI) |
 
 > [!NOTE]
-> τ-i18n was previously called τ-Multilingual, and τ-entity was previously
+> τ-i18n was previously called τ-Multilingual, and τ-Entity was previously
 > called τ-Elicitation. Only the names changed: the old names remain in
-> technical identifiers, provenance and paper titles, and the τ-entity domain
+> technical identifiers, provenance and paper titles, and the τ-Entity domain
 > is still `intake`.
 
 ## Installation and a first custom run
@@ -214,7 +214,7 @@ Results are saved to `data/simulations/`. Use `tau2 view` to browse them.
 | [Language packs](docs/language-packs.md) | What a language pack contains and how runs resolve it |
 | [Adding a language](docs/language-authoring.md) | The `tau2 factory` authoring workflow |
 | [Judge validation](docs/judge-validation.md) | Production judges, and authoring and validating new ones |
-| [τ-entity](docs/elicitation.md) | The `intake` domain and its strategies |
+| [τ-Entity](docs/elicitation.md) | The `intake` domain and its strategies |
 
 ### Knowledge Retrieval
 
@@ -296,7 +296,7 @@ If you use a specific component of $\tau^3$-bench, please cite the corresponding
 }
 ```
 
-### Entity Capture Benchmark (τ-entity, `intake`)
+### Entity Capture Benchmark (τ-Entity, `intake`)
 
 ```bibtex
 @misc{ray2026tauelicitation,

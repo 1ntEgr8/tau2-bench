@@ -25,7 +25,7 @@ For how the commands fit together, see
 | [`tau2 run`](#tau2-run) | Run a benchmark |
 | [`tau2 run-pass3`](#tau2-run-pass3) | Run Pass^3 on three ordinary or crossed trials |
 | [`tau2 languages`](#tau2-languages) | Inspect and validate published language packs |
-| [`tau2 intake-tasks`](#tau2-intake-tasks) | Generate and verify τ-entity tasks |
+| [`tau2 intake-tasks`](#tau2-intake-tasks) | Generate and verify τ-Entity tasks |
 | [`tau2 play`](#tau2-play) | Play manual mode - interact with a domain as the agent |
 | [`tau2 view`](#tau2-view) | View simulation results |
 | [`tau2 domain`](#tau2-domain) | Show domain documentation |
@@ -805,10 +805,10 @@ options:
   --user {user_simulator,dummy_user,voice_streaming_user_simulator}
                         The user implementation to use. Default is user_simulator.
   --user-llm USER_LLM   The LLM to use for the user. Default is gpt-4.1-2025-04-14;
-                        τ-entity uses gpt-5.5.
+                        τ-Entity uses gpt-5.5.
   --user-llm-args USER_LLM_ARGS
                         The arguments to pass to the LLM for the user. Default is
-                        '{"temperature": 0.0}'; the default τ-entity caller uses
+                        '{"temperature": 0.0}'; the default τ-Entity caller uses
                         {"temperature": 0.0, "reasoning_effort": "low"}.
   --task-set-name {mock,airline,retail,telecom_full,telecom_small,telecom,telecom-workflow,banking_knowledge,intake}
                         The task set to run the simulation on. If not provided, will
@@ -910,7 +910,7 @@ options:
                         0.2.
   --max-steps-seconds MAX_STEPS_SECONDS
                         Maximum conversation duration in seconds. Default is 1200;
-                        τ-entity uses 240.
+                        τ-Entity uses 240.
   --speech-complexity {control,regular,control_audio,control_accents,control_behavior,control_audio_accents,control_audio_behavior,control_accents_behavior}
                         Speech complexity level for audio effects. Default is
                         'regular'.
@@ -1081,10 +1081,10 @@ options:
   --user {user_simulator,dummy_user,voice_streaming_user_simulator}
                         The user implementation to use. Default is user_simulator.
   --user-llm USER_LLM   The LLM to use for the user. Default is gpt-4.1-2025-04-14;
-                        τ-entity uses gpt-5.5.
+                        τ-Entity uses gpt-5.5.
   --user-llm-args USER_LLM_ARGS
                         The arguments to pass to the LLM for the user. Default is
-                        '{"temperature": 0.0}'; the default τ-entity caller uses
+                        '{"temperature": 0.0}'; the default τ-Entity caller uses
                         {"temperature": 0.0, "reasoning_effort": "low"}.
   --task-set-name {mock,airline,retail,telecom_full,telecom_small,telecom,telecom-workflow,banking_knowledge,intake}
                         The task set to run the simulation on. If not provided, will
@@ -1186,7 +1186,7 @@ options:
                         0.2.
   --max-steps-seconds MAX_STEPS_SECONDS
                         Maximum conversation duration in seconds. Default is 1200;
-                        τ-entity uses 240.
+                        τ-Entity uses 240.
   --speech-complexity {control,regular,control_audio,control_accents,control_behavior,control_audio_accents,control_audio_behavior,control_accents_behavior}
                         Speech complexity level for audio effects. Default is
                         'regular'.

@@ -29,7 +29,7 @@ scores comparable with the 1.x leaderboard, use the `v1.0.1` tag. The CHANGELOG'
   | `voice-v2-entity` | `tau2 run --audio-native --benchmark entity` | 1,200 |
   | `voice-v1` | `tau2 run --audio-native --benchmark voice-v1` | English voice frame |
 
-- **τ-entity (`intake` domain).** Outbound calls that test exact entity capture: 200
+- **τ-Entity (`intake` domain).** Outbound calls that test exact entity capture: 200
   tasks, agent-directed in voice, with a scaffolded ablation that also runs in text.
 - **`tau2 judges`.** A post-hoc judge suite for saved runs. It is diagnostic only and
   never part of the reward.
