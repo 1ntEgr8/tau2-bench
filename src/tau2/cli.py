@@ -278,6 +278,7 @@ def add_run_args(parser):
             "nova",
             "qwen",
             "avartha_pipecat",
+            "phonic",
             "livekit",
             "launa",
         ],

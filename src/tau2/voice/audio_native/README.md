@@ -13,6 +13,7 @@ Full-duplex voice evaluation via provider-specific realtime APIs. Each provider 
 | **nova** | Native audio | Amazon Nova Sonic | amazon.nova-2-sonic-v1:0 |
 | **qwen** | Native audio | Alibaba Qwen Omni | qwen3-omni-flash-realtime |
 | **avartha_pipecat** | Hosted voice agent | Avartha over Pipecat SmallWebRTC | Agent URL (`--avartha-base-url`) |
+| **phonic** | Native audio | Phonic speech-to-speech | phonic-1 |
 | **livekit** | Cascaded (STT→LLM→TTS) | LiveKit + Deepgram + OpenAI | Configurable |
 
 ## Architecture
@@ -29,6 +30,7 @@ DiscreteTimeAdapter (adapter.py)          ← shared base class
 ├── qwen/discrete_time_adapter.py
 ├── nova/discrete_time_adapter.py
 ├── avartha_pipecat/discrete_time_adapter.py
+├── phonic/discrete_time_adapter.py       ← realtime audio pump (see phonic/README.md)
 └── livekit/discrete_time_adapter.py      ← own run_tick (cascaded pipeline, different interaction model)
 ```
 

@@ -735,7 +735,7 @@ usage: tau2 run [-h] [--communicate-scorer {semantic,substring}]
                 [--max-retries MAX_RETRIES] [--retry-delay RETRY_DELAY]
                 [--enforce-communication-protocol] [--user-persona USER_PERSONA]
                 [--audio-native]
-                [--audio-native-provider {openai,openai_live,gemini,xai,nova,qwen,avartha_pipecat,livekit,launa}]
+                [--audio-native-provider {openai,openai_live,gemini,xai,nova,qwen,avartha_pipecat,phonic,livekit,launa}]
                 [--cascaded-config CASCADED_CONFIG]
                 [--audio-native-model AUDIO_NATIVE_MODEL]
                 [--avartha-base-url AVARTHA_BASE_URL] [--live-config LIVE_CONFIG]
@@ -887,7 +887,7 @@ options:
   --audio-native        Enable audio-native mode using DiscreteTimeAudioNativeAgent
                         with VoiceStreamingUserSimulator. This enables full-duplex
                         voice simulation using audio native APIs.
-  --audio-native-provider {openai,openai_live,gemini,xai,nova,qwen,avartha_pipecat,livekit,launa}
+  --audio-native-provider {openai,openai_live,gemini,xai,nova,qwen,avartha_pipecat,phonic,livekit,launa}
                         Audio native API provider. Default is 'openai'.
   --cascaded-config CASCADED_CONFIG
                         Cascaded config preset name for livekit provider. Available
@@ -1015,7 +1015,7 @@ usage: tau2 run-pass3 [-h] [--communicate-scorer {semantic,substring}]
                       [--max-retries MAX_RETRIES] [--retry-delay RETRY_DELAY]
                       [--enforce-communication-protocol] [--user-persona USER_PERSONA]
                       [--audio-native]
-                      [--audio-native-provider {openai,openai_live,gemini,xai,nova,qwen,avartha_pipecat,livekit,launa}]
+                      [--audio-native-provider {openai,openai_live,gemini,xai,nova,qwen,avartha_pipecat,phonic,livekit,launa}]
                       [--cascaded-config CASCADED_CONFIG]
                       [--audio-native-model AUDIO_NATIVE_MODEL]
                       [--avartha-base-url AVARTHA_BASE_URL]
@@ -1171,7 +1171,7 @@ options:
   --audio-native        Enable audio-native mode using DiscreteTimeAudioNativeAgent
                         with VoiceStreamingUserSimulator. This enables full-duplex
                         voice simulation using audio native APIs.
-  --audio-native-provider {openai,openai_live,gemini,xai,nova,qwen,avartha_pipecat,livekit,launa}
+  --audio-native-provider {openai,openai_live,gemini,xai,nova,qwen,avartha_pipecat,phonic,livekit,launa}
                         Audio native API provider. Default is 'openai'.
   --cascaded-config CASCADED_CONFIG
                         Cascaded config preset name for livekit provider. Available

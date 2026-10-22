@@ -16,6 +16,7 @@ from tau2.config import (
     DEFAULT_GEMINI_VOICE,
     DEFAULT_NOVA_VOICE,
     DEFAULT_OPENAI_VOICE,
+    DEFAULT_PHONIC_VOICE,
     DEFAULT_QWEN_VOICE,
     DEFAULT_XAI_VOICE,
 )
@@ -27,6 +28,7 @@ PROVIDER_DEFAULT_VOICE: dict[str, str] = {
     "xai": DEFAULT_XAI_VOICE,
     "nova": DEFAULT_NOVA_VOICE,
     "qwen": DEFAULT_QWEN_VOICE,
+    "phonic": DEFAULT_PHONIC_VOICE,
 }
 
 # (provider -> {voice_lower -> "male" | "female"}). Only confidently-gendered
@@ -67,6 +69,13 @@ VOICE_GENDER: dict[str, dict[str, str]] = {
         "matthew": "male",
         "tiffany": "female",
         "amy": "female",
+    },
+    # Phonic voices (genders as listed by Phonic's voices API).
+    "phonic": {
+        "grant": "male",
+        "landon": "male",
+        "sabrina": "female",
+        "shelby": "female",
     },
     "qwen": {
         "cherry": "female",

@@ -140,6 +140,13 @@ PROVIDERS = [
         ),
     ),
     pytest.param(
+        "phonic",
+        marks=pytest.mark.skipif(
+            not os.environ.get("PHONIC_API_KEY"),
+            reason="PHONIC_API_KEY not set",
+        ),
+    ),
+    pytest.param(
         "qwen",
         marks=pytest.mark.skipif(
             not os.environ.get("DASHSCOPE_API_KEY"),
