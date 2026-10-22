@@ -1156,6 +1156,9 @@ const Leaderboard = () => {
                         {displayOrg === 'xAI' && (
                           <img src={`${import.meta.env.BASE_URL}xai-logo.svg`} alt="xAI" className="logo-img" />
                         )}
+                        {displayOrg === 'Avartha' && (
+                          <img src={`${import.meta.env.BASE_URL}avartha-logo.svg`} alt="Avartha" className="logo-img" />
+                        )}
                        </div>
                         <div className="org-text">
                           <span className="org-name" title={pipelineSummary || displayOrg}>{displayOrg}</span>
