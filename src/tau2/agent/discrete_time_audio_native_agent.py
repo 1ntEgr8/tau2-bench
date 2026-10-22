@@ -46,7 +46,7 @@ from loguru import logger
 
 if TYPE_CHECKING:
     from tau2.data_model.cascaded import CascadedConfig
-    from tau2.voice.audio_native.ava_zero_pipecat.config import AvaZeroPipecatConfig
+    from tau2.voice.audio_native.avartha_pipecat.config import AvarthaPipecatConfig
     from tau2.voice.audio_native.gemini.provider import GeminiVADConfig
     from tau2.voice.audio_native.nova.provider import NovaVADConfig
     from tau2.voice.audio_native.openai.provider import OpenAIVADConfig
@@ -92,7 +92,7 @@ AudioNativeProvider = Literal[
     "xai",
     "nova",
     "qwen",
-    "ava_zero_pipecat",
+    "avartha_pipecat",
     "livekit",
 ]
 
@@ -251,7 +251,7 @@ class DiscreteTimeAudioNativeAgent(FullDuplexAgent[DiscreteTimeAgentState]):
         language: Optional[str] = None,
         agent_instruction_override: Optional[str] = None,
         additional_stop_tool_names: frozenset[str] = frozenset(),
-        ava_zero_config: Optional["AvaZeroPipecatConfig"] = None,
+        avartha_config: Optional["AvarthaPipecatConfig"] = None,
     ):
         """Initialize the discrete-time audio native agent.
 
@@ -284,8 +284,8 @@ class DiscreteTimeAudioNativeAgent(FullDuplexAgent[DiscreteTimeAgentState]):
                 Only used when provider="livekit". Ignored for other providers.
                 Can be a CascadedConfig instance or None to use defaults.
             audio_taps_dir: Directory to save audio taps. Only used when audio_taps_dir is not None.
-            ava_zero_config: Connection settings for a hosted Ava Zero agent. Only
-                used when provider="ava_zero_pipecat".
+            avartha_config: Connection settings for a hosted Avartha agent. Only
+                used when provider="avartha_pipecat".
         """
         self.tools = tools
         self.domain_policy = domain_policy
@@ -304,7 +304,7 @@ class DiscreteTimeAudioNativeAgent(FullDuplexAgent[DiscreteTimeAgentState]):
         self.language = language
         self.agent_instruction_override = agent_instruction_override
         self.additional_stop_tool_names = additional_stop_tool_names
-        self.ava_zero_config = ava_zero_config
+        self.avartha_config = avartha_config
         self._live_trace_path = (
             audio_taps_dir / "live.jsonl" if audio_taps_dir else None
         )
@@ -342,7 +342,7 @@ class DiscreteTimeAudioNativeAgent(FullDuplexAgent[DiscreteTimeAgentState]):
             from tau2.voice.audio_native.qwen.provider import QwenVADConfig
 
             self.vad_config = QwenVADConfig()
-        elif provider == "ava_zero_pipecat":
+        elif provider == "avartha_pipecat":
             # Turn detection is configured on the hosted agent.
             self.vad_config = None
         elif provider == "livekit":
@@ -412,7 +412,7 @@ class DiscreteTimeAudioNativeAgent(FullDuplexAgent[DiscreteTimeAgentState]):
                 voice=self.voice,
                 transcription_language=self.transcription_language,
                 language=self.language,
-                ava_zero_config=self.ava_zero_config,
+                avartha_config=self.avartha_config,
             )
         return self._adapter
 
@@ -914,7 +914,7 @@ def create_discrete_time_audio_native_agent(tools, domain_policy, **kwargs):
             voice=audio_native_config.voice,
             transcription_language=audio_native_config.transcription_language,
             language=audio_native_config.language,
-            ava_zero_config=audio_native_config.ava_zero_config,
+            avartha_config=audio_native_config.avartha_config,
         )
     else:
         # Fallback: use individual kwargs or defaults

@@ -1,0 +1,146 @@
+{
+  "model_name": "Ava 0",
+  "model_organization": "Avartha",
+  "submitting_organization": "Avartha",
+  "submission_date": "2026-10-22",
+  "submission_type": "standard",
+  "modality": "voice",
+  "contact_info": {
+    "email": "elton@avartha.ai",
+    "name": "Elton Pinto"
+  },
+  "results": {
+    "retail": {
+      "pass_1": 75.43859649122807
+    },
+    "airline": {
+      "pass_1": 86.0
+    },
+    "telecom": {
+      "pass_1": 79.82456140350878
+    }
+  },
+  "is_new": true,
+  "trajectories_available": true,
+  "trajectory_files": {
+    "airline": "airline",
+    "retail": "retail",
+    "telecom": "telecom"
+  },
+  "references": [
+    {
+      "title": "Avartha",
+      "url": "https://avartha.ai",
+      "type": "other"
+    }
+  ],
+  "methodology": {
+    "evaluation_date": "2026-10-22",
+    "tau2_bench_version": "1.0.1",
+    "user_simulator": "v1.0",
+    "notes": "Avartha evaluation of Ava 0 through the avartha_pipecat adapter (added in sierra-research/tau2-bench#631 as ava_zero_pipecat and renamed in this PR), calling a hosted Ava 0 agent over WebRTC. The agent runs on OSS models: Qwen3-ASR-1.7B (ASR), GLM-5.3 (frontend), DeepSeek-V4.1-Flash-1017 (backend), and Qwen3-TTS-12Hz-1.7B (TTS). Base airline, retail, and telecom task sets, regular speech complexity, seed 300, 0.2-second ticks, 1200-second simulated limit, and one scored trial per task. We ran three trials and submit the one with the best overall Pass^1 (80.42%); the other two averaged 77.54% and 80.26%. Ticks follow the wall clock and the user simulator's LLM and TTS run without blocking them (realtime_generation), as for openai_live. Voice user simulator v1.0 with its default customer LLM (gpt-4.1-2025-04-14) and ElevenLabs eleven_v3; the seven personas used voices from Avartha's ElevenLabs account (TAU2_VOICE_ID_* overrides). Run from Avartha's tau2-bench fork, which carries the same adapter code and grades with upstream v1.0.1's hallucination reviewer, on 20 runners per domain with one call each. 11 attempts hit an infrastructure error and were re-run from scratch: 9 failed during call setup and 2 lost the agent's audio track mid-conversation (both in telecom). The reviewer discarded and re-ran 43 conversations in which the simulated user hallucinated. There were no reward-based or agent-error reruns. The hosted agent reports no cost. Trajectory metadata uses the adapter's original name, ava_zero_pipecat, and its configuration fields (hosted agent URL and the run's timeouts); dialogue, tool calls, rewards, and audio are unchanged.",
+    "verification": {
+      "modified_prompts": false,
+      "omitted_questions": false,
+      "details": "All 278 base tasks (airline 50, retail 114, telecom 114) have one scored trajectory. The submitted scores were computed from the saved trajectories with tau2 submit prepare and checked with tau2 submit validate."
+    }
+  },
+  "voice_config": {
+    "provider": "Avartha",
+    "model": "ava-0",
+    "tick_duration_seconds": 0.2,
+    "max_steps_seconds": 1200.0,
+    "user_tts_provider": "elevenlabs/eleven_v3"
+  },
+  "interaction_metrics": {
+    "version": "1.0",
+    "config": {
+      "tick_duration_sec": 0.2,
+      "no_yield_window_sec": 2.0,
+      "backchannel_yield_window_sec": 1.0,
+      "vocal_tic_yield_window_sec": 1.0,
+      "non_directed_yield_window_sec": 1.0,
+      "vocal_tic_response_window_sec": 2.0,
+      "non_directed_response_window_sec": 2.0
+    },
+    "domains": {
+      "airline": {
+        "response_latency_mean": 1.550167224080267,
+        "yield_latency_mean": 1.054054054054054,
+        "response_rate": 0.998330550918197,
+        "yield_rate": 0.578125,
+        "agent_interruption_rate": 0.11352253756260434,
+        "selectivity_backchannel": 0.8888888888888888,
+        "selectivity_vocal_tic": 0.35526315789473684,
+        "selectivity_non_directed": 0.4722222222222222,
+        "counts": {
+          "n_simulations": 50,
+          "response_total": 599,
+          "yield_total": 320,
+          "backchannel_total": 18,
+          "vocal_tic_total": 76,
+          "non_directed_total": 36,
+          "agent_interrupts_count": 68
+        }
+      },
+      "retail": {
+        "response_latency_mean": 1.6203338391502276,
+        "yield_latency_mean": 1.13224043715847,
+        "response_rate": 0.9992418498862775,
+        "yield_rate": 0.5856,
+        "agent_interruption_rate": 0.10083396512509477,
+        "selectivity_backchannel": 0.9387755102040817,
+        "selectivity_vocal_tic": 0.3973509933774835,
+        "selectivity_non_directed": 0.4591836734693877,
+        "counts": {
+          "n_simulations": 114,
+          "response_total": 1319,
+          "yield_total": 625,
+          "backchannel_total": 49,
+          "vocal_tic_total": 151,
+          "non_directed_total": 98,
+          "agent_interrupts_count": 133
+        }
+      },
+      "telecom": {
+        "response_latency_mean": 1.7038847664775205,
+        "yield_latency_mean": 1.0282208588957056,
+        "response_rate": 0.9956540634506736,
+        "yield_rate": 0.5849282296650717,
+        "agent_interruption_rate": 0.10560625814863103,
+        "selectivity_backchannel": 0.9130434782608696,
+        "selectivity_vocal_tic": 0.3411764705882353,
+        "selectivity_non_directed": 0.49006622516556286,
+        "counts": {
+          "n_simulations": 114,
+          "response_total": 2301,
+          "yield_total": 836,
+          "backchannel_total": 23,
+          "vocal_tic_total": 255,
+          "non_directed_total": 151,
+          "agent_interrupts_count": 243
+        }
+      }
+    },
+    "overall": {
+      "response_latency_mean": 1.6247952765693385,
+      "yield_latency_mean": 1.0715051167027432,
+      "response_rate": 0.997742154751716,
+      "yield_rate": 0.5828844098883573,
+      "agent_interruption_rate": 0.10665425361211005,
+      "selectivity_backchannel": 0.91356929245128,
+      "selectivity_vocal_tic": 0.3645968739534852,
+      "selectivity_non_directed": 0.4738240402857243,
+      "counts": {
+        "n_simulations": 278,
+        "response_total": 4219,
+        "yield_total": 1781,
+        "backchannel_total": 90,
+        "vocal_tic_total": 482,
+        "non_directed_total": 285,
+        "agent_interrupts_count": 444
+      }
+    }
+  },
+  "reasoning_effort": "Backend: DeepSeek-V4.1-Flash-1017 (max)"
+}

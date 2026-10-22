@@ -1,9 +1,9 @@
-# Ava Zero provider (Pipecat RTVI)
+# Avartha provider (Pipecat RTVI)
 
-This adapter connects τ-bench's discrete-time audio agent to a hosted Ava Zero
-voice agent from Avartha. It calls the agent through Pipecat's agent-server
-(SmallWebRTC) protocol. τ-bench does not start or configure the agent. Model,
-speech, and turn-taking settings belong to the agent.
+This adapter connects τ-bench's discrete-time audio agent to a hosted Avartha
+voice agent. It calls the agent through Pipecat's agent-server (SmallWebRTC)
+protocol. τ-bench does not start or configure the agent. Model, speech, and
+turn-taking settings belong to the agent.
 
 ## Install
 
@@ -18,16 +18,16 @@ uv sync --extra voice --extra live
 ```bash
 export AVARTHA_API_KEY=<your-api-key>
 tau2 run --audio-native --benchmark none --domain retail \
-  --audio-native-provider ava_zero_pipecat \
-  --ava-zero-base-url https://<host>/inference/serverless/pipecat/v1/public/<agent_id> \
+  --audio-native-provider avartha_pipecat \
+  --avartha-base-url https://<host>/inference/serverless/pipecat/v1/public/<agent_id> \
   --num-tasks 1
 ```
 
 | Option or variable | Description |
 |---|---|
-| `--ava-zero-base-url` | The hosted agent's URL (required) |
+| `--avartha-base-url` | The hosted agent's URL (required) |
 | `AVARTHA_API_KEY` | The agent's API key, sent as a bearer token when starting each call (required) |
-| `--audio-native-model` | Label recorded with the results, `ava-zero` by default; the URL selects the agent |
+| `--audio-native-model` | Label recorded with the results, `avartha` by default; the URL selects the agent |
 
 `--reasoning-effort` is rejected: reasoning is configured on the agent.
 
@@ -70,7 +70,7 @@ On barge-in, text the caller has not heard is discarded.
 
 The agent's `tools_registered` or `tools_registration_error` reply must carry
 `"protocol": "avartha-harness-tools/1"`. A missing or different protocol fails
-the run immediately with `Incompatible Ava Zero tool protocol`: this is a
+the run immediately with `Incompatible Avartha tool protocol`: this is a
 configuration error, so local and worker runs stop scheduling tasks and skip
 simulation retries instead of recording the mismatch as a benchmark score.
 
@@ -82,9 +82,9 @@ The hosted agent reports no cost.
 ## Live provider suite
 
 ```bash
-AVA_ZERO_PIPECAT_TEST_ENABLED=1 \
-TAU2_AVA_ZERO_BASE_URL=https://<host>/inference/serverless/pipecat/v1/public/<agent_id> \
+AVARTHA_PIPECAT_TEST_ENABLED=1 \
+TAU2_AVARTHA_BASE_URL=https://<host>/inference/serverless/pipecat/v1/public/<agent_id> \
 AVARTHA_API_KEY=<your-api-key> \
 uv run pytest tests/test_voice/test_audio_native/test_provider_suite.py \
-  -v -s -k ava_zero_pipecat
+  -v -s -k avartha_pipecat
 ```

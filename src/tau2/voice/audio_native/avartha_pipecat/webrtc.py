@@ -1,11 +1,11 @@
-"""Call a hosted Ava Zero agent over Pipecat SmallWebRTC.
+"""Call a hosted Avartha agent over Pipecat SmallWebRTC.
 
 A hosted agent is served through Pipecat's agent-server protocol:
 ``POST {agent_url}/start`` admits a call, ``POST
 {agent_url}/sessions/{id}/api/offer`` opens one Opus audio track plus a data
 channel, and RTVI runs on that channel. The RTVI session itself (boot verdict,
 ``avartha-harness-tools/1`` tool exchange, routing) is
-:class:`AvaZeroPipecatProvider`; this module carries it over the call.
+:class:`AvarthaPipecatProvider`; this module carries it over the call.
 """
 
 from __future__ import annotations
@@ -34,20 +34,20 @@ try:
     from av.audio.resampler import AudioResampler
 except ImportError as exc:  # pragma: no cover - depends on installed extras
     raise ImportError(
-        "The ava_zero_pipecat provider requires aiortc. "
+        "The avartha_pipecat provider requires aiortc. "
         "Install tau2 with the live extra: uv sync --extra live"
     ) from exc
 
 from tau2.config import (
-    DEFAULT_AVA_ZERO_INPUT_SAMPLE_RATE,
-    DEFAULT_AVA_ZERO_OUTPUT_SAMPLE_RATE,
+    DEFAULT_AVARTHA_INPUT_SAMPLE_RATE,
+    DEFAULT_AVARTHA_OUTPUT_SAMPLE_RATE,
 )
-from tau2.voice.audio_native.ava_zero_pipecat.config import AvaZeroPipecatConfig
-from tau2.voice.audio_native.ava_zero_pipecat.provider import (
+from tau2.voice.audio_native.avartha_pipecat.config import AvarthaPipecatConfig
+from tau2.voice.audio_native.avartha_pipecat.provider import (
     RTVI_MESSAGE_LABEL,
     RTVI_PROTOCOL_VERSION,
     AgentAudioEvent,
-    AvaZeroPipecatProvider,
+    AvarthaPipecatProvider,
 )
 
 # The hosted agent's API key, sent as a bearer token to /start.
@@ -137,10 +137,10 @@ def is_digital_silence(pcm: bytes) -> bool:
     )
 
 
-class AvaZeroWebRTCProvider(AvaZeroPipecatProvider):
+class AvarthaWebRTCProvider(AvarthaPipecatProvider):
     """Exchange audio, transcripts and tool calls with a hosted agent."""
 
-    def __init__(self, config: AvaZeroPipecatConfig):
+    def __init__(self, config: AvarthaPipecatConfig):
         super().__init__(config)
         self.url = config.base_url.rstrip("/")
         self._peer: Optional[RTCPeerConnection] = None
@@ -160,7 +160,7 @@ class AvaZeroWebRTCProvider(AvaZeroPipecatProvider):
         api_key = os.getenv(AVARTHA_API_KEY_ENV)
         if not api_key:
             raise ValueError(
-                f"Set {AVARTHA_API_KEY_ENV} to call a hosted Ava Zero agent."
+                f"Set {AVARTHA_API_KEY_ENV} to call a hosted Avartha agent."
             )
         return {"Authorization": f"Bearer {api_key}"}
 
@@ -168,7 +168,7 @@ class AvaZeroWebRTCProvider(AvaZeroPipecatProvider):
         """Start a call, open its media and wait for a healthy boot."""
 
         if self.is_connected:
-            raise RuntimeError("Ava Zero WebRTC call is already connected")
+            raise RuntimeError("Avartha WebRTC call is already connected")
         self._reset_session_state()
         headers = self._headers()
         async with httpx.AsyncClient(
@@ -182,7 +182,7 @@ class AvaZeroWebRTCProvider(AvaZeroPipecatProvider):
             _raise_for_status(response, "start")
             started = response.json()
             self.session_id = started["sessionId"]
-            logger.info("Ava Zero WebRTC session id={}", self.session_id)
+            logger.info("Avartha WebRTC session id={}", self.session_id)
 
             peer = RTCPeerConnection(
                 configuration=RTCConfiguration(
@@ -190,7 +190,7 @@ class AvaZeroWebRTCProvider(AvaZeroPipecatProvider):
                 )
             )
             self._peer = peer
-            self._track = _CallerAudioTrack(DEFAULT_AVA_ZERO_INPUT_SAMPLE_RATE)
+            self._track = _CallerAudioTrack(DEFAULT_AVARTHA_INPUT_SAMPLE_RATE)
             peer.addTrack(self._track)
             channel_open = asyncio.Event()
             self._channel = peer.createDataChannel("chat", ordered=True)
@@ -218,7 +218,7 @@ class AvaZeroWebRTCProvider(AvaZeroPipecatProvider):
             channel_open.wait(), timeout=self.config.connect_timeout_seconds
         )
         self._reader = asyncio.create_task(
-            self._read_loop(), name="tau2-ava-zero-webrtc-reader"
+            self._read_loop(), name="tau2-avartha-webrtc-reader"
         )
         await self._send_message(
             {
@@ -231,7 +231,7 @@ class AvaZeroWebRTCProvider(AvaZeroPipecatProvider):
                 },
             }
         )
-        logger.info(f"Ava Zero WebRTC call connected and client-ready ({self.url})")
+        logger.info(f"Avartha WebRTC call connected and client-ready ({self.url})")
         await self._await_boot()
 
     def _wire_peer(self, peer: RTCPeerConnection, channel_open: asyncio.Event) -> None:
@@ -248,12 +248,12 @@ class AvaZeroWebRTCProvider(AvaZeroPipecatProvider):
         @channel.on("close")
         def on_close() -> None:
             if not self._closing:
-                self._fail_session("Ava Zero data channel closed before disconnect")
+                self._fail_session("Avartha data channel closed before disconnect")
 
         @peer.on("connectionstatechange")
         def on_state() -> None:
             if not self._closing and peer.connectionState in {"failed", "closed"}:
-                self._fail_session(f"Ava Zero WebRTC connection {peer.connectionState}")
+                self._fail_session(f"Avartha WebRTC connection {peer.connectionState}")
 
         @peer.on("track")
         def on_track(track: Any) -> None:
@@ -265,14 +265,14 @@ class AvaZeroWebRTCProvider(AvaZeroPipecatProvider):
 
     async def _receive_audio(self, track: Any) -> None:
         resampler = AudioResampler(
-            format="s16", layout="mono", rate=DEFAULT_AVA_ZERO_OUTPUT_SAMPLE_RATE
+            format="s16", layout="mono", rate=DEFAULT_AVARTHA_OUTPUT_SAMPLE_RATE
         )
         while not self._closing:
             try:
                 frame = await track.recv()
             except MediaStreamError:
                 if not self._closing:
-                    self._fail_session("Ava Zero audio track ended before disconnect")
+                    self._fail_session("Avartha audio track ended before disconnect")
                 return
             for converted in resampler.resample(frame):
                 pcm = converted.to_ndarray().reshape(-1).astype(np.int16).tobytes()
@@ -280,7 +280,7 @@ class AvaZeroWebRTCProvider(AvaZeroPipecatProvider):
                     await self._queue.put(
                         AgentAudioEvent(
                             audio=pcm,
-                            sample_rate=DEFAULT_AVA_ZERO_OUTPUT_SAMPLE_RATE,
+                            sample_rate=DEFAULT_AVARTHA_OUTPUT_SAMPLE_RATE,
                         )
                     )
 
@@ -293,7 +293,7 @@ class AvaZeroWebRTCProvider(AvaZeroPipecatProvider):
             return
         if sample_rate != self._track.sample_rate:
             raise ValueError(
-                f"Ava Zero WebRTC caller audio is {self._track.sample_rate} Hz, "
+                f"Avartha WebRTC caller audio is {self._track.sample_rate} Hz, "
                 f"got {sample_rate} Hz"
             )
         self._track.append(audio_data)
@@ -335,7 +335,7 @@ class AvaZeroWebRTCProvider(AvaZeroPipecatProvider):
         try:
             await peer.close()
         except Exception as exc:
-            logger.debug(f"Ava Zero WebRTC peer close failed: {exc!r}")
+            logger.debug(f"Avartha WebRTC peer close failed: {exc!r}")
 
     def _reset_session_state(self) -> None:
         super()._reset_session_state()
@@ -350,7 +350,7 @@ class AvaZeroWebRTCProvider(AvaZeroPipecatProvider):
         if self._session_error:
             raise self._session_error
         if self._channel is None or self._channel.readyState != "open":
-            raise RuntimeError("Ava Zero data channel is not open")
+            raise RuntimeError("Avartha data channel is not open")
         self._channel.send(json.dumps(message))
 
     async def _read_loop(self) -> None:
@@ -361,7 +361,7 @@ class AvaZeroWebRTCProvider(AvaZeroPipecatProvider):
             except (TypeError, ValueError):
                 continue  # keepalives and other non-RTVI text
             if isinstance(message, dict) and message.get("type") == "error-response":
-                logger.warning("Ava Zero rejected a client message: {}", message)
+                logger.warning("Avartha rejected a client message: {}", message)
                 continue
             if await self._accept_output(message):
                 self._route_message(message)
@@ -371,6 +371,6 @@ def _raise_for_status(response: httpx.Response, step: str) -> None:
     if response.is_success:
         return
     raise RuntimeError(
-        f"Ava Zero WebRTC {step} failed (HTTP {response.status_code}): "
+        f"Avartha WebRTC {step} failed (HTTP {response.status_code}): "
         f"{response.text[:600]}"
     )

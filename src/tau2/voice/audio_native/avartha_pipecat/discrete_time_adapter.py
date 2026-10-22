@@ -1,4 +1,4 @@
-"""Discrete-time adapter for a hosted Ava Zero voice agent over Pipecat RTVI."""
+"""Discrete-time adapter for a hosted Avartha voice agent over Pipecat RTVI."""
 
 from __future__ import annotations
 
@@ -13,8 +13,8 @@ from loguru import logger
 from tau2.config import (
     DEFAULT_AUDIO_NATIVE_DISCONNECT_TIMEOUT,
     DEFAULT_AUDIO_NATIVE_TICK_TIMEOUT_BUFFER,
-    DEFAULT_AVA_ZERO_INPUT_SAMPLE_RATE,
-    DEFAULT_AVA_ZERO_MODEL,
+    DEFAULT_AVARTHA_INPUT_SAMPLE_RATE,
+    DEFAULT_AVARTHA_MODEL,
 )
 from tau2.data_model.audio import TELEPHONY_AUDIO_FORMAT, AudioFormat
 from tau2.data_model.message import ToolCall
@@ -22,18 +22,18 @@ from tau2.environment.tool import Tool
 from tau2.voice.audio_native.adapter import DiscreteTimeAdapter
 from tau2.voice.audio_native.async_loop import BackgroundAsyncLoop
 from tau2.voice.audio_native.audio_converter import StreamingTelephonyConverter
-from tau2.voice.audio_native.ava_zero_pipecat.caller_audio import CallerAudioUpsampler
-from tau2.voice.audio_native.ava_zero_pipecat.config import AvaZeroPipecatConfig
-from tau2.voice.audio_native.ava_zero_pipecat.provider import (
+from tau2.voice.audio_native.avartha_pipecat.caller_audio import CallerAudioUpsampler
+from tau2.voice.audio_native.avartha_pipecat.config import AvarthaPipecatConfig
+from tau2.voice.audio_native.avartha_pipecat.provider import (
     AgentAudioEvent,
     AgentLLMStartedEvent,
     AgentLLMTextEvent,
     AgentPlaybackEvent,
     AgentStartedSpeakingEvent,
     AgentWordEvent,
-    AvaZeroBootError,
-    AvaZeroPipecatProvider,
-    AvaZeroProtocolError,
+    AvarthaBootError,
+    AvarthaPipecatProvider,
+    AvarthaProtocolError,
     ProviderErrorEvent,
     SpeechEvent,
     ToolCallEvent,
@@ -41,7 +41,7 @@ from tau2.voice.audio_native.ava_zero_pipecat.provider import (
 )
 from tau2.voice.audio_native.tick_result import TickResult
 
-_ITEM_ID = "ava_zero"
+_ITEM_ID = "avartha"
 # How far past the last matched word a spoken word may land. It skips a word
 # or two the TTS alignment dropped. A word never matches past the end of the
 # sentence being spoken: that would mark unaired text as heard.
@@ -51,7 +51,7 @@ _WORD_SKIP_MIN_CHARS = 3
 
 
 def _unescape(text: str) -> str:
-    """Ava Zero HTML-escapes some text, sometimes twice ("I&amp;#x27;m")."""
+    """Avartha HTML-escapes some text, sometimes twice ("I&amp;#x27;m")."""
 
     for _ in range(3):
         unescaped = html.unescape(text)
@@ -64,7 +64,7 @@ def _unescape(text: str) -> str:
 class _SpokenTranscript:
     """Reveal the agent's sentence text only as far as it has been aired.
 
-    Ava Zero sends each sentence (``TranscriptEvent``) as soon as the LLM
+    Avartha sends each sentence (``TranscriptEvent``) as soon as the LLM
     writes it, ahead of the audio, and streams the audio at about real time.
     Releasing text in proportion to audio played / audio received over the
     whole call therefore showed every sentence on its first audio chunk, and
@@ -75,7 +75,7 @@ class _SpokenTranscript:
 
     - a spoken word (``AgentWordEvent``, sent by the TTS clock as it plays),
       matched in order within the sentence being spoken;
-    - the played caption (``AgentPlaybackEvent``) Ava Zero reports when an
+    - the played caption (``AgentPlaybackEvent``) Avartha reports when an
       utterance ends, which also covers words the alignment dropped.
 
     Without evidence text waits; it is never guessed. The text shown is always
@@ -108,7 +108,7 @@ class _SpokenTranscript:
     def add_text(self, text: str) -> None:
         """Append one bot-transcription sentence, keeping its own spacing.
 
-        Ava Zero's splitter also breaks at decimal points ("$13." then
+        Avartha's splitter also breaks at decimal points ("$13." then
         "46"), and marks real sentence starts with a leading space. Only the
         first sentence of a response lacks one.
         """
@@ -192,7 +192,7 @@ class _SpokenTranscript:
         )
 
     def add_playback(self, caption: str) -> None:
-        """Ava Zero's caption of what this utterance actually played.
+        """Avartha's caption of what this utterance actually played.
 
         Text in the caption that the sentences lack (speech no LLM sentence
         produced, or a reply's unpunctuated tail) is inserted where it aired.
@@ -223,7 +223,7 @@ class _SpokenTranscript:
                 missing = " " + missing if common == 0 else missing
             if self.text[at:].strip() and not missing[-1].isspace():
                 missing += " "
-            logger.debug(f"Ava Zero playback adds unsent text: {missing!r}")
+            logger.debug(f"Avartha playback adds unsent text: {missing!r}")
             self.text = self.text[:at] + missing + self.text[at:]
             self._sentence_ends = sorted(
                 [e if e <= at else e + len(missing) for e in self._sentence_ends]
@@ -271,8 +271,8 @@ def _mcp_tool_schema(tool: Tool) -> dict[str, Any]:
     }
 
 
-class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
-    """Bridge tau2 telephony ticks to a hosted Ava Zero agent's call."""
+class DiscreteTimeAvarthaPipecatAdapter(DiscreteTimeAdapter):
+    """Bridge tau2 telephony ticks to a hosted Avartha agent's call."""
 
     def __init__(
         self,
@@ -281,27 +281,27 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
         model: Optional[str] = None,
         reasoning_effort: Optional[str] = None,
         audio_format: Optional[AudioFormat] = None,
-        ava_zero_config: Optional[AvaZeroPipecatConfig] = None,
-        provider: Optional[AvaZeroPipecatProvider] = None,
+        avartha_config: Optional[AvarthaPipecatConfig] = None,
+        provider: Optional[AvarthaPipecatProvider] = None,
     ):
         if reasoning_effort is not None:
             raise ValueError(
-                "Ava Zero reasoning is configured on the hosted agent; "
+                "Avartha reasoning is configured on the hosted agent; "
                 "--reasoning-effort is not supported"
             )
 
         # An injected provider already carries its call settings.
-        config = ava_zero_config or (provider.config if provider is not None else None)
+        config = avartha_config or (provider.config if provider is not None else None)
         if config is None:
             raise ValueError(
-                "Ava Zero needs the hosted agent's URL (ava_zero_config.base_url)"
+                "Avartha needs the hosted agent's URL (avartha_config.base_url)"
             )
 
         if audio_format is not None and audio_format != TELEPHONY_AUDIO_FORMAT:
             # Output is always converted to 8 kHz u-law and input is read as
             # it; any other format would be mislabelled and mistimed.
             raise ValueError(
-                "Ava Zero supports only telephony audio (8 kHz u-law), "
+                "Avartha supports only telephony audio (8 kHz u-law), "
                 f"got {audio_format}"
             )
 
@@ -310,9 +310,9 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
             audio_format=audio_format,
             send_audio_instant=send_audio_instant,
         )
-        self.model = model or DEFAULT_AVA_ZERO_MODEL
+        self.model = model or DEFAULT_AVARTHA_MODEL
         self.reasoning_effort = reasoning_effort
-        self.ava_zero_config = config
+        self.avartha_config = config
         # The hosted call is live WebRTC: the agent speaks and listens on the
         # wall clock, so ticks must keep to it. Unpaced, every stall of the
         # user simulator left the caller track sending silence mid-word and
@@ -320,10 +320,10 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
         # although the agent had already counted it as played.
         self.realtime_pacing = True
 
-        self._input_converter = CallerAudioUpsampler(DEFAULT_AVA_ZERO_INPUT_SAMPLE_RATE)
+        self._input_converter = CallerAudioUpsampler(DEFAULT_AVARTHA_INPUT_SAMPLE_RATE)
         self._output_converters: dict[int, StreamingTelephonyConverter] = {}
         self._chunk_size = int(
-            DEFAULT_AVA_ZERO_INPUT_SAMPLE_RATE * 2 * self._voip_interval_ms / 1000
+            DEFAULT_AVARTHA_INPUT_SAMPLE_RATE * 2 * self._voip_interval_ms / 1000
         )
 
         self._provider = provider
@@ -355,16 +355,16 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
         self._llm_carryover = ""
 
     @property
-    def provider(self) -> AvaZeroPipecatProvider:
+    def provider(self) -> AvarthaPipecatProvider:
         """Get the provider, creating it lazily."""
 
         if self._provider is None:
             # aiortc ships in the live extra; only a real call needs it.
-            from tau2.voice.audio_native.ava_zero_pipecat.webrtc import (
-                AvaZeroWebRTCProvider,
+            from tau2.voice.audio_native.avartha_pipecat.webrtc import (
+                AvarthaWebRTCProvider,
             )
 
-            self._provider = AvaZeroWebRTCProvider(self.ava_zero_config)
+            self._provider = AvarthaWebRTCProvider(self.avartha_config)
         return self._provider
 
     @property
@@ -380,22 +380,22 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
         vad_config: Any = None,
         modality: str = "audio",
     ) -> None:
-        """Connect to Ava Zero and establish a ready, tool-aware session."""
+        """Connect to Avartha and establish a ready, tool-aware session."""
 
         if modality != "audio":
-            raise ValueError("Ava Zero currently supports audio modality only")
+            raise ValueError("Avartha currently supports audio modality only")
         if self._connected:
             self.disconnect()
 
         try:
             self._bg_loop.start()
             timeout = (
-                self.ava_zero_config.boot_attempts
+                self.avartha_config.boot_attempts
                 * (
-                    self.ava_zero_config.connect_timeout_seconds
-                    + self.ava_zero_config.boot_timeout_seconds
+                    self.avartha_config.connect_timeout_seconds
+                    + self.avartha_config.boot_timeout_seconds
                 )
-                + self.ava_zero_config.tool_registration_timeout_seconds
+                + self.avartha_config.tool_registration_timeout_seconds
                 + 5
             )
             self._bg_loop.run_coroutine(
@@ -404,8 +404,8 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
             )
             self._connected = True
             logger.info(
-                "DiscreteTimeAvaZeroPipecatAdapter connected "
-                f"({self.ava_zero_config.base_url}, tick={self.tick_duration_ms}ms)"
+                "DiscreteTimeAvarthaPipecatAdapter connected "
+                f"({self.avartha_config.base_url}, tick={self.tick_duration_ms}ms)"
             )
         except Exception as exc:
             if (
@@ -419,31 +419,31 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
                         timeout=DEFAULT_AUDIO_NATIVE_DISCONNECT_TIMEOUT,
                     )
                 except Exception as cleanup_exc:
-                    logger.debug(f"Ava Zero connect cleanup failed: {cleanup_exc}")
+                    logger.debug(f"Avartha connect cleanup failed: {cleanup_exc}")
             self._bg_loop.stop()
-            if isinstance(exc, AvaZeroProtocolError):
+            if isinstance(exc, AvarthaProtocolError):
                 raise
-            raise RuntimeError(f"Failed to connect to Ava Zero: {exc}") from exc
+            raise RuntimeError(f"Failed to connect to Avartha: {exc}") from exc
 
     async def _async_connect(
         self,
         system_prompt: str,
         tools: List[Tool],
     ) -> None:
-        for attempt in range(1, self.ava_zero_config.boot_attempts + 1):
+        for attempt in range(1, self.avartha_config.boot_attempts + 1):
             try:
                 await self.provider.connect(system_prompt=system_prompt)
                 break
-            except AvaZeroBootError as exc:
+            except AvarthaBootError as exc:
                 await self.provider.disconnect()
-                if attempt == self.ava_zero_config.boot_attempts:
+                if attempt == self.avartha_config.boot_attempts:
                     logger.error(
-                        f"Ava Zero boot failed {attempt} time(s), giving up: {exc}"
+                        f"Avartha boot failed {attempt} time(s), giving up: {exc}"
                     )
                     raise
                 logger.warning(
-                    "Ava Zero boot failed "
-                    f"(attempt {attempt}/{self.ava_zero_config.boot_attempts}): "
+                    "Avartha boot failed "
+                    f"(attempt {attempt}/{self.avartha_config.boot_attempts}): "
                     f"{exc}; retrying"
                 )
                 self.provider.reset_for_retry()
@@ -461,7 +461,7 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
                     timeout=DEFAULT_AUDIO_NATIVE_DISCONNECT_TIMEOUT,
                 )
             except Exception as exc:
-                logger.warning(f"Error disconnecting Ava Zero: {exc}")
+                logger.warning(f"Error disconnecting Avartha: {exc}")
 
         self._bg_loop.stop()
         self._connected = False
@@ -473,7 +473,7 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
             converter.reset()
         self._output_converters.clear()
         self._reset_interruption_state()
-        logger.info("DiscreteTimeAvaZeroPipecatAdapter disconnected")
+        logger.info("DiscreteTimeAvarthaPipecatAdapter disconnected")
 
     async def _async_disconnect(self) -> None:
         if self._provider is not None and self._provider.is_connected:
@@ -482,7 +482,7 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
             try:
                 await self._flush_pending_tool_results()
             except Exception as exc:
-                logger.warning(f"Ava Zero tool results lost at shutdown: {exc}")
+                logger.warning(f"Avartha tool results lost at shutdown: {exc}")
         if self._owns_provider and self._provider is not None:
             await self.provider.disconnect()
 
@@ -494,7 +494,7 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
         """Exchange one simulation tick of audio and events."""
 
         if not self.is_connected:
-            raise RuntimeError("Not connected to Ava Zero. Call connect() first.")
+            raise RuntimeError("Not connected to Avartha. Call connect() first.")
         if tick_number is None:
             tick_number = self._tick_count
         self._tick_count = tick_number + 1
@@ -547,7 +547,7 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
         async def send_audio(chunk: bytes) -> None:
             await self.provider.send_audio(
                 chunk,
-                sample_rate=DEFAULT_AVA_ZERO_INPUT_SAMPLE_RATE,
+                sample_rate=DEFAULT_AVARTHA_INPUT_SAMPLE_RATE,
             )
 
         async def receive_events() -> list[Any]:
@@ -614,7 +614,7 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
         result.events.append(event)
         if not isinstance(event, AgentAudioEvent):
             logger.debug(
-                f"Ava Zero event: {event!r} stale_text={self._stale_text} "
+                f"Avartha event: {event!r} stale_text={self._stale_text} "
                 f"stale_audio={self._stale_audio}"
             )
 
@@ -622,7 +622,7 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
             converter = self._output_converters.setdefault(
                 event.sample_rate,
                 StreamingTelephonyConverter(
-                    input_sample_rate=DEFAULT_AVA_ZERO_INPUT_SAMPLE_RATE,
+                    input_sample_rate=DEFAULT_AVARTHA_INPUT_SAMPLE_RATE,
                     output_sample_rate=event.sample_rate,
                 ),
             )
@@ -647,7 +647,7 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
                     requestor="assistant",
                 )
             )
-            logger.info(f"Ava Zero tool call: {event.name}({event.arguments})")
+            logger.info(f"Avartha tool call: {event.name}({event.arguments})")
         elif isinstance(event, AgentLLMTextEvent):
             self._llm_unsent += event.text
         elif isinstance(event, TranscriptEvent):
@@ -663,7 +663,7 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
                 return
             if text.strip():
                 self._transcript().add_text(text)
-                logger.debug(f"Ava Zero transcript: {text!r}")
+                logger.debug(f"Avartha transcript: {text!r}")
         elif isinstance(event, AgentWordEvent):
             if not self._stale_audio:
                 self._transcript().add_word(event.text)
@@ -696,4 +696,4 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
                 for converter in self._output_converters.values():
                     converter.reset()
         elif isinstance(event, ProviderErrorEvent):
-            raise RuntimeError(f"Ava Zero reader failed: {event.message}")
+            raise RuntimeError(f"Avartha reader failed: {event.message}")

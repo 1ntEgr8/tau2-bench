@@ -735,10 +735,10 @@ usage: tau2 run [-h] [--communicate-scorer {semantic,substring}]
                 [--max-retries MAX_RETRIES] [--retry-delay RETRY_DELAY]
                 [--enforce-communication-protocol] [--user-persona USER_PERSONA]
                 [--audio-native]
-                [--audio-native-provider {openai,openai_live,gemini,xai,nova,qwen,ava_zero_pipecat,livekit,launa}]
+                [--audio-native-provider {openai,openai_live,gemini,xai,nova,qwen,avartha_pipecat,livekit,launa}]
                 [--cascaded-config CASCADED_CONFIG]
                 [--audio-native-model AUDIO_NATIVE_MODEL]
-                [--ava-zero-base-url AVA_ZERO_BASE_URL] [--live-config LIVE_CONFIG]
+                [--avartha-base-url AVARTHA_BASE_URL] [--live-config LIVE_CONFIG]
                 [--realtime-generation | --no-realtime-generation]
                 [--reasoning-effort {minimal,low,medium,high,xhigh}]
                 [--tick-duration TICK_DURATION]
@@ -887,7 +887,7 @@ options:
   --audio-native        Enable audio-native mode using DiscreteTimeAudioNativeAgent
                         with VoiceStreamingUserSimulator. This enables full-duplex
                         voice simulation using audio native APIs.
-  --audio-native-provider {openai,openai_live,gemini,xai,nova,qwen,ava_zero_pipecat,livekit,launa}
+  --audio-native-provider {openai,openai_live,gemini,xai,nova,qwen,avartha_pipecat,livekit,launa}
                         Audio native API provider. Default is 'openai'.
   --cascaded-config CASCADED_CONFIG
                         Cascaded config preset name for livekit provider. Available
@@ -895,10 +895,10 @@ options:
                         tau2.data_model.cascaded for details.
   --audio-native-model AUDIO_NATIVE_MODEL
                         Audio native model to use. If not specified, uses the default
-                        model for the selected provider. For ava_zero_pipecat, it is
-                        only a label, since --ava-zero-base-url selects the agent.
-  --ava-zero-base-url AVA_ZERO_BASE_URL
-                        URL of the hosted Ava Zero agent the ava_zero_pipecat provider
+                        model for the selected provider. For avartha_pipecat, it is
+                        only a label, since --avartha-base-url selects the agent.
+  --avartha-base-url AVARTHA_BASE_URL
+                        URL of the hosted Avartha agent the avartha_pipecat provider
                         calls, https://<host>/inference/serverless/pipecat/v1/public/<
                         agent_id>. Required for that provider, which also needs the
                         live extra and AVARTHA_API_KEY.
@@ -907,7 +907,7 @@ options:
                         and optional frontend_prompt/backend_prompt overrides.
   --realtime-generation, --no-realtime-generation
                         Run user LLM/TTS generation without blocking audio ticks.
-                        Defaults to enabled for openai_live and ava_zero_pipecat and
+                        Defaults to enabled for openai_live and avartha_pipecat and
                         disabled for other providers. Use --no-realtime-generation to
                         disable.
   --reasoning-effort {minimal,low,medium,high,xhigh}
@@ -1015,10 +1015,10 @@ usage: tau2 run-pass3 [-h] [--communicate-scorer {semantic,substring}]
                       [--max-retries MAX_RETRIES] [--retry-delay RETRY_DELAY]
                       [--enforce-communication-protocol] [--user-persona USER_PERSONA]
                       [--audio-native]
-                      [--audio-native-provider {openai,openai_live,gemini,xai,nova,qwen,ava_zero_pipecat,livekit,launa}]
+                      [--audio-native-provider {openai,openai_live,gemini,xai,nova,qwen,avartha_pipecat,livekit,launa}]
                       [--cascaded-config CASCADED_CONFIG]
                       [--audio-native-model AUDIO_NATIVE_MODEL]
-                      [--ava-zero-base-url AVA_ZERO_BASE_URL]
+                      [--avartha-base-url AVARTHA_BASE_URL]
                       [--live-config LIVE_CONFIG]
                       [--realtime-generation | --no-realtime-generation]
                       [--reasoning-effort {minimal,low,medium,high,xhigh}]
@@ -1171,7 +1171,7 @@ options:
   --audio-native        Enable audio-native mode using DiscreteTimeAudioNativeAgent
                         with VoiceStreamingUserSimulator. This enables full-duplex
                         voice simulation using audio native APIs.
-  --audio-native-provider {openai,openai_live,gemini,xai,nova,qwen,ava_zero_pipecat,livekit,launa}
+  --audio-native-provider {openai,openai_live,gemini,xai,nova,qwen,avartha_pipecat,livekit,launa}
                         Audio native API provider. Default is 'openai'.
   --cascaded-config CASCADED_CONFIG
                         Cascaded config preset name for livekit provider. Available
@@ -1179,10 +1179,10 @@ options:
                         tau2.data_model.cascaded for details.
   --audio-native-model AUDIO_NATIVE_MODEL
                         Audio native model to use. If not specified, uses the default
-                        model for the selected provider. For ava_zero_pipecat, it is
-                        only a label, since --ava-zero-base-url selects the agent.
-  --ava-zero-base-url AVA_ZERO_BASE_URL
-                        URL of the hosted Ava Zero agent the ava_zero_pipecat provider
+                        model for the selected provider. For avartha_pipecat, it is
+                        only a label, since --avartha-base-url selects the agent.
+  --avartha-base-url AVARTHA_BASE_URL
+                        URL of the hosted Avartha agent the avartha_pipecat provider
                         calls, https://<host>/inference/serverless/pipecat/v1/public/<
                         agent_id>. Required for that provider, which also needs the
                         live extra and AVARTHA_API_KEY.
@@ -1191,7 +1191,7 @@ options:
                         and optional frontend_prompt/backend_prompt overrides.
   --realtime-generation, --no-realtime-generation
                         Run user LLM/TTS generation without blocking audio ticks.
-                        Defaults to enabled for openai_live and ava_zero_pipecat and
+                        Defaults to enabled for openai_live and avartha_pipecat and
                         disabled for other providers. Use --no-realtime-generation to
                         disable.
   --reasoning-effort {minimal,low,medium,high,xhigh}
@@ -1599,11 +1599,12 @@ options:
                         contact_info.email
   --historical-voice-v2
                         Maintainers only: read the frozen 2026-10-02 Voice V2 release
-                        export
+                        export; --benchmark voice (default), banking or entity selects
+                        the frame
   --judges-root JUDGES_ROOT
-                        With --historical-voice-v2: a provider's saved verdict
-                        directory (<language>/<simulation-id>.json); repeat for each
-                        judge suite
+                        With --historical-voice-v2 (voice frame only): a provider's
+                        saved verdict directory (<language>/<simulation-id>.json);
+                        repeat for each judge suite
 ```
 
 ### `tau2 submit validate`
@@ -1626,11 +1627,12 @@ options:
                         validation
   --historical-voice-v2
                         Maintainers only: read the frozen 2026-10-02 Voice V2 release
-                        export
+                        export; --benchmark voice (default), banking or entity selects
+                        the frame
   --judges-root JUDGES_ROOT
-                        With --historical-voice-v2: a provider's saved verdict
-                        directory (<language>/<simulation-id>.json); repeat for each
-                        judge suite
+                        With --historical-voice-v2 (voice frame only): a provider's
+                        saved verdict directory (<language>/<simulation-id>.json);
+                        repeat for each judge suite
 ```
 
 ### `tau2 submit verify-trajs`
