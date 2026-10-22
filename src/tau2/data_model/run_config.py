@@ -3,7 +3,7 @@
 from copy import deepcopy
 from typing import Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
 from typing_extensions import Annotated
 
 from tau2.config import (
@@ -48,6 +48,7 @@ from tau2.data_model.elicitation import (
 from tau2.data_model.live_config import LiveConfig
 from tau2.data_model.semantic_communication import CommunicateScoring
 from tau2.data_model.voice import SpeechComplexity, VoiceSettings
+from tau2.voice.audio_native.ava_zero_pipecat.config import AvaZeroPipecatConfig
 
 
 class AudioNativeConfig(BaseModel):
@@ -82,10 +83,18 @@ class AudioNativeConfig(BaseModel):
 
     # Provider selection
     provider: Literal[
-        "openai", "openai_live", "gemini", "xai", "nova", "qwen", "livekit", "launa"
+        "openai",
+        "openai_live",
+        "gemini",
+        "xai",
+        "nova",
+        "qwen",
+        "ava_zero_pipecat",
+        "livekit",
+        "launa",
     ] = Field(
         default=DEFAULT_AUDIO_NATIVE_PROVIDER,
-        description="Audio native API provider: 'openai' (OpenAI Realtime), 'openai_live' (OpenAI Live), 'gemini' (Gemini Live), 'xai' (xAI Grok Voice Agent), 'nova' (Amazon Nova Sonic), 'qwen' (Alibaba Qwen Omni), 'launa' (Salesforce Launa), or 'livekit' (LiveKit cascaded STT→LLM→TTS)",
+        description="Audio native API provider: 'openai' (OpenAI Realtime), 'openai_live' (OpenAI Live), 'gemini' (Gemini Live), 'xai' (xAI Grok Voice Agent), 'nova' (Amazon Nova Sonic), 'qwen' (Alibaba Qwen Omni), 'ava_zero_pipecat' (hosted Ava Zero agent over Pipecat SmallWebRTC), 'launa' (Salesforce Launa), or 'livekit' (LiveKit cascaded STT→LLM→TTS)",
     )
 
     transcription_language: Optional[str] = Field(
@@ -114,9 +123,17 @@ class AudioNativeConfig(BaseModel):
         description="Effective LiveKit STT, LLM and TTS settings, resolved before construction and recorded on results.",
     )
 
+    ava_zero_config: Optional[AvaZeroPipecatConfig] = Field(
+        default=None,
+        description="Hosted agent connection settings for the ava_zero_pipecat provider",
+    )
+
     model: str = Field(
         default=DEFAULT_AUDIO_NATIVE_MODELS[DEFAULT_AUDIO_NATIVE_PROVIDER],
-        description="Audio native model to use",
+        description=(
+            "Audio native model to use (a recorded label for Ava Zero, whose "
+            "agent URL selects the agent)"
+        ),
     )
     reasoning_effort: Optional[str] = Field(
         default=None,
@@ -129,7 +146,8 @@ class AudioNativeConfig(BaseModel):
     realtime_generation: Optional[bool] = Field(
         default=None,
         description="Whether user LLM and TTS generation run without blocking audio ticks. "
-        "Defaults to enabled for openai_live and disabled for other providers.",
+        "Defaults to enabled for openai_live and ava_zero_pipecat and disabled for "
+        "other providers.",
     )
 
     @property
@@ -137,7 +155,7 @@ class AudioNativeConfig(BaseModel):
         """Resolve the provider-aware default for real-time user generation."""
         if self.realtime_generation is not None:
             return self.realtime_generation
-        return self.provider == "openai_live"
+        return self.provider in ("openai_live", "ava_zero_pipecat")
 
     @model_validator(mode="after")
     def validate_live_config(self):
@@ -146,6 +164,31 @@ class AudioNativeConfig(BaseModel):
                 "live_config is required for openai_live and only valid for that provider"
             )
         return self
+
+    @model_validator(mode="after")
+    def validate_ava_zero_config(self):
+        """Require the hosted agent's settings for the Ava Zero provider."""
+        if self.provider == "ava_zero_pipecat":
+            if self.ava_zero_config is None:
+                raise ValueError(
+                    "ava_zero_pipecat needs ava_zero_config with the hosted agent's URL"
+                )
+            default_model = DEFAULT_AUDIO_NATIVE_MODELS[DEFAULT_AUDIO_NATIVE_PROVIDER]
+            if self.model == default_model:
+                self.model = DEFAULT_AUDIO_NATIVE_MODELS["ava_zero_pipecat"]
+        elif self.ava_zero_config is not None:
+            raise ValueError(
+                "ava_zero_config is only valid when provider='ava_zero_pipecat'"
+            )
+        return self
+
+    @model_serializer(mode="wrap")
+    def serialize_ava_zero_config(self, handler):
+        """Other providers keep their existing serialized contract."""
+        value = handler(self)
+        if self.ava_zero_config is None:
+            value.pop("ava_zero_config", None)
+        return value
 
     # Timing configuration
     tick_duration_seconds: float = Field(

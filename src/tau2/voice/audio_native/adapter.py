@@ -34,6 +34,7 @@ from tau2.voice.audio_native.tick_result import (
 
 if TYPE_CHECKING:
     from tau2.data_model.live_config import LiveConfig
+    from tau2.voice.audio_native.ava_zero_pipecat.config import AvaZeroPipecatConfig
 
 
 class DiscreteTimeAdapter(ABC):
@@ -392,6 +393,7 @@ def create_adapter(
     voice: Optional[str] = None,
     transcription_language: Optional[str] = None,
     language: Optional[str] = None,
+    ava_zero_config: Optional["AvaZeroPipecatConfig"] = None,
 ) -> Tuple[DiscreteTimeAdapter, str]:
     """Create a discrete-time adapter for the given provider.
 
@@ -401,7 +403,7 @@ def create_adapter(
 
     Args:
         provider: Provider identifier (openai, gemini, xai, nova, qwen,
-            livekit).
+            ava_zero_pipecat, livekit).
         tick_duration_ms: Duration of each tick in milliseconds.
         send_audio_instant: If True, send audio in one call per tick.
         model: Model identifier. If None, uses the provider's default.
@@ -412,6 +414,7 @@ def create_adapter(
         trace_path: Optional private protocol trace for OpenAI Live.
         language: Resolved run language for supported provider hints. OpenAI
             input transcription retains its explicit transcription_language setting.
+        ava_zero_config: Connection settings for a hosted Ava Zero agent.
 
     Returns:
         Tuple of (adapter, resolved_model).
@@ -534,6 +537,19 @@ def create_adapter(
             send_audio_instant=send_audio_instant,
             model=model,
             reasoning_effort=reasoning_effort,
+        )
+    elif provider == "ava_zero_pipecat":
+        from tau2.voice.audio_native.ava_zero_pipecat.discrete_time_adapter import (
+            DiscreteTimeAvaZeroPipecatAdapter,
+        )
+
+        adapter = DiscreteTimeAvaZeroPipecatAdapter(
+            tick_duration_ms=tick_duration_ms,
+            send_audio_instant=send_audio_instant,
+            model=model,
+            reasoning_effort=reasoning_effort,
+            audio_format=audio_format,
+            ava_zero_config=ava_zero_config,
         )
     elif provider == "livekit":
         from tau2.data_model.cascaded import CascadedConfig

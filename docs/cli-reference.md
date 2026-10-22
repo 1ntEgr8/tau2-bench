@@ -735,9 +735,10 @@ usage: tau2 run [-h] [--communicate-scorer {semantic,substring}]
                 [--max-retries MAX_RETRIES] [--retry-delay RETRY_DELAY]
                 [--enforce-communication-protocol] [--user-persona USER_PERSONA]
                 [--audio-native]
-                [--audio-native-provider {openai,openai_live,gemini,xai,nova,qwen,livekit,launa}]
+                [--audio-native-provider {openai,openai_live,gemini,xai,nova,qwen,ava_zero_pipecat,livekit,launa}]
                 [--cascaded-config CASCADED_CONFIG]
-                [--audio-native-model AUDIO_NATIVE_MODEL] [--live-config LIVE_CONFIG]
+                [--audio-native-model AUDIO_NATIVE_MODEL]
+                [--ava-zero-base-url AVA_ZERO_BASE_URL] [--live-config LIVE_CONFIG]
                 [--realtime-generation | --no-realtime-generation]
                 [--reasoning-effort {minimal,low,medium,high,xhigh}]
                 [--tick-duration TICK_DURATION]
@@ -886,7 +887,7 @@ options:
   --audio-native        Enable audio-native mode using DiscreteTimeAudioNativeAgent
                         with VoiceStreamingUserSimulator. This enables full-duplex
                         voice simulation using audio native APIs.
-  --audio-native-provider {openai,openai_live,gemini,xai,nova,qwen,livekit,launa}
+  --audio-native-provider {openai,openai_live,gemini,xai,nova,qwen,ava_zero_pipecat,livekit,launa}
                         Audio native API provider. Default is 'openai'.
   --cascaded-config CASCADED_CONFIG
                         Cascaded config preset name for livekit provider. Available
@@ -894,14 +895,21 @@ options:
                         tau2.data_model.cascaded for details.
   --audio-native-model AUDIO_NATIVE_MODEL
                         Audio native model to use. If not specified, uses the default
-                        model for the selected provider.
+                        model for the selected provider. For ava_zero_pipecat, it is
+                        only a label, since --ava-zero-base-url selects the agent.
+  --ava-zero-base-url AVA_ZERO_BASE_URL
+                        URL of the hosted Ava Zero agent the ava_zero_pipecat provider
+                        calls, https://<host>/inference/serverless/pipecat/v1/public/<
+                        agent_id>. Required for that provider, which also needs the
+                        live extra and AVARTHA_API_KEY.
   --live-config LIVE_CONFIG
                         JSON config for openai_live: backend_model (required), voice,
                         and optional frontend_prompt/backend_prompt overrides.
   --realtime-generation, --no-realtime-generation
                         Run user LLM/TTS generation without blocking audio ticks.
-                        Defaults to enabled for openai_live and disabled for other
-                        providers. Use --no-realtime-generation to disable.
+                        Defaults to enabled for openai_live and ava_zero_pipecat and
+                        disabled for other providers. Use --no-realtime-generation to
+                        disable.
   --reasoning-effort {minimal,low,medium,high,xhigh}
                         Reasoning effort for thinking models. Only applies to
                         providers that support it (e.g. OpenAI).
@@ -1007,9 +1015,10 @@ usage: tau2 run-pass3 [-h] [--communicate-scorer {semantic,substring}]
                       [--max-retries MAX_RETRIES] [--retry-delay RETRY_DELAY]
                       [--enforce-communication-protocol] [--user-persona USER_PERSONA]
                       [--audio-native]
-                      [--audio-native-provider {openai,openai_live,gemini,xai,nova,qwen,livekit,launa}]
+                      [--audio-native-provider {openai,openai_live,gemini,xai,nova,qwen,ava_zero_pipecat,livekit,launa}]
                       [--cascaded-config CASCADED_CONFIG]
                       [--audio-native-model AUDIO_NATIVE_MODEL]
+                      [--ava-zero-base-url AVA_ZERO_BASE_URL]
                       [--live-config LIVE_CONFIG]
                       [--realtime-generation | --no-realtime-generation]
                       [--reasoning-effort {minimal,low,medium,high,xhigh}]
@@ -1162,7 +1171,7 @@ options:
   --audio-native        Enable audio-native mode using DiscreteTimeAudioNativeAgent
                         with VoiceStreamingUserSimulator. This enables full-duplex
                         voice simulation using audio native APIs.
-  --audio-native-provider {openai,openai_live,gemini,xai,nova,qwen,livekit,launa}
+  --audio-native-provider {openai,openai_live,gemini,xai,nova,qwen,ava_zero_pipecat,livekit,launa}
                         Audio native API provider. Default is 'openai'.
   --cascaded-config CASCADED_CONFIG
                         Cascaded config preset name for livekit provider. Available
@@ -1170,14 +1179,21 @@ options:
                         tau2.data_model.cascaded for details.
   --audio-native-model AUDIO_NATIVE_MODEL
                         Audio native model to use. If not specified, uses the default
-                        model for the selected provider.
+                        model for the selected provider. For ava_zero_pipecat, it is
+                        only a label, since --ava-zero-base-url selects the agent.
+  --ava-zero-base-url AVA_ZERO_BASE_URL
+                        URL of the hosted Ava Zero agent the ava_zero_pipecat provider
+                        calls, https://<host>/inference/serverless/pipecat/v1/public/<
+                        agent_id>. Required for that provider, which also needs the
+                        live extra and AVARTHA_API_KEY.
   --live-config LIVE_CONFIG
                         JSON config for openai_live: backend_model (required), voice,
                         and optional frontend_prompt/backend_prompt overrides.
   --realtime-generation, --no-realtime-generation
                         Run user LLM/TTS generation without blocking audio ticks.
-                        Defaults to enabled for openai_live and disabled for other
-                        providers. Use --no-realtime-generation to disable.
+                        Defaults to enabled for openai_live and ava_zero_pipecat and
+                        disabled for other providers. Use --no-realtime-generation to
+                        disable.
   --reasoning-effort {minimal,low,medium,high,xhigh}
                         Reasoning effort for thinking models. Only applies to
                         providers that support it (e.g. OpenAI).
