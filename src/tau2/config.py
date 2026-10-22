@@ -228,6 +228,15 @@ DEFAULT_QWEN_VOICE = "Tina"  # overridable; Qwen3.5-Omni-Realtime default voice
 DEFAULT_QWEN_INPUT_SAMPLE_RATE = 16000  # fixed, API-defined
 DEFAULT_QWEN_OUTPUT_SAMPLE_RATE = 24000  # fixed, API-defined
 
+# =============================================================================
+# PHONIC PROVIDER (overridable model; project via env var)
+# =============================================================================
+DEFAULT_PHONIC_API_BASE = "https://api.phonic.co/v1"
+DEFAULT_PHONIC_WS_BASE = "wss://api.phonic.co"
+DEFAULT_PHONIC_PROJECT = "main"  # overridable via PHONIC_PROJECT
+DEFAULT_PHONIC_MODEL = "phonic-1"  # overridable; sent as phonic_model
+DEFAULT_PHONIC_VOICE = "grant"
+
 # Explicit-language cascaded runs use the same speech models and voice in every
 # language. Flash supports language hints; Multilingual V2 does not.
 DEFAULT_CASCADED_MULTILINGUAL_STT_MODEL = "nova-3"
@@ -260,6 +269,7 @@ DEFAULT_AUDIO_NATIVE_MODELS = {
     "nova": DEFAULT_NOVA_MODEL,
     "qwen": DEFAULT_QWEN_MODEL,
     "avartha_pipecat": DEFAULT_AVARTHA_MODEL,
+    "phonic": DEFAULT_PHONIC_MODEL,
     "livekit": "dummy",
 }
 
@@ -272,6 +282,7 @@ DEFAULT_AUDIO_NATIVE_REASONING_EFFORT: dict[str, str | None] = {
     "nova": None,
     "qwen": None,
     "avartha_pipecat": None,
+    "phonic": "high",  # intelligence level; low/medium/minimal map to standard
     "livekit": None,
 }
 
@@ -284,6 +295,7 @@ AUDIO_NATIVE_PROVIDER_TYPES = {
     "nova": "audio_native",
     "qwen": "audio_native",
     "avartha_pipecat": "cascaded",
+    "phonic": "audio_native",
     "livekit": "cascaded",
 }
 

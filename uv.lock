@@ -1991,6 +1991,22 @@ wheels = [
 ]
 
 [[package]]
+name = "phonic"
+version = "0.32.39"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "pydantic-core" },
+    { name = "typing-extensions" },
+    { name = "websockets" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/4a/f4/d599f83a0cb493dd9aad579ba46b613137dcf402dc8e401d46c26b2de0be/phonic-0.32.39.tar.gz", hash = "sha256:e4f46cded55f6f53f03d523ea4022acdce3cc418c73b89ffc235b3322a438d91", size = 221255, upload-time = "2026-10-14T04:45:28.89Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/df/e3/81a82958942f3d09c92b475ae3958808503790e5f15999a53757b15c4a7c/phonic-0.32.39-py3-none-any.whl", hash = "sha256:4b76dbc86da620ea073753d2339799c5105d5c290f9422b2b2334dd38765931e", size = 471962, upload-time = "2026-10-14T04:45:27.5Z" },
+]
+
+[[package]]
 name = "pillow"
 version = "12.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2973,6 +2989,7 @@ all = [
     { name = "matplotlib" },
     { name = "openai" },
     { name = "openpyxl" },
+    { name = "phonic" },
     { name = "plotly" },
     { name = "pre-commit" },
     { name = "pyaudio" },
@@ -3022,6 +3039,7 @@ live = [
     { name = "livekit-plugins-deepgram" },
     { name = "livekit-plugins-elevenlabs" },
     { name = "livekit-plugins-openai" },
+    { name = "phonic" },
     { name = "pyaudio" },
     { name = "pydub" },
     { name = "scipy" },
@@ -3045,6 +3063,7 @@ voice = [
     { name = "livekit-plugins-deepgram" },
     { name = "livekit-plugins-elevenlabs" },
     { name = "livekit-plugins-openai" },
+    { name = "phonic" },
     { name = "pyaudio" },
     { name = "pydub" },
     { name = "scipy" },
@@ -3082,6 +3101,7 @@ requires-dist = [
     { name = "openai", marker = "extra == 'knowledge'", specifier = ">=1.0.0" },
     { name = "openpyxl", marker = "extra == 'localization-review'", specifier = ">=3.1.5,<4" },
     { name = "pandas", specifier = ">=2.2.3" },
+    { name = "phonic", marker = "extra == 'voice'", specifier = ">=0.32.39" },
     { name = "plotly", marker = "extra == 'experiments'", specifier = ">=6.0.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.0.0" },
     { name = "psutil", specifier = ">=7.0.0" },
