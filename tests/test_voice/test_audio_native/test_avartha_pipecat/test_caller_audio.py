@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from tau2.voice.audio_native.audio_converter import StreamingTelephonyConverter
-from tau2.voice.audio_native.ava_zero_pipecat.caller_audio import CallerAudioUpsampler
+from tau2.voice.audio_native.avartha_pipecat.caller_audio import CallerAudioUpsampler
 
 
 def _tone_ulaw(hz, seconds=1.0, amplitude=8000):

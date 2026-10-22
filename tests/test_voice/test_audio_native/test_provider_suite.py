@@ -98,15 +98,15 @@ PROVIDERS = [
         ),
     ),
     pytest.param(
-        "ava_zero_pipecat",
+        "avartha_pipecat",
         marks=pytest.mark.skipif(
             not (
-                os.environ.get("AVA_ZERO_PIPECAT_TEST_ENABLED")
-                and os.environ.get("TAU2_AVA_ZERO_BASE_URL")
+                os.environ.get("AVARTHA_PIPECAT_TEST_ENABLED")
+                and os.environ.get("TAU2_AVARTHA_BASE_URL")
                 and os.environ.get("AVARTHA_API_KEY")
             ),
             reason=(
-                "AVA_ZERO_PIPECAT_TEST_ENABLED, TAU2_AVA_ZERO_BASE_URL (a hosted "
+                "AVARTHA_PIPECAT_TEST_ENABLED, TAU2_AVARTHA_BASE_URL (a hosted "
                 "agent's URL), and AVARTHA_API_KEY are required"
             ),
         ),
@@ -375,19 +375,19 @@ def adapter(provider_name: str):
     real_provider = provider_name
     cascaded_config = None
     live_config = None
-    ava_zero_config = None
+    avartha_config = None
     model = None
 
     if provider_name == "openai_live":
         model = os.environ.get("OPENAI_LIVE_MODEL", DEFAULT_OPENAI_LIVE_MODEL)
         live_config = LiveConfig(backend_model=os.environ["OPENAI_LIVE_BACKEND_MODEL"])
-    elif provider_name == "ava_zero_pipecat":
-        from tau2.voice.audio_native.ava_zero_pipecat.config import (
-            AvaZeroPipecatConfig,
+    elif provider_name == "avartha_pipecat":
+        from tau2.voice.audio_native.avartha_pipecat.config import (
+            AvarthaPipecatConfig,
         )
 
-        ava_zero_config = AvaZeroPipecatConfig(
-            base_url=os.environ["TAU2_AVA_ZERO_BASE_URL"]
+        avartha_config = AvarthaPipecatConfig(
+            base_url=os.environ["TAU2_AVARTHA_BASE_URL"]
         )
 
     if provider_name in CASCADED_CONFIG_ALIASES:
@@ -402,7 +402,7 @@ def adapter(provider_name: str):
         cascaded_config=cascaded_config,
         model=model,
         live_config=live_config,
-        ava_zero_config=ava_zero_config,
+        avartha_config=avartha_config,
     )
     yield adapter
     if adapter.is_connected:

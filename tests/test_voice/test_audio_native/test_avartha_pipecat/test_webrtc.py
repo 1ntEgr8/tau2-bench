@@ -7,20 +7,20 @@ import pytest
 
 pytest.importorskip("aiortc")
 
-import tau2.voice.audio_native.ava_zero_pipecat.webrtc as webrtc_module  # noqa: E402
-from tau2.voice.audio_native.ava_zero_pipecat.config import (  # noqa: E402
-    AvaZeroPipecatConfig,
+import tau2.voice.audio_native.avartha_pipecat.webrtc as webrtc_module  # noqa: E402
+from tau2.voice.audio_native.avartha_pipecat.config import (  # noqa: E402
+    AvarthaPipecatConfig,
 )
-from tau2.voice.audio_native.ava_zero_pipecat.discrete_time_adapter import (  # noqa: E402
-    DiscreteTimeAvaZeroPipecatAdapter,
+from tau2.voice.audio_native.avartha_pipecat.discrete_time_adapter import (  # noqa: E402
+    DiscreteTimeAvarthaPipecatAdapter,
 )
-from tau2.voice.audio_native.ava_zero_pipecat.provider import (  # noqa: E402
+from tau2.voice.audio_native.avartha_pipecat.provider import (  # noqa: E402
     HARNESS_TOOLS_PROTOCOL,
     ProviderErrorEvent,
     ToolCallEvent,
 )
-from tau2.voice.audio_native.ava_zero_pipecat.webrtc import (  # noqa: E402
-    AvaZeroWebRTCProvider,
+from tau2.voice.audio_native.avartha_pipecat.webrtc import (  # noqa: E402
+    AvarthaWebRTCProvider,
     is_digital_silence,
     webrtc_start_body,
 )
@@ -29,15 +29,15 @@ AGENT_URL = "https://platform.example/inference/serverless/pipecat/v1/public/age
 
 
 def webrtc_config(**overrides):
-    return AvaZeroPipecatConfig(base_url=AGENT_URL, **overrides)
+    return AvarthaPipecatConfig(base_url=AGENT_URL, **overrides)
 
 
 def test_adapter_calls_the_hosted_agent():
-    adapter = DiscreteTimeAvaZeroPipecatAdapter(
-        tick_duration_ms=200, ava_zero_config=webrtc_config()
+    adapter = DiscreteTimeAvarthaPipecatAdapter(
+        tick_duration_ms=200, avartha_config=webrtc_config()
     )
 
-    assert isinstance(adapter.provider, AvaZeroWebRTCProvider)
+    assert isinstance(adapter.provider, AvarthaWebRTCProvider)
     assert adapter.provider.url == AGENT_URL
 
 
@@ -67,7 +67,7 @@ def test_only_digital_silence_is_dropped_from_agent_audio():
 
 
 def test_avartha_api_key_is_the_bearer_token(monkeypatch):
-    provider = AvaZeroWebRTCProvider(webrtc_config())
+    provider = AvarthaWebRTCProvider(webrtc_config())
     monkeypatch.delenv("AVARTHA_API_KEY", raising=False)
     with pytest.raises(ValueError, match="AVARTHA_API_KEY"):
         provider._headers()
@@ -212,7 +212,7 @@ def test_call_starts_negotiates_boots_and_exchanges_tools(monkeypatch):
     monkeypatch.setattr(webrtc_module, "RTCPeerConnection", make_peer)
 
     async def exercise():
-        provider = AvaZeroWebRTCProvider(AvaZeroPipecatConfig(base_url=AGENT_URL + "/"))
+        provider = AvarthaWebRTCProvider(AvarthaPipecatConfig(base_url=AGENT_URL + "/"))
         await provider.connect(system_prompt="Retail policy")
         await provider.register_tools([{"name": "get_order", "inputSchema": {}}])
         channel = peers[0].channel
@@ -281,7 +281,7 @@ def test_call_starts_negotiates_boots_and_exchanges_tools(monkeypatch):
 
 def test_channel_loss_mid_call_fails_the_session():
     async def exercise():
-        provider = AvaZeroWebRTCProvider(webrtc_config())
+        provider = AvarthaWebRTCProvider(webrtc_config())
         provider._reset_session_state()
         channel = FakeChannel()
         peer = FakePeer(webrtc_module.RTCConfiguration(iceServers=[]))
@@ -293,7 +293,7 @@ def test_channel_loss_mid_call_fails_the_session():
     provider, events = asyncio.run(exercise())
 
     assert events == [
-        ProviderErrorEvent("Ava Zero data channel closed before disconnect")
+        ProviderErrorEvent("Avartha data channel closed before disconnect")
     ]
     with pytest.raises(RuntimeError, match="closed before disconnect"):
         asyncio.run(provider.send_audio(b"\x00\x00", 16000))

@@ -18,7 +18,7 @@ tau2 run --domain retail --audio-native --num-tasks 1 --verbose-logs
 | OpenAI Realtime | `--audio-native-provider openai` | `OPENAI_API_KEY` |
 | Google Gemini Live | `--audio-native-provider gemini` | `GEMINI_API_KEY` (or Vertex AI credentials) |
 | xAI Grok Voice | `--audio-native-provider xai` | `XAI_API_KEY` |
-| Ava Zero (Pipecat RTVI) | `--audio-native-provider ava_zero_pipecat` | A hosted agent URL and `AVARTHA_API_KEY` |
+| Avartha (Pipecat RTVI) | `--audio-native-provider avartha_pipecat` | A hosted agent URL and `AVARTHA_API_KEY` |
 
 The default provider is `openai`. Use `--audio-native-model` to override the default model for a provider.
 
@@ -139,6 +139,6 @@ See the [Voice Persona Setup Guide](../../../docs/voice-personas.md) for step-by
 | `GEMINI_API_KEY` | Gemini Live provider, and the speech-fidelity judge |
 | `XAI_API_KEY` | xAI Grok Voice provider |
 | `ELEVENLABS_API_KEY` | User simulator TTS (synthesis) |
-| `AVARTHA_API_KEY` | Ava Zero hosted-agent calls (`--audio-native-provider ava_zero_pipecat`) |
+| `AVARTHA_API_KEY` | Avartha hosted-agent calls (`--audio-native-provider avartha_pipecat`) |
 | `DEEPGRAM_API_KEY` | Transcription (Deepgram nova-2, nova-3) |
 | `TAU2_VOICE_ID_<LANG>_<PERSONA>` | Custom voice ID overrides (see [Voice Persona Setup](../../../docs/voice-personas.md)) |
