@@ -1,7 +1,7 @@
 """Discrete-time adapter for the Phonic speech-to-speech API.
 
-Phonic uses G.711 mu-law at 8 kHz natively, which matches tau2's telephony
-format, so audio passes through without conversion.
+Phonic accepts and returns G.711 mu-law at 8 kHz, which matches tau2's
+telephony format, so audio passes through without conversion.
 
 Phonic processes audio as a live call, so it expects a continuous real-time
 stream. Between ticks the orchestrator can block for seconds (user simulator

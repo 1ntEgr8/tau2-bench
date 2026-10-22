@@ -1,8 +1,8 @@
 """Phonic speech-to-speech provider for tau2 voice simulation.
 
-Wraps the Phonic speech-to-speech WebSocket. Phonic speaks G.711 mu-law at 8 kHz natively
-(``mulaw_8000``), which is tau2's telephony format, so no audio conversion is
-needed.
+Wraps the Phonic speech-to-speech WebSocket. Phonic accepts and returns G.711
+mu-law at 8 kHz (``mulaw_8000``), which is tau2's telephony format, so no audio
+conversion is needed.
 
 Each session sends the benchmark's system prompt and tools inline. Tools are
 ``custom_websocket`` tools with their exact tau names, so tool calls arrive as

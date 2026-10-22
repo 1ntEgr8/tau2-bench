@@ -347,7 +347,7 @@ class DiscreteTimeAudioNativeAgent(FullDuplexAgent[DiscreteTimeAgentState]):
             # Turn detection is configured on the hosted agent.
             self.vad_config = None
         elif provider == "phonic":
-            # Phonic's speech recognition does its own turn detection.
+            # Phonic does its own turn detection.
             self.vad_config = None
         elif provider == "livekit":
             from tau2.voice.audio_native.livekit.discrete_time_adapter import (
