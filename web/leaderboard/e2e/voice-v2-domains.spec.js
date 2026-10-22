@@ -112,14 +112,14 @@ test('moving to /progress shows the English progress view', async ({ page }) => 
   await expect(page.locator('.mv-leaderboard-table')).toBeVisible()
 })
 
-test('a same-path popstate keeps the English only toggle', async ({ page }) => {
+test('a same-path popstate keeps the English toggle', async ({ page }) => {
   await page.goto('/leaderboard?benchmark=voice')
-  await page.getByRole('button', { name: 'English only' }).click()
+  await page.getByRole('button', { name: 'English', exact: true }).click()
   await page.evaluate(() => {
     window.history.pushState(null, '', '/leaderboard?benchmark=voice')
     window.dispatchEvent(new PopStateEvent('popstate'))
   })
-  await expect(page.getByRole('button', { name: 'English only' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByRole('button', { name: 'English', exact: true })).toHaveAttribute('aria-pressed', 'true')
 })
 
 test('the language map view survives a reload and leaves with the τ-i18n view', async ({ page }) => {
@@ -133,7 +133,7 @@ test('the language map view survives a reload and leaves with the τ-i18n view',
   await expect(page).not.toHaveURL(/view=/)
   await tab('Language map').click()
   await expect(page).toHaveURL(/view=languages/)
-  await page.getByRole('button', { name: 'English only' }).click()
+  await page.getByRole('button', { name: 'English', exact: true }).click()
   await expect(page).not.toHaveURL(/view=/)
 })
 
