@@ -48,7 +48,7 @@
     "evaluation_date": "2026-10-22",
     "tau2_bench_version": "1.0.1",
     "user_simulator": "v1.0",
-    "notes": "Standard Ava Zero evaluation through the avartha_pipecat adapter against a hosted Ava Zero agent over WebRTC, with Qwen3-ASR-1.7B ASR, GLM-5.3 frontend, DeepSeek-V4.1-Flash-1017 backend at max reasoning effort, Qwen3-TTS-12Hz-1.7B TTS, regular speech complexity, realtime user generation, seed 300, and the default hallucination reviewer. User simulator personas used Avartha's own ElevenLabs voices. One trial was scheduled for every task: airline 50, retail 114, and telecom 114. The submitted run is the best of three full runs (overall 77.54%, 80.42%, and 80.26%).",
+    "notes": "Standard Ava Zero evaluation through the avartha_pipecat adapter against a hosted Ava Zero agent on the Avartha Platform over WebRTC. We use GLM 5.3 Anchor and Deepseek v4.1 Flash 1017 as the backend worker at Max reasoning. Regular speech complexity, realtime user generation, seed 300, and the default Opus 4.5 hallucination reviewer. One trial was scheduled for every task: airline 50, retail 114, and telecom 114.",
     "verification": {
       "modified_prompts": false,
       "omitted_questions": false
