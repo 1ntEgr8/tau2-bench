@@ -51,7 +51,8 @@
     "notes": "Standard Ava Zero evaluation through the avartha_pipecat adapter against a hosted Ava Zero agent on the Avartha Platform over WebRTC. We use GLM 5.3 Anchor and Deepseek v4.1 Flash 1017 as the backend worker at Max reasoning. Regular speech complexity, realtime user generation, seed 300, and the default Opus 4.5 hallucination reviewer. One trial was scheduled for every task: airline 50, retail 114, and telecom 114.",
     "verification": {
       "modified_prompts": false,
-      "omitted_questions": false
+      "omitted_questions": false,
+      "details": "All 278 base tasks (airline 50, retail 114, telecom 114) have one scored trajectory. The submitted scores were computed from the saved trajectories with tau2 submit prepare and checked with tau2 submit validate."
     }
   },
   "voice_config": {
