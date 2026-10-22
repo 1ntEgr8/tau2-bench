@@ -23,6 +23,7 @@ def run_simulation(
     evaluation_type: EvaluationType = EvaluationType.ALL,
     env_kwargs: Optional[dict] = None,
     communicate_scoring: Optional[CommunicateScoring] = None,
+    canonical_tasks: bool = False,
 ) -> SimulationRun:
     """Run a simulation and evaluate the result.
 
@@ -43,6 +44,8 @@ def run_simulation(
         communicate_scoring: Scorer for orchestrators built without a call
             context; defaults to the pinned semantic judge. An orchestrator's
             call context always supplies its own scorer.
+        canonical_tasks: Whether the run's plan bound the canonical registry
+            tasks (voice-v1); the call's language reload must repeat it.
 
     Returns:
         SimulationRun with reward_info attached.
@@ -67,13 +70,15 @@ def run_simulation(
     if call_context is not None:
         from tau2.multilingual.runtime import (
             language_environment_kwargs,
-            reload_call_language,
             task_digest,
         )
+        from tau2.runner.presets import reload_recorded_call
 
         context = call_context.language
-        loaded = reload_call_language(
-            context, orchestrator.environment.get_domain_name()
+        loaded = reload_recorded_call(
+            context,
+            orchestrator.environment.get_domain_name(),
+            canonical_tasks=canonical_tasks,
         )
         if task_digest(orchestrator.task) != context.task_sha256:
             raise ValueError(

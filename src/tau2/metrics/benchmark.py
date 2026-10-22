@@ -35,7 +35,11 @@ from tau2.data_model.simulation import (
     TextRunConfig,
     VoiceRunConfig,
 )
-from tau2.runner.presets import binding_revision, load_cell_language
+from tau2.runner.presets import (
+    binding_revision,
+    load_cell_language,
+    uses_canonical_tasks,
+)
 
 
 class IncompleteSubmissionError(ValueError):
@@ -137,7 +141,12 @@ def _recorded_config(info: Info) -> RunConfig:
 
 
 def _authoritative_language(
-    language: str, domain: str, expected_binding: str, mode: str
+    language: str,
+    domain: str,
+    expected_binding: str,
+    mode: str,
+    *,
+    canonical_tasks: bool = False,
 ):
     """Require exact published source assets; saved metadata cannot authenticate itself.
 
@@ -146,7 +155,9 @@ def _authoritative_language(
     there is no fallback to a task or persona supplied inside the saved result.
     """
     try:
-        loaded = load_cell_language(language, domain, mode)
+        loaded = load_cell_language(
+            language, domain, mode, canonical_tasks=canonical_tasks
+        )
     except (OSError, ValueError) as exc:
         raise ValueError(
             f"Cannot load authoritative benchmark artifacts for {language}/{domain}; "
@@ -262,7 +273,11 @@ def read_task_trials(path: Path, frame: BenchmarkFrame) -> list[TaskTrial]:
             + ", ".join(changed)
         )
     authoritative = _authoritative_language(
-        record.language, record.domain, cell.binding_revision, frame.mode
+        record.language,
+        record.domain,
+        cell.binding_revision,
+        frame.mode,
+        canonical_tasks=uses_canonical_tasks(frame),
     )
     if info.language_artifacts != authoritative.artifact_pins:
         raise ValueError(

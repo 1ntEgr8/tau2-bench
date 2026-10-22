@@ -33,7 +33,7 @@ from tau2.data_model.run_config import AudioNativeConfig
 from tau2.data_model.simulation import RunConfig, TextRunConfig, VoiceRunConfig
 
 if TYPE_CHECKING:
-    from tau2.data_model.language import TaskSelection
+    from tau2.data_model.language import LanguageTaskInfo, TaskSelection
     from tau2.multilingual.runtime import LoadedLanguage
 
 
@@ -154,6 +154,43 @@ def load_cell_language(
     )
 
 
+def uses_canonical_tasks(benchmark: object | None) -> bool:
+    """Whether a benchmark binds the canonical registry tasks (voice-v1).
+
+    voice-v1 skips the English pack's reviewed task replacements (retail and
+    telecom ``tasks_file``). Accepts a run config's benchmark request, a recorded
+    ``BenchmarkRunInfo`` or a frame, so every reload repeats the planner's rule.
+    """
+    return getattr(benchmark, "benchmark_version", None) == "voice-v1"
+
+
+def reload_recorded_call(
+    context: "LanguageTaskInfo", domain: str, *, canonical_tasks: bool = False
+) -> "LoadedLanguage":
+    """Reload exactly the binding a recorded call used, rejecting any drift.
+
+    ``canonical_tasks`` must repeat the planner's choice (``uses_canonical_tasks``).
+    Kept outside ``multilingual.runtime``, whose source is part of the pinned
+    intake runtime rules digest.
+    """
+    from tau2.multilingual.runtime import load_language, reload_call_language
+
+    if not canonical_tasks:
+        return reload_call_language(context, domain)
+    loaded = load_language(
+        context.language,
+        domain,
+        mode=context.mode,
+        localize_db=context.scenario_mode != "canonical",
+        selection=context.task_selection,
+        pack_extension=context.pack_extension,
+        canonical_tasks=True,
+    )
+    if loaded.artifact_pins != context.artifact_pins:
+        raise ValueError("published language artifacts differ from the recorded call")
+    return loaded
+
+
 def resolve_configs(
     frame: BenchmarkFrame,
     template: RunConfig,
@@ -232,7 +269,7 @@ def resolve_configs(
             cell.language,
             cell.domain,
             frame.mode,
-            canonical_tasks=frame.benchmark_version == "voice-v1",
+            canonical_tasks=uses_canonical_tasks(frame),
         )
         if binding_revision(loaded) != cell.binding_revision:
             raise ValueError(

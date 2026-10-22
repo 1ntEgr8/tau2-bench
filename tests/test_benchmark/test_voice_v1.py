@@ -11,10 +11,18 @@ from tau2.data_model.simulation import (
     TerminationReason,
     VoiceRunConfig,
 )
-from tau2.multilingual.runtime import load_language
+from tau2.metrics.benchmark import _authoritative_language
+from tau2.multilingual.runtime import load_language, load_run_language, resolve_task
 from tau2.runner.cli import check_benchmark_selection
 from tau2.runner.helpers import get_info
-from tau2.runner.presets import BenchmarkRequest, load_frame, resolve_benchmark
+from tau2.runner.presets import (
+    BenchmarkRequest,
+    load_cell_language,
+    load_frame,
+    reload_recorded_call,
+    resolve_benchmark,
+    uses_canonical_tasks,
+)
 from tau2.scripts.leaderboard.prepare_submission import validate_submission_traj_set
 from tau2.task_subsets.store import load_frame as load_canonical_frame
 
@@ -191,3 +199,47 @@ def test_voice_v1_submission_requires_the_recorded_full_domain(tmp_path):
     unmarked.info.benchmark = None
     assert "mix benchmark modes" in validate_submission_traj_set([results, unmarked])[1]
     assert validate_submission_traj_set([unmarked])[0]
+
+
+@pytest.mark.parametrize("domain", ["airline", "retail", "telecom"])
+def test_voice_v1_calls_and_export_reload_the_pinned_binding(domain):
+    """Voice V1 pins the canonical task set, also where the pack publishes a
+    tasks file (retail, telecom); the per-call reload and the authoritative
+    export must load that same binding, and never guess between the two."""
+    frame = load_frame("voice-v1")
+    assert uses_canonical_tasks(frame)
+    cell = next(cell for cell in frame.cells if cell.domain == domain)
+    plan = load_cell_language(
+        cell.language, cell.domain, frame.mode, canonical_tasks=True
+    )
+    context = resolve_task(plan, plan.tasks[0], 300)
+    reloaded = reload_recorded_call(context, cell.domain, canonical_tasks=True)
+    assert reloaded.artifact_pins == context.artifact_pins
+    if plan.binding.tasks_file is not None:
+        with pytest.raises(ValueError, match="differ from the recorded call"):
+            reload_recorded_call(context, cell.domain)
+    authoritative = _authoritative_language(
+        cell.language,
+        cell.domain,
+        cell.binding_revision,
+        frame.mode,
+        canonical_tasks=True,
+    )
+    assert authoritative.artifact_pins == plan.artifact_pins
+
+
+def test_voice_v1_run_configs_reload_their_planned_binding(tmp_path):
+    """The batch path derives the reload rule from each planned run config."""
+    plan = resolve_benchmark(
+        BenchmarkRequest(preset="voice-v1", output=tmp_path / "v1")
+    )
+    for config in plan.configs:
+        assert uses_canonical_tasks(config.benchmark)
+        loaded = load_run_language(config)
+        context = resolve_task(loaded, loaded.tasks[0], 300)
+        reloaded = reload_recorded_call(
+            context,
+            config.domain,
+            canonical_tasks=uses_canonical_tasks(config.benchmark),
+        )
+        assert reloaded.artifact_pins == loaded.artifact_pins
