@@ -59,6 +59,7 @@ from tau2.runner.hallucination_checkpoint import (
     save_review_checkpoint,
 )
 from tau2.runner.helpers import get_info, make_run_name, select_run_tasks
+from tau2.runner.presets import uses_canonical_tasks
 from tau2.runner.progress import StatusMonitor, run_with_retry
 from tau2.runner.simulation import run_simulation
 from tau2.runner.work import WorkQueue, WorkUnit, make_unit_id
@@ -443,7 +444,10 @@ def run_single_task(
             _build_env_kwargs(config, task, language_context=call_language) or None
         )
         simulation = run_simulation(
-            orchestrator, evaluation_type=evaluation_type, env_kwargs=env_kwargs
+            orchestrator,
+            evaluation_type=evaluation_type,
+            env_kwargs=env_kwargs,
+            canonical_tasks=uses_canonical_tasks(config.benchmark),
         )
 
         simulation.complication = sample_run_complication(config, task)

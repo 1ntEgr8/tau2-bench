@@ -121,10 +121,12 @@ def _recorded_language(results: Results) -> LoadedLanguage | None:
             "Saved language contexts predate the installed pack schema; "
             "rescore them with the release that produced them"
         )
-    from tau2.multilingual.runtime import reload_call_language
+    from tau2.runner.presets import reload_recorded_call, uses_canonical_tasks
 
-    loaded = reload_call_language(
-        contexts[0], results.info.environment_info.domain_name
+    loaded = reload_recorded_call(
+        contexts[0],
+        results.info.environment_info.domain_name,
+        canonical_tasks=uses_canonical_tasks(results.info.benchmark),
     )
     if loaded.artifact_pins != results.info.language_artifacts:
         raise ValueError(
