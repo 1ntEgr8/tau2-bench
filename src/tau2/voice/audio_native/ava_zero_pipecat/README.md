@@ -31,6 +31,10 @@ tau2 run --domain retail --audio-native \
 
 `--reasoning-effort` is rejected: reasoning is configured on the agent.
 
+The agent speaks and listens on the wall clock, so ticks are paced in real
+time and the user simulator's LLM and TTS run without blocking them, as for
+`openai_live`. `--no-realtime-generation` turns the latter off.
+
 ## What happens on each call
 
 1. `POST <agent-url>/start` with `caller_tools: true` and the unmodified domain
@@ -58,8 +62,9 @@ tau2 run --domain retail --audio-native \
 The agent's transcript is revealed only as far as its audio has actually
 played. The agent sends each sentence of text before the audio that speaks it;
 the adapter holds the text back until the agent's word-timing events or its
-end-of-utterance playback caption show that the words aired. On barge-in, text
-the caller has not heard is discarded.
+end-of-utterance playback caption show that the words aired. A word the
+alignment splits in two ("T-shir" + "t") counts once both pieces have aired.
+On barge-in, text the caller has not heard is discarded.
 
 ## Protocol compatibility
 

@@ -310,7 +310,8 @@ def add_run_args(parser):
         action=argparse.BooleanOptionalAction,
         default=None,
         help="Run user LLM/TTS generation without blocking audio ticks. "
-        "Defaults to enabled for openai_live and disabled for other providers. "
+        "Defaults to enabled for openai_live and ava_zero_pipecat and disabled for "
+        "other providers. "
         "Use --no-realtime-generation to disable.",
     )
     parser.add_argument(

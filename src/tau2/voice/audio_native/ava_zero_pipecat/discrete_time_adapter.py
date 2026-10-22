@@ -95,6 +95,9 @@ class _SpokenTranscript:
         self._audio_received = 0
         self._audio_played = 0
         self._match_cursor = 0
+        # A word that matched nothing yet: possibly the first piece of a word
+        # the alignment split ("T-shir" + "t", "a" + "t"). See add_word.
+        self._pending_piece = ""
         # Where the utterance now playing starts in ``text``.
         self._utterance_start = 0
         self._spoken_chars = 0
@@ -123,12 +126,33 @@ class _SpokenTranscript:
         self._audio_received += num_bytes
 
     def add_word(self, word: str) -> None:
+        """Advance past a spoken word, joining it to a split word's first piece.
+
+        TTS alignment splits words into pieces ("T-shir" + "t", "a" + "t",
+        "8408879784" + "35."). A piece matches no whole word, so on its own it
+        would leave text waiting for the caption at the utterance's end, and a
+        barge-in before then discards the rest of the line although its audio
+        played. A word that matches nothing is held; when the next word joins
+        it into one that matches, both count as spoken. Otherwise the held
+        piece is dropped and the new word is matched alone, so "I" followed by
+        "If" still never matches inside "If".
+        """
+
         needle = _unescape(word).strip().lower()
         if not needle:
             return
+        piece, self._pending_piece = self._pending_piece, ""
+        if piece and self._match(piece + needle):
+            return
+        if not self._match(needle):
+            self._pending_piece = needle
+
+    def _match(self, needle: str) -> bool:
+        """Advance past ``needle`` if it is the next spoken word; say whether it was."""
+
         sentence = bisect_right(self._sentence_ends, self._match_cursor)
         if sentence == len(self._sentence_ends):
-            return  # its sentence has not arrived yet
+            return False  # its sentence has not arrived yet
         haystack = self.text.lower()
         limit = min(
             self._match_cursor + len(needle) + _WORD_MATCH_SLACK_CHARS,
@@ -141,10 +165,11 @@ class _SpokenTranscript:
             # Mid-word: only the rest of that word may follow ("Wha" + "t").
             if haystack.startswith(needle, cursor):
                 self._advance(cursor + len(needle))
-            return
+                return True
+            return False
         # Otherwise a whole word. A fragment ("Wha") is indistinguishable from
-        # a short word inside a longer one ("I" in "If"), so it waits for the
-        # next whole word rather than risk jumping ahead of the audio.
+        # a short word inside a longer one ("I" in "If"), so it matches nothing
+        # here; add_word joins it with the next piece instead.
         if len(needle.strip(".,!?;:—-")) < _WORD_SKIP_MIN_CHARS:
             # Too common to skip ahead for: only the very next word.
             nxt = cursor
@@ -156,6 +181,8 @@ class _SpokenTranscript:
             index = haystack.find(needle, index + 1, limit)
         if index >= 0:
             self._advance(index + len(needle))
+            return True
+        return False
 
     @staticmethod
     def _is_whole_word(text: str, index: int, length: int) -> bool:
@@ -171,6 +198,7 @@ class _SpokenTranscript:
         produced, or a reply's unpunctuated tail) is inserted where it aired.
         """
 
+        self._pending_piece = ""
         caption = " ".join(_unescape(caption).split())
         if not caption:
             return
@@ -219,6 +247,7 @@ class _SpokenTranscript:
         self._audio_received = self._audio_played
         self._match_cursor = self._spoken_chars = self._shown_chars
         self._utterance_start = self._match_cursor
+        self._pending_piece = ""
         self._marks.clear()
 
     def get_transcript_for_audio(self, audio_bytes_to_play: int) -> str:
@@ -284,6 +313,12 @@ class DiscreteTimeAvaZeroPipecatAdapter(DiscreteTimeAdapter):
         self.model = model or DEFAULT_AVA_ZERO_MODEL
         self.reasoning_effort = reasoning_effort
         self.ava_zero_config = config
+        # The hosted call is live WebRTC: the agent speaks and listens on the
+        # wall clock, so ticks must keep to it. Unpaced, every stall of the
+        # user simulator left the caller track sending silence mid-word and
+        # queued agent audio that a barge-in then discarded as unheard,
+        # although the agent had already counted it as played.
+        self.realtime_pacing = True
 
         self._input_converter = CallerAudioUpsampler(DEFAULT_AVA_ZERO_INPUT_SAMPLE_RATE)
         self._output_converters: dict[int, StreamingTelephonyConverter] = {}

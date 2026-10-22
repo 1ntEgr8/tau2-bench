@@ -68,7 +68,7 @@ Do NOT change this order — it affects noise levels and SNR behavior.
 ### Key Components
 
 - **`BackgroundNoiseGenerator`**: Looping background noise with SNR-based mixing. Also owns burst scheduling (Poisson).
-- **`OutOfTurnSpeechGenerator`**: Loads vocal tics and non-directed phrases from a process-wide TTS cache, materializing misses sequentially. Non-directed phrases get muffling; vocal tics are clear.
+- **`OutOfTurnSpeechGenerator`**: Pre-generates vocal tics and non-directed phrases via TTS. Non-directed phrases get muffling; vocal tics are clear.
 - **`EffectScheduler`**: Poisson for burst noise/speech inserts, Gilbert-Elliott for frame drops.
 
 ### Audio Tags

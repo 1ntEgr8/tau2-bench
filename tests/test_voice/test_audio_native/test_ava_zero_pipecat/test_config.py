@@ -41,6 +41,20 @@ def test_audio_native_config_records_the_ava_zero_label():
     assert config.model == "ava-zero"
 
 
+def test_the_user_is_generated_without_blocking_ticks_by_default():
+    settings = AvaZeroPipecatConfig(base_url=AGENT_URL)
+
+    config = AudioNativeConfig(provider="ava_zero_pipecat", ava_zero_config=settings)
+    assert config.realtime_generation_enabled is True
+
+    config = AudioNativeConfig(
+        provider="ava_zero_pipecat",
+        ava_zero_config=settings,
+        realtime_generation=False,
+    )
+    assert config.realtime_generation_enabled is False
+
+
 def test_ava_zero_config_is_rejected_for_other_providers():
     with pytest.raises(ValidationError, match="only valid"):
         AudioNativeConfig(

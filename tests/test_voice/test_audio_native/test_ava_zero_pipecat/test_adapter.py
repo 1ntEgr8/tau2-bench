@@ -103,6 +103,15 @@ def test_the_hosted_agent_url_is_required():
         create_adapter("ava_zero_pipecat", tick_duration_ms=20)
 
 
+def test_ticks_keep_to_the_wall_clock():
+    adapter = DiscreteTimeAvaZeroPipecatAdapter(
+        tick_duration_ms=20,
+        ava_zero_config=AvaZeroPipecatConfig(base_url=AGENT_URL),
+    )
+
+    assert adapter.realtime_pacing is True
+
+
 def test_reasoning_effort_is_rejected():
     with pytest.raises(ValueError, match="configured on the hosted agent"):
         DiscreteTimeAvaZeroPipecatAdapter(
@@ -371,8 +380,78 @@ def test_played_caption_releases_words_the_alignment_dropped():
         ]
     )
 
-    # "Wha" + "t" could be "I" inside "If": a fragment waits for a whole word.
-    assert shown == ["", "What can I help", " you with today?"]
+    # "Wha" + "t" join into "What", the sentence's next word.
+    assert shown == ["What", " can I help", " you with today?"]
+
+
+def test_a_split_word_keeps_text_with_the_audio_before_a_barge_in():
+    """The alignment aired "T-shirt" as "T-shir" + "t". Text used to stop at " T",
+    and a barge-in then discarded the rest of the line although it had played."""
+
+    shown = _transcripts(
+        [
+            [
+                TranscriptEvent("We have 12 T-shirt styles, and 10 are in stock."),
+                _audio_ticks(1),
+                AgentWordEvent("We"),
+                AgentWordEvent("have"),
+                AgentWordEvent("12"),
+            ],
+            [_audio_ticks(1), AgentWordEvent("T-shir"), AgentWordEvent("t")],
+            [_audio_ticks(1), AgentWordEvent("styles,"), AgentWordEvent("and")],
+            [_audio_ticks(1), AgentWordEvent("10"), AgentWordEvent("are")],
+            [SpeechEvent("speech_started")],
+        ]
+    )
+
+    assert shown == ["We have 12", " T-shirt", " styles, and", " 10 are", ""]
+
+
+def test_a_short_word_split_in_two_still_advances_to_the_amount():
+    """The alignment aired "at" as "a" + "t". The text used to stay at "Camera"
+    until the line ended, after "$481.50." had played."""
+
+    shown = _transcripts(
+        [
+            [
+                TranscriptEvent("The most expensive is the Action Camera at $481.50."),
+                _audio_ticks(1),
+                AgentWordEvent("The"),
+                AgentWordEvent("most"),
+                AgentWordEvent("expensive"),
+                AgentWordEvent("is"),
+                AgentWordEvent("the"),
+            ],
+            [_audio_ticks(1), AgentWordEvent("Action"), AgentWordEvent("Camera")],
+            [_audio_ticks(1), AgentWordEvent("a"), AgentWordEvent("t")],
+            [_audio_ticks(1), AgentWordEvent("$481.50.")],
+        ]
+    )
+
+    assert shown == [
+        "The most expensive is the",
+        " Action Camera",
+        " at",
+        " $481.50.",
+    ]
+
+
+def test_a_piece_its_next_word_does_not_complete_is_dropped():
+    """A held piece joins only the very next word; otherwise the next word
+    is matched alone."""
+
+    shown = _transcripts(
+        [
+            [
+                TranscriptEvent("What can I help you with today?"),
+                _audio_ticks(1),
+                AgentWordEvent("Wha"),
+            ],
+            [_audio_ticks(1), AgentWordEvent("can")],
+        ]
+    )
+
+    assert shown == ["", "What can"]
 
 
 def test_barge_in_discards_the_unheard_rest_of_the_line():
