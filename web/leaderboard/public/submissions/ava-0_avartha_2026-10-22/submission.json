@@ -1,5 +1,5 @@
 {
-  "model_name": "Ava Zero",
+  "model_name": "Ava 0",
   "model_organization": "Avartha",
   "submitting_organization": "Avartha",
   "submission_date": "2026-10-22",
@@ -38,7 +38,7 @@
     "evaluation_date": "2026-10-22",
     "tau2_bench_version": "1.0.1",
     "user_simulator": "v1.0",
-    "notes": "Avartha evaluation of Ava Zero through the avartha_pipecat adapter (added in sierra-research/tau2-bench#631 as ava_zero_pipecat and renamed in this PR), calling a hosted Ava Zero agent over WebRTC. The agent runs on OSS models: Qwen3-ASR-1.7B (ASR), GLM-5.3 (frontend), DeepSeek-V4.1-Flash-1017 (backend), and Qwen3-TTS-12Hz-1.7B (TTS). Base airline, retail, and telecom task sets, regular speech complexity, seed 300, 0.2-second ticks, 1200-second simulated limit, and one scored trial per task. We ran three trials and submit the one with the best overall Pass^1 (80.42%); the other two averaged 77.54% and 80.26%. Ticks follow the wall clock and the user simulator's LLM and TTS run without blocking them (realtime_generation), as for openai_live. Voice user simulator v1.0 with its default customer LLM (gpt-4.1-2025-04-14) and ElevenLabs eleven_v3; the seven personas used voices from Avartha's ElevenLabs account (TAU2_VOICE_ID_* overrides). Run from Avartha's tau2-bench fork, which carries the same adapter code and grades with upstream v1.0.1's hallucination reviewer, on 20 runners per domain with one call each. 11 attempts hit an infrastructure error and were re-run from scratch: 9 failed during call setup and 2 lost the agent's audio track mid-conversation (both in telecom). The reviewer discarded and re-ran 43 conversations in which the simulated user hallucinated. There were no reward-based or agent-error reruns. The hosted agent reports no cost. Trajectory metadata uses the adapter's original name, ava_zero_pipecat, and its configuration fields (hosted agent URL and the run's timeouts); dialogue, tool calls, rewards, and audio are unchanged.",
+    "notes": "Avartha evaluation of Ava 0 through the avartha_pipecat adapter (added in sierra-research/tau2-bench#631 as ava_zero_pipecat and renamed in this PR), calling a hosted Ava 0 agent over WebRTC. The agent runs on OSS models: Qwen3-ASR-1.7B (ASR), GLM-5.3 (frontend), DeepSeek-V4.1-Flash-1017 (backend), and Qwen3-TTS-12Hz-1.7B (TTS). Base airline, retail, and telecom task sets, regular speech complexity, seed 300, 0.2-second ticks, 1200-second simulated limit, and one scored trial per task. We ran three trials and submit the one with the best overall Pass^1 (80.42%); the other two averaged 77.54% and 80.26%. Ticks follow the wall clock and the user simulator's LLM and TTS run without blocking them (realtime_generation), as for openai_live. Voice user simulator v1.0 with its default customer LLM (gpt-4.1-2025-04-14) and ElevenLabs eleven_v3; the seven personas used voices from Avartha's ElevenLabs account (TAU2_VOICE_ID_* overrides). Run from Avartha's tau2-bench fork, which carries the same adapter code and grades with upstream v1.0.1's hallucination reviewer, on 20 runners per domain with one call each. 11 attempts hit an infrastructure error and were re-run from scratch: 9 failed during call setup and 2 lost the agent's audio track mid-conversation (both in telecom). The reviewer discarded and re-ran 43 conversations in which the simulated user hallucinated. There were no reward-based or agent-error reruns. The hosted agent reports no cost. Trajectory metadata uses the adapter's original name, ava_zero_pipecat, and its configuration fields (hosted agent URL and the run's timeouts); dialogue, tool calls, rewards, and audio are unchanged.",
     "verification": {
       "modified_prompts": false,
       "omitted_questions": false,
@@ -47,7 +47,7 @@
   },
   "voice_config": {
     "provider": "Avartha",
-    "model": "ava-zero",
+    "model": "ava-0",
     "tick_duration_seconds": 0.2,
     "max_steps_seconds": 1200.0,
     "user_tts_provider": "elevenlabs/eleven_v3"
@@ -141,5 +141,6 @@
         "agent_interrupts_count": 444
       }
     }
-  }
+  },
+  "reasoning_effort": "Backend: DeepSeek-V4.1-Flash-1017 (max)"
 }
