@@ -74,7 +74,7 @@ test('multilingual leaderboard ranks submitted packages', async ({ page }) => {
 
 test('1.x English voice tab is unchanged by 2.0 packages', async ({ page }) => {
   await page.goto('/leaderboard?benchmark=voice')
-  await page.getByRole('button', { name: 'English only' }).click()
+  await page.getByRole('button', { name: 'English', exact: true }).click()
   await expect(page.locator('.reliability-table.voice-table tbody tr.model-row').first()).toBeVisible()
   await expect(page.locator('tr[data-package]')).toHaveCount(0)
 })
