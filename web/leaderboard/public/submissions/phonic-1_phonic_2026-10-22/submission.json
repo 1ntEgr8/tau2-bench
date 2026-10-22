@@ -5,6 +5,9 @@
   "submission_date": "2026-10-22",
   "submission_type": "standard",
   "modality": "voice",
+  "model_release": {
+    "release_date": "2026-10-22"
+  },
   "contact_info": {
     "email": "qiong@phonic.ai"
   },
