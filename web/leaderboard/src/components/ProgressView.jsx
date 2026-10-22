@@ -26,7 +26,7 @@ const ORG_TINT = {
   'Moonshot AI': '#000000',
   'Zhipu AI': '#3268FB',
   'Distyl AI': '#7C3AED',
-  'Avartha': '#A09065',
+  'Avartha': '#18171C',
 }
 
 const ORG_EMOJI = {
