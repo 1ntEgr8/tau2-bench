@@ -5,19 +5,19 @@ import pytest
 
 from tau2.environment.tool import Tool
 from tau2.voice.audio_native.adapter import create_adapter
-from tau2.voice.audio_native.ava_zero_pipecat.config import AvaZeroPipecatConfig
-from tau2.voice.audio_native.ava_zero_pipecat.discrete_time_adapter import (
-    DiscreteTimeAvaZeroPipecatAdapter,
+from tau2.voice.audio_native.avartha_pipecat.config import AvarthaPipecatConfig
+from tau2.voice.audio_native.avartha_pipecat.discrete_time_adapter import (
+    DiscreteTimeAvarthaPipecatAdapter,
 )
-from tau2.voice.audio_native.ava_zero_pipecat.provider import (
+from tau2.voice.audio_native.avartha_pipecat.provider import (
     AgentAudioEvent,
     AgentLLMStartedEvent,
     AgentLLMTextEvent,
     AgentPlaybackEvent,
     AgentStartedSpeakingEvent,
     AgentWordEvent,
-    AvaZeroBootError,
-    AvaZeroProtocolError,
+    AvarthaBootError,
+    AvarthaProtocolError,
     SpeechEvent,
     ToolCallEvent,
     TranscriptEvent,
@@ -28,7 +28,7 @@ AGENT_URL = "https://platform.example/inference/serverless/pipecat/v1/public/age
 
 class FakeProvider:
     def __init__(self, events_by_tick=(), boot_failures=0):
-        self.config = AvaZeroPipecatConfig(base_url=AGENT_URL)
+        self.config = AvarthaPipecatConfig(base_url=AGENT_URL)
         self.events_by_tick = deque(events_by_tick)
         self.boot_failures = boot_failures
         self.connect_attempts = 0
@@ -45,7 +45,7 @@ class FakeProvider:
         self.connect_prompts.append(system_prompt)
         self.is_connected = True
         if self.connect_attempts <= self.boot_failures:
-            raise AvaZeroBootError("cold worker")
+            raise AvarthaBootError("cold worker")
 
     async def register_tools(self, schemas):
         self.registered = schemas
@@ -85,28 +85,28 @@ def make_lookup_tool():
     return Tool(lookup)
 
 
-def test_factory_constructs_ava_zero_for_a_hosted_agent():
-    config = AvaZeroPipecatConfig(base_url=AGENT_URL)
+def test_factory_constructs_avartha_for_a_hosted_agent():
+    config = AvarthaPipecatConfig(base_url=AGENT_URL)
 
     adapter, model = create_adapter(
-        "ava_zero_pipecat", tick_duration_ms=20, ava_zero_config=config
+        "avartha_pipecat", tick_duration_ms=20, avartha_config=config
     )
 
-    assert isinstance(adapter, DiscreteTimeAvaZeroPipecatAdapter)
+    assert isinstance(adapter, DiscreteTimeAvarthaPipecatAdapter)
     assert model == "ava-zero"
     assert adapter.model == "ava-zero"
-    assert adapter.ava_zero_config is config
+    assert adapter.avartha_config is config
 
 
 def test_the_hosted_agent_url_is_required():
     with pytest.raises(ValueError, match="hosted agent's URL"):
-        create_adapter("ava_zero_pipecat", tick_duration_ms=20)
+        create_adapter("avartha_pipecat", tick_duration_ms=20)
 
 
 def test_ticks_keep_to_the_wall_clock():
-    adapter = DiscreteTimeAvaZeroPipecatAdapter(
+    adapter = DiscreteTimeAvarthaPipecatAdapter(
         tick_duration_ms=20,
-        ava_zero_config=AvaZeroPipecatConfig(base_url=AGENT_URL),
+        avartha_config=AvarthaPipecatConfig(base_url=AGENT_URL),
     )
 
     assert adapter.realtime_pacing is True
@@ -114,10 +114,10 @@ def test_ticks_keep_to_the_wall_clock():
 
 def test_reasoning_effort_is_rejected():
     with pytest.raises(ValueError, match="configured on the hosted agent"):
-        DiscreteTimeAvaZeroPipecatAdapter(
+        DiscreteTimeAvarthaPipecatAdapter(
             tick_duration_ms=20,
             reasoning_effort="high",
-            ava_zero_config=AvaZeroPipecatConfig(base_url=AGENT_URL),
+            avartha_config=AvarthaPipecatConfig(base_url=AGENT_URL),
         )
 
 
@@ -135,7 +135,7 @@ def test_audio_transcript_tool_and_result_round_trip():
             [],
         ]
     )
-    adapter = DiscreteTimeAvaZeroPipecatAdapter(
+    adapter = DiscreteTimeAvarthaPipecatAdapter(
         tick_duration_ms=20,
         provider=provider,
     )
@@ -172,10 +172,10 @@ def test_audio_transcript_tool_and_result_round_trip():
 
 def test_boot_failure_retries_before_registering_tools():
     provider = FakeProvider(boot_failures=1)
-    config = AvaZeroPipecatConfig(base_url=AGENT_URL, boot_attempts=2)
-    adapter = DiscreteTimeAvaZeroPipecatAdapter(
+    config = AvarthaPipecatConfig(base_url=AGENT_URL, boot_attempts=2)
+    adapter = DiscreteTimeAvarthaPipecatAdapter(
         tick_duration_ms=20,
-        ava_zero_config=config,
+        avartha_config=config,
         provider=provider,
     )
 
@@ -198,7 +198,7 @@ def test_user_speech_truncates_same_tick_audio():
             ]
         ]
     )
-    adapter = DiscreteTimeAvaZeroPipecatAdapter(
+    adapter = DiscreteTimeAvarthaPipecatAdapter(
         tick_duration_ms=20,
         provider=provider,
     )
@@ -229,7 +229,7 @@ def test_interruption_discards_transcript_accounting_before_next_response():
             ],
         ]
     )
-    adapter = DiscreteTimeAvaZeroPipecatAdapter(
+    adapter = DiscreteTimeAvarthaPipecatAdapter(
         tick_duration_ms=20,
         provider=provider,
     )
@@ -268,7 +268,7 @@ def test_bot_interruption_discards_buffered_and_late_cancelled_output():
             ],
         ]
     )
-    adapter = DiscreteTimeAvaZeroPipecatAdapter(
+    adapter = DiscreteTimeAvarthaPipecatAdapter(
         tick_duration_ms=20,
         provider=provider,
     )
@@ -302,7 +302,7 @@ def _audio_ticks(n):
 
 def _transcripts(events_by_tick):
     provider = FakeProvider(events_by_tick)
-    adapter = DiscreteTimeAvaZeroPipecatAdapter(tick_duration_ms=20, provider=provider)
+    adapter = DiscreteTimeAvarthaPipecatAdapter(tick_duration_ms=20, provider=provider)
     adapter.connect("policy", [])
     try:
         return [
@@ -314,7 +314,7 @@ def _transcripts(events_by_tick):
 
 
 def test_sentence_text_waits_for_the_audio_that_speaks_it():
-    """Ava Zero sends a sentence before its audio. Releasing it on arrival
+    """Avartha sends a sentence before its audio. Releasing it on arrival
     showed "...spelled out letter by letter?" on the first 20 ms of the line,
     and the simulated caller answered 1.6 s into it."""
 
@@ -535,7 +535,7 @@ def test_a_late_caption_still_delivers_the_line_end_with_audio():
             [_played("Thanks for waiting.")],
         ]
     )
-    adapter = DiscreteTimeAvaZeroPipecatAdapter(tick_duration_ms=20, provider=provider)
+    adapter = DiscreteTimeAvarthaPipecatAdapter(tick_duration_ms=20, provider=provider)
     adapter.connect("policy", [])
     try:
         ticks = [adapter.run_tick(b"\xff" * 160, tick_number=i) for i in (1, 2, 3)]
@@ -567,7 +567,7 @@ def test_a_word_never_skips_ahead_into_an_unaired_sentence():
 
 
 def test_decimal_split_by_the_sentence_splitter_is_rejoined():
-    """Ava Zero sends "$13." and "46 back." as two sentences. Rejoining
+    """Avartha sends "$13." and "46 back." as two sentences. Rejoining
     them with a space showed "$13. 46", and the caption "$13.46" then no
     longer matched the text."""
 
@@ -738,7 +738,7 @@ def test_replacement_audio_in_the_same_tick_as_the_cut_is_kept():
             [],
         ]
     )
-    adapter = DiscreteTimeAvaZeroPipecatAdapter(tick_duration_ms=20, provider=provider)
+    adapter = DiscreteTimeAvarthaPipecatAdapter(tick_duration_ms=20, provider=provider)
     adapter.connect("policy", [])
     try:
         ticks = [adapter.run_tick(b"\xff" * 160, tick_number=i) for i in (1, 2, 3)]
@@ -768,7 +768,7 @@ def test_cut_off_audio_arriving_after_the_cut_tick_stays_discarded():
             ],
         ]
     )
-    adapter = DiscreteTimeAvaZeroPipecatAdapter(tick_duration_ms=20, provider=provider)
+    adapter = DiscreteTimeAvarthaPipecatAdapter(tick_duration_ms=20, provider=provider)
     adapter.connect("policy", [])
     try:
         ticks = [adapter.run_tick(b"\xff" * 160, tick_number=i) for i in (1, 2, 3, 4)]
@@ -788,21 +788,21 @@ def test_non_telephony_audio_format_is_rejected():
     from tau2.data_model.audio import AudioEncoding, AudioFormat
 
     with pytest.raises(ValueError, match="telephony"):
-        DiscreteTimeAvaZeroPipecatAdapter(
+        DiscreteTimeAvarthaPipecatAdapter(
             tick_duration_ms=20,
             audio_format=AudioFormat(
                 encoding=AudioEncoding.PCM_S16LE, sample_rate=16000, channels=1
             ),
-            ava_zero_config=AvaZeroPipecatConfig(base_url=AGENT_URL),
+            avartha_config=AvarthaPipecatConfig(base_url=AGENT_URL),
         )
 
 
-def test_ava_zero_events_count_as_provider_activity():
+def test_avartha_events_count_as_provider_activity():
     """The stall detector looked for a ``type`` the events lacked,
     so a call streaming audio was reported inactive every 30 s."""
 
     provider = FakeProvider([[_audio_ticks(1)], []])
-    adapter = DiscreteTimeAvaZeroPipecatAdapter(tick_duration_ms=20, provider=provider)
+    adapter = DiscreteTimeAvarthaPipecatAdapter(tick_duration_ms=20, provider=provider)
     adapter.connect("policy", [])
     try:
         busy = adapter.run_tick(b"\xff" * 160, tick_number=1)
@@ -819,7 +819,7 @@ def test_shutdown_delivers_results_of_tools_already_executed():
     ends first, disconnect used to drop them unsent."""
 
     provider = FakeProvider([[]])
-    adapter = DiscreteTimeAvaZeroPipecatAdapter(tick_duration_ms=20, provider=provider)
+    adapter = DiscreteTimeAvarthaPipecatAdapter(tick_duration_ms=20, provider=provider)
     adapter.connect("policy", [])
     adapter.run_tick(b"\xff" * 160, tick_number=1)
     adapter.send_tool_result("call-9", "transferred")
@@ -831,11 +831,11 @@ def test_shutdown_delivers_results_of_tools_already_executed():
 def test_protocol_error_aborts_connection_without_boot_retries():
     class IncompatibleProvider(FakeProvider):
         async def register_tools(self, schemas):
-            raise AvaZeroProtocolError("Incompatible Ava Zero tool protocol")
+            raise AvarthaProtocolError("Incompatible Avartha tool protocol")
 
     provider = IncompatibleProvider()
-    adapter = DiscreteTimeAvaZeroPipecatAdapter(tick_duration_ms=20, provider=provider)
-    with pytest.raises(AvaZeroProtocolError, match="Incompatible Ava Zero"):
+    adapter = DiscreteTimeAvarthaPipecatAdapter(tick_duration_ms=20, provider=provider)
+    with pytest.raises(AvarthaProtocolError, match="Incompatible Avartha"):
         adapter.connect("policy", [])
 
     assert provider.connect_attempts == 1
@@ -863,7 +863,7 @@ def test_failed_audio_send_drains_receive_task_before_loop_stops():
     async def exercise():
         provider = FailingProvider()
         provider.receive_started = asyncio.Event()
-        adapter = DiscreteTimeAvaZeroPipecatAdapter(
+        adapter = DiscreteTimeAvarthaPipecatAdapter(
             tick_duration_ms=20, provider=provider
         )
         with pytest.raises(RuntimeError, match="socket closed"):

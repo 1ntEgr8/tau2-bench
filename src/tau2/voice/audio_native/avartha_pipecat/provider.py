@@ -1,6 +1,6 @@
-"""Pipecat RTVI session with a hosted Ava Zero agent.
+"""Pipecat RTVI session with a hosted Avartha agent.
 
-``AvaZeroPipecatProvider`` holds everything that does not depend on how the
+``AvarthaPipecatProvider`` holds everything that does not depend on how the
 call is carried: the boot verdict, the tool exchange, output acknowledgement
 and routing of RTVI messages into events. The call itself is a WebRTC
 connection, in ``webrtc.py``, kept apart because aiortc ships in the optional
@@ -16,7 +16,7 @@ from typing import Any, ClassVar, Optional
 from loguru import logger
 
 from tau2.utils.errors import NonRetryableError
-from tau2.voice.audio_native.ava_zero_pipecat.config import AvaZeroPipecatConfig
+from tau2.voice.audio_native.avartha_pipecat.config import AvarthaPipecatConfig
 
 # Wire identifier of the tool-exchange protocol the agent must acknowledge.
 HARNESS_TOOLS_PROTOCOL = "avartha-harness-tools/1"
@@ -27,7 +27,7 @@ RTVI_PROTOCOL_VERSION = "2.0.0"
 
 @dataclass
 class AgentAudioEvent:
-    """PCM16 audio emitted by Ava Zero."""
+    """PCM16 audio emitted by Avartha."""
 
     # Read by TickResult.has_provider_activity; without it every tick looks idle.
     type: ClassVar[str] = "agent_audio"
@@ -38,7 +38,7 @@ class AgentAudioEvent:
 
 @dataclass
 class ToolCallEvent:
-    """Domain tool invocation requested by Ava Zero."""
+    """Domain tool invocation requested by Avartha."""
 
     type: ClassVar[str] = "tool_call"
 
@@ -109,7 +109,7 @@ class AgentStartedSpeakingEvent:
 class AgentPlaybackEvent:
     """What one agent utterance actually played, reported when it ends.
 
-    Ava Zero ``assistant_playback`` server-message; ``cut`` when the
+    Avartha ``assistant_playback`` server-message; ``cut`` when the
     caller barged in and ``text`` holds only the played part.
     """
 
@@ -137,22 +137,22 @@ class ProviderErrorEvent:
     message: str
 
 
-class AvaZeroBootError(RuntimeError):
-    """The Ava Zero session failed to become ready."""
+class AvarthaBootError(RuntimeError):
+    """The Avartha session failed to become ready."""
 
 
-class AvaZeroProtocolError(NonRetryableError):
-    """The Ava Zero agent does not support this harness tool protocol."""
+class AvarthaProtocolError(NonRetryableError):
+    """The Avartha agent does not support this harness tool protocol."""
 
 
-class AvaZeroPipecatProvider:
-    """Exchange transcripts, tool calls and boot state with Ava Zero.
+class AvarthaPipecatProvider:
+    """Exchange transcripts, tool calls and boot state with Avartha.
 
     Subclasses carry the call: ``connect``, ``send_audio``, ``disconnect`` and
     ``_send_message``.
     """
 
-    def __init__(self, config: AvaZeroPipecatConfig):
+    def __init__(self, config: AvarthaPipecatConfig):
         self.config = config
 
         self._queue: asyncio.Queue[Any] = asyncio.Queue()
@@ -200,14 +200,14 @@ class AvaZeroPipecatProvider:
             )
         except TimeoutError as exc:
             raise RuntimeError(
-                "Ava Zero did not acknowledge register_tools within "
+                "Avartha did not acknowledge register_tools within "
                 f"{self.config.tool_registration_timeout_seconds:g}s"
             ) from exc
         if self._session_error:
             raise self._session_error
         if self._registration_error:
             raise self._registration_error
-        logger.info(f"Ava Zero registered {len(schemas)} tool(s)")
+        logger.info(f"Avartha registered {len(schemas)} tool(s)")
 
     async def send_audio(self, audio_data: bytes, sample_rate: int) -> None:
         """Send one mono PCM16 chunk of caller audio."""
@@ -221,7 +221,7 @@ class AvaZeroPipecatProvider:
         request_response: bool = True,
         is_error: bool = False,
     ) -> None:
-        """Return a tau2 tool result to Ava Zero."""
+        """Return a tau2 tool result to Avartha."""
 
         del request_response
         await self._client_message(
@@ -284,17 +284,17 @@ class AvaZeroPipecatProvider:
                 timeout=self.config.boot_timeout_seconds,
             )
         except TimeoutError as exc:
-            raise AvaZeroBootError(
-                "Ava Zero session_boot never settled within "
+            raise AvarthaBootError(
+                "Avartha session_boot never settled within "
                 f"{self.config.boot_timeout_seconds:g}s"
             ) from exc
         if self._session_error:
             raise self._session_error
         if not self.boot_ready:
-            raise AvaZeroBootError(
-                self.boot_error or "Ava Zero session boot reported not ready"
+            raise AvarthaBootError(
+                self.boot_error or "Avartha session boot reported not ready"
             )
-        logger.info("Ava Zero session boot is ready")
+        logger.info("Avartha session boot is ready")
 
     def _note_boot(self, data: dict[str, Any]) -> None:
         if data.get("ready"):
@@ -322,7 +322,7 @@ class AvaZeroPipecatProvider:
     async def _accept_output(self, message: Any) -> bool:
         """Acknowledge a reliable caller output and route each one only once.
 
-        Ava Zero resends every server-message carrying an
+        Avartha resends every server-message carrying an
         ``output_event_id`` once a second until the client answers with
         ``output_ack``, as its browser client does. Unacknowledged, each played
         caption came back about a hundred times a call, and every copy reached
@@ -345,7 +345,7 @@ class AvaZeroPipecatProvider:
             try:
                 await self._client_message("output_ack", {"event_id": event_id})
             except Exception as exc:  # it is resent, and the repeat dropped
-                logger.debug(f"Ava Zero output_ack {event_id} failed: {exc!r}")
+                logger.debug(f"Avartha output_ack {event_id} failed: {exc!r}")
         if event_id in self._delivered_outputs:
             return False
         self._delivered_outputs.add(event_id)
@@ -368,11 +368,11 @@ class AvaZeroPipecatProvider:
         message_type = message.get("type")
         data = message.get("data")
         if message_type == "error" and isinstance(data, dict):
-            detail = str(data.get("error") or "unknown Ava Zero error")
+            detail = str(data.get("error") or "unknown Avartha error")
             if data.get("fatal"):
-                self._fail_session(f"Ava Zero fatal error: {detail}")
+                self._fail_session(f"Avartha fatal error: {detail}")
             else:
-                logger.warning("Ava Zero reported a nonfatal error: {}", detail)
+                logger.warning("Avartha reported a nonfatal error: {}", detail)
         elif message_type == "server-message" and isinstance(data, dict):
             inner_type = data.get("type")
             if inner_type in {"tools_registered", "tools_registration_error"}:
@@ -383,10 +383,10 @@ class AvaZeroPipecatProvider:
                         if protocol is not None
                         else "missing (legacy tool format)"
                     )
-                    self._registration_error = AvaZeroProtocolError(
-                        "Incompatible Ava Zero tool protocol: "
+                    self._registration_error = AvarthaProtocolError(
+                        "Incompatible Avartha tool protocol: "
                         f"expected {HARNESS_TOOLS_PROTOCOL!r}, received {received} "
-                        f"in {inner_type}. Point --ava-zero-base-url at an agent "
+                        f"in {inner_type}. Point --avartha-base-url at an agent "
                         f"that supports {HARNESS_TOOLS_PROTOCOL}."
                     )
                     self._registered.set()
@@ -403,7 +403,7 @@ class AvaZeroPipecatProvider:
                     else str(error or "unknown registration error")
                 )
                 self._registration_error = RuntimeError(
-                    f"Ava Zero rejected register_tools: {detail}"
+                    f"Avartha rejected register_tools: {detail}"
                 )
                 self._registered.set()
             elif inner_type == "assistant_playback":

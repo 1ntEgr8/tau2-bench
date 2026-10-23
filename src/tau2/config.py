@@ -100,7 +100,7 @@ DEFAULT_AUDIO_NATIVE_AGENT_IMPLEMENTATION = "discrete_time_audio_native_agent"
 DEFAULT_AUDIO_NATIVE_USER_IMPLEMENTATION = "voice_streaming_user_simulator"
 DEFAULT_AUDIO_NATIVE_PROVIDER = (
     "openai"  # overridable: openai, openai_live, gemini, xai, nova, qwen,
-    # elevenlabs, ava_zero_pipecat, livekit
+    # elevenlabs, avartha_pipecat, livekit
 )
 DEFAULT_TICK_DURATION_SECONDS = 0.20  # overridable
 DEFAULT_MAX_STEPS_SECONDS = 1200  # overridable
@@ -214,14 +214,14 @@ DEFAULT_ELEVENLABS_CONVERSATION_BASE_URL = (
 )
 
 # =============================================================================
-# AVA ZERO (hosted agent over Pipecat SmallWebRTC)
+# AVARTHA (hosted agent over Pipecat SmallWebRTC)
 # =============================================================================
-DEFAULT_AVA_ZERO_MODEL = "ava-zero"  # recorded label; the URL selects the agent
-DEFAULT_AVA_ZERO_INPUT_SAMPLE_RATE = 16000  # caller audio track rate
-DEFAULT_AVA_ZERO_OUTPUT_SAMPLE_RATE = 24000  # agent audio is resampled to this
-DEFAULT_AVA_ZERO_BOOT_TIMEOUT_SECONDS = 45.0
-DEFAULT_AVA_ZERO_TOOL_REGISTRATION_TIMEOUT_SECONDS = 20.0
-DEFAULT_AVA_ZERO_BOOT_ATTEMPTS = 3
+DEFAULT_AVARTHA_MODEL = "ava-zero"  # recorded label; the URL selects the agent
+DEFAULT_AVARTHA_INPUT_SAMPLE_RATE = 16000  # caller audio track rate
+DEFAULT_AVARTHA_OUTPUT_SAMPLE_RATE = 24000  # agent audio is resampled to this
+DEFAULT_AVARTHA_BOOT_TIMEOUT_SECONDS = 45.0
+DEFAULT_AVARTHA_TOOL_REGISTRATION_TIMEOUT_SECONDS = 20.0
+DEFAULT_AVARTHA_BOOT_ATTEMPTS = 3
 
 # =============================================================================
 # PROVIDER REGISTRY (derived from above)
@@ -238,7 +238,7 @@ DEFAULT_AUDIO_NATIVE_MODELS = {
     "nova": DEFAULT_NOVA_MODEL,
     "qwen": DEFAULT_QWEN_MODEL,
     "elevenlabs": DEFAULT_ELEVENLABS_AGENT_ID,
-    "ava_zero_pipecat": DEFAULT_AVA_ZERO_MODEL,
+    "avartha_pipecat": DEFAULT_AVARTHA_MODEL,
     "livekit": "dummy",
 }
 
@@ -251,7 +251,7 @@ DEFAULT_AUDIO_NATIVE_REASONING_EFFORT: dict[str, str | None] = {
     "nova": None,
     "qwen": None,
     "elevenlabs": None,
-    "ava_zero_pipecat": None,
+    "avartha_pipecat": None,
     "livekit": None,
 }
 
@@ -264,7 +264,7 @@ AUDIO_NATIVE_PROVIDER_TYPES = {
     "nova": "audio_native",
     "qwen": "audio_native",
     "elevenlabs": "cascaded",
-    "ava_zero_pipecat": "cascaded",
+    "avartha_pipecat": "cascaded",
     "livekit": "cascaded",
 }
 

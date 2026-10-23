@@ -60,7 +60,7 @@ from tau2.environment.environment import EnvironmentInfo
 from tau2.environment.toolkit import ToolType
 from tau2.orchestrator.modes import CommunicationMode
 from tau2.utils.utils import get_now
-from tau2.voice.audio_native.ava_zero_pipecat.config import AvaZeroPipecatConfig
+from tau2.voice.audio_native.avartha_pipecat.config import AvarthaPipecatConfig
 from tau2.voice.audio_native.openai.live_config import LiveConfig
 
 SIMULATIONS_DIR = "simulations"
@@ -82,12 +82,12 @@ class AudioNativeConfig(BaseModel):
         "nova",
         "qwen",
         "elevenlabs",
-        "ava_zero_pipecat",
+        "avartha_pipecat",
         "livekit",
         "launa",
     ] = Field(
         default=DEFAULT_AUDIO_NATIVE_PROVIDER,
-        description="Audio native API provider: 'openai' (OpenAI Realtime), 'openai_live' (OpenAI Live), 'gemini' (Gemini Live), 'xai' (xAI Grok Voice Agent), 'nova' (Amazon Nova Sonic), 'qwen' (Alibaba Qwen Omni), 'elevenlabs' (hosted ElevenLabs agent), 'ava_zero_pipecat' (Ava Zero over Pipecat RTVI), 'launa' (Salesforce Launa), or 'livekit' (LiveKit cascaded STT→LLM→TTS)",
+        description="Audio native API provider: 'openai' (OpenAI Realtime), 'openai_live' (OpenAI Live), 'gemini' (Gemini Live), 'xai' (xAI Grok Voice Agent), 'nova' (Amazon Nova Sonic), 'qwen' (Alibaba Qwen Omni), 'elevenlabs' (hosted ElevenLabs agent), 'avartha_pipecat' (Avartha over Pipecat RTVI), 'launa' (Salesforce Launa), or 'livekit' (LiveKit cascaded STT→LLM→TTS)",
     )
 
     # Cascaded config (for livekit provider)
@@ -96,16 +96,16 @@ class AudioNativeConfig(BaseModel):
         description="Name of cascaded config preset for livekit provider (e.g., 'default', 'openai-thinking', 'openai-thinking-high')",
     )
 
-    ava_zero_config: Optional[AvaZeroPipecatConfig] = Field(
+    avartha_config: Optional[AvarthaPipecatConfig] = Field(
         default=None,
-        description="Hosted agent connection settings for the ava_zero_pipecat provider",
+        description="Hosted agent connection settings for the avartha_pipecat provider",
     )
 
     model: str = Field(
         default=DEFAULT_AUDIO_NATIVE_MODELS[DEFAULT_AUDIO_NATIVE_PROVIDER],
         description=(
             "Audio native model to use (hosted agent ID for ElevenLabs; "
-            "server-side agent ID for Ava Zero)"
+            "server-side agent ID for Avartha)"
         ),
     )
     reasoning_effort: Optional[str] = Field(
@@ -119,7 +119,7 @@ class AudioNativeConfig(BaseModel):
     realtime_generation: Optional[bool] = Field(
         default=None,
         description="Whether user LLM and TTS generation run without blocking audio ticks. "
-        "Defaults to enabled for openai_live and ava_zero_pipecat and disabled for "
+        "Defaults to enabled for openai_live and avartha_pipecat and disabled for "
         "other providers.",
     )
 
@@ -128,7 +128,7 @@ class AudioNativeConfig(BaseModel):
         """Resolve the provider-aware default for real-time user generation."""
         if self.realtime_generation is not None:
             return self.realtime_generation
-        return self.provider in ("openai_live", "ava_zero_pipecat")
+        return self.provider in ("openai_live", "avartha_pipecat")
 
     @model_validator(mode="after")
     def validate_live_config(self):
@@ -151,19 +151,19 @@ class AudioNativeConfig(BaseModel):
         return self
 
     @model_validator(mode="after")
-    def validate_ava_zero_config(self):
-        """Require the hosted agent's settings for the Ava Zero provider."""
-        if self.provider == "ava_zero_pipecat":
-            if self.ava_zero_config is None:
+    def validate_avartha_config(self):
+        """Require the hosted agent's settings for the Avartha provider."""
+        if self.provider == "avartha_pipecat":
+            if self.avartha_config is None:
                 raise ValueError(
-                    "ava_zero_pipecat needs ava_zero_config with the hosted agent's URL"
+                    "avartha_pipecat needs avartha_config with the hosted agent's URL"
                 )
             default_model = DEFAULT_AUDIO_NATIVE_MODELS[DEFAULT_AUDIO_NATIVE_PROVIDER]
             if self.model == default_model:
-                self.model = DEFAULT_AUDIO_NATIVE_MODELS["ava_zero_pipecat"]
-        elif self.ava_zero_config is not None:
+                self.model = DEFAULT_AUDIO_NATIVE_MODELS["avartha_pipecat"]
+        elif self.avartha_config is not None:
             raise ValueError(
-                "ava_zero_config is only valid when provider='ava_zero_pipecat'"
+                "avartha_config is only valid when provider='avartha_pipecat'"
             )
         return self
 

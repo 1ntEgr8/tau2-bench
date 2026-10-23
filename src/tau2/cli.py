@@ -42,7 +42,7 @@ from tau2.data_model.simulation import (
 from tau2.domains.banking_knowledge.retrieval import get_all_variant_names
 from tau2.run import get_options, run_domain
 from tau2.runner.work import parse_provider_limits
-from tau2.voice.audio_native.ava_zero_pipecat.config import AvaZeroPipecatConfig
+from tau2.voice.audio_native.avartha_pipecat.config import AvarthaPipecatConfig
 
 
 def get_all_retrieval_config_names():
@@ -266,7 +266,7 @@ def add_run_args(parser):
             "nova",
             "qwen",
             "elevenlabs",
-            "ava_zero_pipecat",
+            "avartha_pipecat",
             "livekit",
             "launa",
         ],
@@ -286,14 +286,14 @@ def add_run_args(parser):
         type=str,
         default=None,
         help="Audio native model to use. If not specified, uses the default model for the selected provider. "
-        "For elevenlabs, this is the required hosted agent ID; for ava_zero_pipecat, "
-        "it is only a label, since --ava-zero-base-url selects the agent.",
+        "For elevenlabs, this is the required hosted agent ID; for avartha_pipecat, "
+        "it is only a label, since --avartha-base-url selects the agent.",
     )
     parser.add_argument(
-        "--ava-zero-base-url",
+        "--avartha-base-url",
         default=None,
         help=(
-            "URL of the hosted Ava Zero agent the ava_zero_pipecat provider calls, "
+            "URL of the hosted Avartha agent the avartha_pipecat provider calls, "
             "https://<host>/inference/serverless/pipecat/v1/public/<agent_id>. "
             "Required for that provider, which also needs the live extra and "
             "AVARTHA_API_KEY."
@@ -310,7 +310,7 @@ def add_run_args(parser):
         action=argparse.BooleanOptionalAction,
         default=None,
         help="Run user LLM/TTS generation without blocking audio ticks. "
-        "Defaults to enabled for openai_live and ava_zero_pipecat and disabled for "
+        "Defaults to enabled for openai_live and avartha_pipecat and disabled for "
         "other providers. "
         "Use --no-realtime-generation to disable.",
     )
@@ -666,19 +666,19 @@ def main():
                     args.audio_native_provider
                 ]
 
-            ava_zero_config = None
-            if args.audio_native_provider == "ava_zero_pipecat":
-                if not args.ava_zero_base_url:
+            avartha_config = None
+            if args.audio_native_provider == "avartha_pipecat":
+                if not args.avartha_base_url:
                     run_parser.error(
-                        "--ava-zero-base-url is required when "
-                        "--audio-native-provider ava_zero_pipecat"
+                        "--avartha-base-url is required when "
+                        "--audio-native-provider avartha_pipecat"
                     )
                 try:
-                    ava_zero_config = AvaZeroPipecatConfig(
-                        base_url=args.ava_zero_base_url
+                    avartha_config = AvarthaPipecatConfig(
+                        base_url=args.avartha_base_url
                     )
                 except ValueError as exc:
-                    run_parser.error(f"invalid Ava Zero configuration: {exc}")
+                    run_parser.error(f"invalid Avartha configuration: {exc}")
 
             # Determine use_xml_prompt: defaults to False (plain text)
             use_xml_prompt = False
@@ -689,7 +689,7 @@ def main():
                 # Provider
                 provider=args.audio_native_provider,
                 model=audio_native_model,
-                ava_zero_config=ava_zero_config,
+                avartha_config=avartha_config,
                 cascaded_config_name=args.cascaded_config,
                 reasoning_effort=args.reasoning_effort,
                 live_config=args.live_config,

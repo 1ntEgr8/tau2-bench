@@ -66,9 +66,9 @@ tau2 run \
 | Option | Default | Description |
 |--------|---------|-------------|
 | `--audio-native` | `false` | Enable audio native mode |
-| `--audio-native-provider` | `openai` | Provider: `openai`, `openai_live`, `gemini`, `xai`, `nova`, `qwen`, `elevenlabs`, `ava_zero_pipecat`, `livekit`, or `launa` |
+| `--audio-native-provider` | `openai` | Provider: `openai`, `openai_live`, `gemini`, `xai`, `nova`, `qwen`, `elevenlabs`, `avartha_pipecat`, `livekit`, or `launa` |
 | `--audio-native-model` | *(per-provider)* | Model to use (defaults to provider-specific model if not set); required ElevenLabs `agent_...` ID for `elevenlabs` |
-| `--ava-zero-base-url` | *(none)* | Hosted Ava Zero agent URL; required for `ava_zero_pipecat`, which also needs the `live` extra and `AVARTHA_API_KEY` |
+| `--avartha-base-url` | *(none)* | Hosted Avartha agent URL; required for `avartha_pipecat`, which also needs the `live` extra and `AVARTHA_API_KEY` |
 | `--tick-duration` | `0.2` | Tick duration in seconds (simulation timestep) |
 | `--max-steps-seconds` | `600` | Maximum conversation duration in seconds |
 | `--speech-complexity` | `regular` | Speech complexity: `control`, `regular`, or ablation variants (`control_audio`, `control_accents`, `control_behavior`, `control_audio_accents`, `control_audio_behavior`, `control_accents_behavior`) |

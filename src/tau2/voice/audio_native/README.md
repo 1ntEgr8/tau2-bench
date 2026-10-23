@@ -12,7 +12,7 @@ Full-duplex voice evaluation via provider-specific realtime APIs. Each provider 
 | **nova** | Native audio | Amazon Nova Sonic | amazon.nova-2-sonic-v1:0 |
 | **qwen** | Native audio | Alibaba Qwen Omni | qwen3-omni-flash-realtime |
 | **elevenlabs** | Hosted voice agent | ElevenLabs Agents Platform | Required `agent_...` ID |
-| **ava_zero_pipecat** | Hosted voice agent | Ava Zero over Pipecat SmallWebRTC | Agent URL (`--ava-zero-base-url`) |
+| **avartha_pipecat** | Hosted voice agent | Avartha over Pipecat SmallWebRTC | Agent URL (`--avartha-base-url`) |
 | **livekit** | Cascaded (STT→LLM→TTS) | LiveKit + Deepgram + OpenAI | Configurable |
 
 ## Architecture
@@ -29,7 +29,7 @@ DiscreteTimeAdapter (adapter.py)          ← shared base class
 ├── qwen/discrete_time_adapter.py
 ├── nova/discrete_time_adapter.py
 ├── elevenlabs/discrete_time_adapter.py
-├── ava_zero_pipecat/discrete_time_adapter.py
+├── avartha_pipecat/discrete_time_adapter.py
 └── livekit/discrete_time_adapter.py      ← own run_tick (cascaded pipeline, different interaction model)
 ```
 
@@ -57,22 +57,22 @@ parameter schemas and with responses enabled. The adapter uses a signed URL
 when `ELEVENLABS_API_KEY` is set, injects the domain policy, negotiates the
 agent's audio formats, and sends tool results back over the same WebSocket.
 
-## Ava Zero
+## Avartha
 
-Call a hosted Ava Zero agent over Pipecat SmallWebRTC (requires the `live`
+Call a hosted Avartha agent over Pipecat SmallWebRTC (requires the `live`
 extra and `AVARTHA_API_KEY`):
 
 ```bash
 export AVARTHA_API_KEY=<your-api-key>
 tau2 run --domain retail --audio-native \
-  --audio-native-provider ava_zero_pipecat \
-  --ava-zero-base-url https://<host>/inference/serverless/pipecat/v1/public/<agent_id> \
+  --audio-native-provider avartha_pipecat \
+  --avartha-base-url https://<host>/inference/serverless/pipecat/v1/public/<agent_id> \
   --num-tasks 1
 ```
 
 The adapter installs the domain policy as the call's prompt, registers the
 domain tools, and records the call's session ID on each simulation. See the
-[Ava Zero provider guide](ava_zero_pipecat/README.md) for the protocol,
+[Avartha provider guide](avartha_pipecat/README.md) for the protocol,
 options, and live test setup.
 
 ## Adding a New Provider

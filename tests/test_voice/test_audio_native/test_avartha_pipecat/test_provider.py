@@ -2,15 +2,15 @@ import asyncio
 
 import pytest
 
-from tau2.voice.audio_native.ava_zero_pipecat.config import AvaZeroPipecatConfig
-from tau2.voice.audio_native.ava_zero_pipecat.provider import (
+from tau2.voice.audio_native.avartha_pipecat.config import AvarthaPipecatConfig
+from tau2.voice.audio_native.avartha_pipecat.provider import (
     HARNESS_TOOLS_PROTOCOL,
     AgentLLMStartedEvent,
     AgentPlaybackEvent,
     AgentStartedSpeakingEvent,
     AgentWordEvent,
-    AvaZeroPipecatProvider,
-    AvaZeroProtocolError,
+    AvarthaPipecatProvider,
+    AvarthaProtocolError,
     ProviderErrorEvent,
     SpeechEvent,
     ToolCallEvent,
@@ -21,7 +21,7 @@ AGENT_URL = "https://platform.example/inference/serverless/pipecat/v1/public/age
 
 
 def make_provider(**overrides):
-    return AvaZeroPipecatProvider(AvaZeroPipecatConfig(base_url=AGENT_URL, **overrides))
+    return AvarthaPipecatProvider(AvarthaPipecatConfig(base_url=AGENT_URL, **overrides))
 
 
 async def deliver(provider, message):
@@ -33,7 +33,7 @@ async def deliver(provider, message):
 
 def test_unsupported_config_fields_are_rejected():
     with pytest.raises(ValueError):
-        AvaZeroPipecatConfig(base_url=AGENT_URL, session_id="preconfigured")
+        AvarthaPipecatConfig(base_url=AGENT_URL, session_id="preconfigured")
 
 
 def test_route_message_tracks_handshakes_metadata_and_events():
@@ -114,7 +114,7 @@ def test_registration_error_settles_waiter_and_preserves_message():
     assert provider._registered.is_set()
     assert (
         str(provider._registration_error)
-        == "Ava Zero rejected register_tools: bad schema"
+        == "Avartha rejected register_tools: bad schema"
     )
 
 
@@ -143,11 +143,11 @@ def test_registration_rejects_incompatible_server_immediately(protocol, message_
 
         provider._client_message = client_message
         with pytest.raises(
-            AvaZeroProtocolError, match="Incompatible Ava Zero tool protocol"
+            AvarthaProtocolError, match="Incompatible Avartha tool protocol"
         ) as error:
             await asyncio.wait_for(provider.register_tools([]), timeout=0.1)
         assert HARNESS_TOOLS_PROTOCOL in str(error.value)
-        assert "--ava-zero-base-url" in str(error.value)
+        assert "--avartha-base-url" in str(error.value)
         assert (
             "missing (legacy tool format)" if protocol is None else repr(protocol)
         ) in str(error.value)
@@ -293,7 +293,7 @@ def test_fatal_rtvi_error_wakes_handshakes_with_original_cause(stage):
 
 
 def test_reliable_outputs_are_acknowledged_and_routed_once():
-    """Ava Zero resends each output every second until it is acknowledged."""
+    """Avartha resends each output every second until it is acknowledged."""
 
     def server_message(data):
         return {"label": "rtvi-ai", "type": "server-message", "data": data}

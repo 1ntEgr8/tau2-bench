@@ -1,7 +1,7 @@
-"""Connection settings for the Ava Zero Pipecat provider.
+"""Connection settings for the Avartha Pipecat provider.
 
-Ava Zero owns its own model, speech, and turn-taking configuration. tau2 only
-needs the hosted agent's URL and how long to wait for each step of the call
+The hosted agent owns its own model, speech, and turn-taking configuration.
+tau2 only needs the agent's URL and how long to wait for each step of the call
 handshake.
 """
 
@@ -11,14 +11,14 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from tau2.config import (
     DEFAULT_AUDIO_NATIVE_CONNECT_TIMEOUT,
-    DEFAULT_AVA_ZERO_BOOT_ATTEMPTS,
-    DEFAULT_AVA_ZERO_BOOT_TIMEOUT_SECONDS,
-    DEFAULT_AVA_ZERO_TOOL_REGISTRATION_TIMEOUT_SECONDS,
+    DEFAULT_AVARTHA_BOOT_ATTEMPTS,
+    DEFAULT_AVARTHA_BOOT_TIMEOUT_SECONDS,
+    DEFAULT_AVARTHA_TOOL_REGISTRATION_TIMEOUT_SECONDS,
 )
 
 
-class AvaZeroPipecatConfig(BaseModel):
-    """Connection configuration for a hosted Ava Zero agent."""
+class AvarthaPipecatConfig(BaseModel):
+    """Connection configuration for a hosted Avartha agent."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -31,14 +31,14 @@ class AvaZeroPipecatConfig(BaseModel):
         gt=0,
     )
     boot_timeout_seconds: float = Field(
-        default=DEFAULT_AVA_ZERO_BOOT_TIMEOUT_SECONDS,
+        default=DEFAULT_AVARTHA_BOOT_TIMEOUT_SECONDS,
         gt=0,
     )
     tool_registration_timeout_seconds: float = Field(
-        default=DEFAULT_AVA_ZERO_TOOL_REGISTRATION_TIMEOUT_SECONDS,
+        default=DEFAULT_AVARTHA_TOOL_REGISTRATION_TIMEOUT_SECONDS,
         gt=0,
     )
-    boot_attempts: int = Field(default=DEFAULT_AVA_ZERO_BOOT_ATTEMPTS, ge=1)
+    boot_attempts: int = Field(default=DEFAULT_AVARTHA_BOOT_ATTEMPTS, ge=1)
 
     @field_validator("base_url")
     @classmethod

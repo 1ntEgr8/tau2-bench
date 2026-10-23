@@ -1,4 +1,4 @@
-"""Caller audio for Ava Zero: 8 kHz telephony mu-law to the server's PCM16 rate.
+"""Caller audio for Avartha: 8 kHz telephony mu-law to the server's PCM16 rate.
 
 The shared ``StreamingTelephonyConverter`` upsamples with ``audioop.ratecv``,
 which is linear interpolation. At 2x it leaves a mirror image of the 0-4 kHz
