@@ -40,6 +40,7 @@ import argparse
 import json
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from urllib.request import urlopen
 
@@ -75,6 +76,8 @@ from tau2.scripts.leaderboard.verify_trajectories import (
     VerificationMode,
     verify_single_file,
 )
+from tau2.scripts.leaderboard.viewer_data import sync as sync_viewer_tree
+from tau2.scripts.leaderboard.viewer_data import viewer_cell_dir, write_viewer_cell
 from tau2.scripts.leaderboard.voice_v2_publication import (
     validate_historical_package,
 )
@@ -301,6 +304,30 @@ def _upload(
                 profile,
                 console,
             )
+
+        # The visualizer reads text trajectories split per simulation, next
+        # to the monolithic files (which stay the download).
+        console.print("\n[bold]Uploading viewer cells to S3...[/bold]")
+        with tempfile.TemporaryDirectory() as staging:
+            for path_str, domain in zip(trajectory_files, trajectory_map):
+                cell = (
+                    Path(staging)
+                    / submission_dir.name
+                    / TRAJECTORY_FILES_DIR_NAME
+                    / viewer_cell_dir(domain)
+                )
+                count = write_viewer_cell(json.loads(Path(path_str).read_bytes()), cell)
+                console.print(f"  {domain}: {count} simulations")
+            # The staging dir holds only this submission's text cells. A
+            # failure here leaves the visualizer on the monolithic files, so
+            # it must not stop submission.json from being uploaded.
+            try:
+                sync_viewer_tree(Path(staging), profile, dry_run=False)
+            except subprocess.CalledProcessError as error:
+                console.print(
+                    f"[yellow]Viewer cell upload failed ({error}); rerun "
+                    "`viewer_data split` + `upload` for this submission.[/yellow]"
+                )
 
     console.print("\n[bold]Uploading submission.json to S3...[/bold]")
     local_sub = str(submission_dir / SUBMISSION_FILE_NAME)
