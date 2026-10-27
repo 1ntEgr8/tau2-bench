@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import html
+import re
 from bisect import bisect_right
 from collections import deque
 from typing import Any, List, Optional
@@ -41,6 +42,8 @@ from tau2.voice.audio_native.avartha_pipecat.provider import (
 )
 from tau2.voice.audio_native.tick_result import TickResult
 
+# Key of the call's one _SpokenTranscript. Audio carries it while a tick's text
+# is taken, then its utterance's own ID (see _label_utterances).
 _ITEM_ID = "avartha"
 # How far past the last matched word a spoken word may land. It skips a word
 # or two the TTS alignment dropped. A word never matches past the end of the
@@ -48,6 +51,53 @@ _ITEM_ID = "avartha"
 _WORD_MATCH_SLACK_CHARS = 16
 # Shorter words ("I", "a", "to") match only the very next word, never skip.
 _WORD_SKIP_MIN_CHARS = 3
+# Hangul, kana and CJK ideographs. TTS alignment times these a syllable at a
+# time ("확", "인", "해" for "확인해"), so a spoken piece is rarely a whole word.
+_SYLLABIC_CHARS = re.compile(
+    r"[ᄀ-ᇿ぀-ヿ㄰-㆏㐀-䶿"
+    r"一-鿿가-힣豈-﫿]"
+)
+# How far past the last matched syllable a syllable may land: a dropped
+# syllable or two and the space or punctuation between words.
+_SYLLABLE_MATCH_SLACK_CHARS = 3
+# CJK and full-width punctuation ("，", "。", "："), which no space follows.
+_CJK_PUNCTUATION = re.compile(r"[　-〿！-／：-＠［-｀｛-･]")
+
+
+def _is_syllabic(text: str) -> bool:
+    """Whether every letter of ``text`` is a Hangul, kana or CJK syllable."""
+
+    letters = [char for char in text if char.isalnum()]
+    return bool(letters) and all(_SYLLABIC_CHARS.match(char) for char in letters)
+
+
+def _script_change(before: str, after: str) -> bool:
+    """Whether two adjacent letters switch into or out of a syllabic script.
+
+    Korean and Chinese attach particles and units to numbers and Latin words
+    ("2,530,720원이고", "PayPal로", "17英寸"), so the switch ends a word.
+    """
+
+    return (
+        before.isalnum()
+        and after.isalnum()
+        and bool(_SYLLABIC_CHARS.match(before)) != bool(_SYLLABIC_CHARS.match(after))
+    )
+
+
+def _word_edge(before: str, after: str) -> bool:
+    """Whether a word may end between two adjacent characters.
+
+    Besides a non-letter after it: a script change, and CJK punctuation
+    before it, which no space follows ("1，1，6，0"). ASCII punctuation
+    inside a word ("$13.46") does not end it.
+    """
+
+    return (
+        not after.isalnum()
+        or _script_change(before, after)
+        or bool(_CJK_PUNCTUATION.match(before))
+    )
 
 
 def _unescape(text: str) -> str:
@@ -136,6 +186,11 @@ class _SpokenTranscript:
         it into one that matches, both count as spoken. Otherwise the held
         piece is dropped and the new word is matched alone, so "I" followed by
         "If" still never matches inside "If".
+
+        Korean, Japanese and Chinese are timed a syllable at a time ("확",
+        "인", "해" for "확인해"). Holding one piece joined only two-syllable
+        words, so a Korean line's text stalled at its first longer word. A
+        syllable therefore matches in place (see _match).
         """
 
         needle = _unescape(word).strip().lower()
@@ -159,8 +214,26 @@ class _SpokenTranscript:
             self._sentence_ends[sentence],
         )
         cursor = self._match_cursor
+        if _is_syllabic(needle):
+            # Each syllable is a sound of the next word or of the rest of this
+            # one, so it matches where it stands, mid-word or not, skipping
+            # only a dropped syllable or two.
+            index = haystack.find(
+                needle,
+                cursor,
+                min(
+                    cursor + len(needle) + _SYLLABLE_MATCH_SLACK_CHARS,
+                    self._sentence_ends[sentence],
+                ),
+            )
+            if index >= 0:
+                self._advance(index + len(needle))
+                return True
+            return False
         if 0 < cursor < len(haystack) and (
-            haystack[cursor - 1].isalnum() and haystack[cursor].isalnum()
+            haystack[cursor - 1].isalnum()
+            and haystack[cursor].isalnum()
+            and not _script_change(haystack[cursor - 1], haystack[cursor])
         ):
             # Mid-word: only the rest of that word may follow ("Wha" + "t").
             if haystack.startswith(needle, cursor):
@@ -187,9 +260,12 @@ class _SpokenTranscript:
     @staticmethod
     def _is_whole_word(text: str, index: int, length: int) -> bool:
         end = index + length
-        return (index == 0 or not text[index - 1].isalnum()) and (
-            end == len(text) or not text[end].isalnum()
-        )
+        starts = index == 0 or not text[index - 1].isalnum()
+        if not starts:
+            starts = _script_change(text[index - 1], text[index]) or bool(
+                _CJK_PUNCTUATION.match(text[index])
+            )
+        return starts and (end == len(text) or _word_edge(text[end - 1], text[end]))
 
     def add_playback(self, caption: str) -> None:
         """Avartha's caption of what this utterance actually played.
@@ -326,6 +402,7 @@ class DiscreteTimeAvarthaPipecatAdapter(DiscreteTimeAdapter):
             DEFAULT_AVARTHA_INPUT_SAMPLE_RATE * 2 * self._voip_interval_ms / 1000
         )
 
+        self._utterance_count = 0
         self._provider = provider
         self._owns_provider = provider is None
         self._bg_loop = BackgroundAsyncLoop()
@@ -353,6 +430,11 @@ class DiscreteTimeAvarthaPipecatAdapter(DiscreteTimeAdapter):
         # sentence. This mirrors that buffer to strip it.
         self._llm_unsent = ""
         self._llm_carryover = ""
+        # The utterance new agent audio belongs to, open from its first audio
+        # until its played caption or a cut, and the bytes each utterance still
+        # has queued, in arrival order. See _label_utterances.
+        self._utterance_id: Optional[str] = None
+        self._utterance_audio: deque[list] = deque()
 
     @property
     def provider(self) -> AvarthaPipecatProvider:
@@ -531,7 +613,57 @@ class DiscreteTimeAvarthaPipecatAdapter(DiscreteTimeAdapter):
             self._audio_after_cut = []
         self._buffered_agent_audio.extend(self._held_end)
         self._held_end = []
+        self._label_utterances(result)
         return result
+
+    def _label_utterances(self, result: TickResult) -> None:
+        """Tag this tick's agent audio with the Avartha utterance it plays.
+
+        tau2 groups agent ticks into utterances by these IDs (judge clips and
+        turns, transcript views, communicate scoring), and a tick without one
+        stands alone. One ID for the whole call left only silent ticks to split
+        on, so a pause inside a sentence cut it in two and a judge clip ran a
+        word or two past its text. Each utterance gets its own ID from its
+        first audio until its played caption or a cut; a tick inside it that
+        plays no audio still carries it. A tick that plays two utterances goes
+        to the one it plays most of. Labels are set after the tick's text is
+        taken, so text and audio are unchanged.
+        """
+
+        played = sum(len(chunk) for chunk, _ in result.agent_audio_chunks)
+        if played == 0:
+            if self._utterance_id is not None and not result.was_truncated:
+                result.agent_audio_chunks.append((b"", self._utterance_id))
+            return
+        shares: dict[str, int] = {}
+        remaining = played
+        while remaining and self._utterance_audio:
+            entry = self._utterance_audio[0]
+            taken = min(remaining, entry[1])
+            shares[entry[0]] = shares.get(entry[0], 0) + taken
+            entry[1] -= taken
+            remaining -= taken
+            if entry[1] == 0:
+                self._utterance_audio.popleft()
+        label = (
+            max(shares, key=shares.__getitem__)
+            if shares
+            else self._utterance_id or _ITEM_ID
+        )
+        result.agent_audio_chunks = [
+            (chunk, label) for chunk, _ in result.agent_audio_chunks
+        ]
+
+    def _queue_utterance_audio(self, num_bytes: int) -> None:
+        """Count arriving audio toward its utterance, opening one if none is."""
+
+        if self._utterance_id is None:
+            self._utterance_count += 1
+            self._utterance_id = f"{_ITEM_ID}-{self._utterance_count}"
+        if self._utterance_audio and self._utterance_audio[-1][0] == self._utterance_id:
+            self._utterance_audio[-1][1] += num_bytes
+        else:
+            self._utterance_audio.append([self._utterance_id, num_bytes])
 
     async def _execute_tick(
         self,
@@ -632,6 +764,7 @@ class DiscreteTimeAvarthaPipecatAdapter(DiscreteTimeAdapter):
                     result.truncated_audio_bytes += len(telephony_audio)
                     return
                 chunk = (telephony_audio, _ITEM_ID)
+                self._queue_utterance_audio(len(telephony_audio))
                 self._awaiting_playback = True
                 if result.was_truncated:
                     self._audio_after_cut.append(chunk)
@@ -670,6 +803,7 @@ class DiscreteTimeAvarthaPipecatAdapter(DiscreteTimeAdapter):
         elif isinstance(event, AgentPlaybackEvent):
             if not self._stale_audio:
                 self._awaiting_playback = False
+                self._utterance_id = None
                 self._transcript().add_playback(event.text)
         elif isinstance(event, AgentLLMStartedEvent):
             self._stale_text = False
@@ -691,6 +825,8 @@ class DiscreteTimeAvarthaPipecatAdapter(DiscreteTimeAdapter):
                 self._audio_after_cut.clear()
                 self._held_end = []
                 self._awaiting_playback = False
+                self._utterance_id = None
+                self._utterance_audio.clear()
                 self._transcript().interrupt()
                 self._stale_text = self._stale_audio = True
                 for converter in self._output_converters.values():
