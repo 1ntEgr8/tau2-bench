@@ -547,6 +547,22 @@ def test_saved_task_self_consistent_hash_cannot_replace_frozen_task(
         read_task_trials(path, published_frame)
 
 
+def test_saved_context_accepts_submitter_caller_voice(
+    published_frame, saved_benchmark_cell
+):
+    from tau2.metrics.benchmark import read_task_trials
+
+    path, result = saved_benchmark_cell
+    result.info.language_tasks[
+        result.tasks[0].id
+    ].persona.voice.voice_id = "submitter-voice"
+    result.simulations[0].language_context = result.info.language_tasks[
+        result.tasks[0].id
+    ]
+    result.save(path, format="dir")
+    assert read_task_trials(path, published_frame)[0].reward == 1
+
+
 def test_saved_context_cannot_replace_reviewed_persona(
     published_frame, saved_benchmark_cell
 ):
@@ -555,7 +571,7 @@ def test_saved_context_cannot_replace_reviewed_persona(
     path, result = saved_benchmark_cell
     result.info.language_tasks[
         result.tasks[0].id
-    ].persona.voice.voice_id = "unreviewed-voice"
+    ].persona.gender_guidance = "An unreviewed persona."
     result.simulations[0].language_context = result.info.language_tasks[
         result.tasks[0].id
     ]
