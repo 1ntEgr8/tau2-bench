@@ -37,6 +37,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   collide. voice-v2 and text-v1 names are unchanged.
 
 ### Changed
+- Speech fidelity v7 replaces v6 for every language. It keeps the v6 model,
+  prompt and rubric, constrains the judge's reply to the findings schema and
+  lowers its output cap from 32,768 to 8,192 tokens. A clip on which the judge
+  loops until its output limit therefore fails sooner and costs less, and
+  fewer clips fail. v7 is unvalidated, as v6 was. The new contract and catalog
+  revisions make saved verdicts stale, so `tau2 judges suite` judges them again.
 - 2.0 scoring excludes infrastructure-errored calls from the denominator
   instead of blocking the cell. A cell is complete once every owed call is
   scored or errored and at least one is scored; its score averages the scored
