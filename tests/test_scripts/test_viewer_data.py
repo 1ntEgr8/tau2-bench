@@ -131,3 +131,36 @@ def test_check_staging_refuses_anything_else(tmp_path, stray):
 
     with pytest.raises(SystemExit, match="refusing to upload"):
         check_staging(staging, _submissions(tmp_path))
+
+
+def test_failed_viewer_cells_still_upload_submission_json(tmp_path, monkeypatch):
+    from rich.console import Console
+
+    from tau2.scripts.leaderboard import review_submission
+
+    aws_calls, synced = [], []
+    monkeypatch.setattr(
+        review_submission,
+        "_run_aws",
+        lambda cmd, profile, console: aws_calls.append(cmd) or True,
+    )
+    monkeypatch.setattr(
+        review_submission, "sync_viewer_tree", lambda *args, **kw: synced.append(1)
+    )
+    submission_dir = tmp_path / "text-model"
+    submission_dir.mkdir()
+    (submission_dir / "submission.json").write_text("{}")
+    broken = tmp_path / "retail_results.json"
+    broken.write_text("not json")
+
+    review_submission._upload(
+        submission_dir,
+        [str(broken)],
+        {"retail": "retail_results.json"},
+        is_voice=False,
+        profile="test",
+        console=Console(quiet=True),
+    )
+
+    assert synced == []
+    assert aws_calls[-1][-1].endswith("/text-model/submission.json")
