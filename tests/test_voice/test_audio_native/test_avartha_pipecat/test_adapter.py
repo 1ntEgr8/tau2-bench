@@ -667,6 +667,51 @@ def test_a_short_word_does_not_match_inside_a_later_word():
     assert shown == ["", "If"]
 
 
+def test_korean_syllables_and_attached_particles_advance_the_text():
+    """Korean words can arrive a syllable at a time. Only two-syllable words
+    matched, and "218,840" never matched with "원" attached, so a line's text
+    waited for its caption and a barge-in discarded the rest although it had
+    played."""
+
+    shown = _transcripts(
+        [
+            [
+                TranscriptEvent("함께 확인해 볼게요."),
+                TranscriptEvent(" 차액은 218,840원입니다."),
+                _audio_ticks(1),
+                *[AgentWordEvent(s) for s in ("함", "께", "확", "인", "해")],
+            ],
+            [_audio_ticks(1), *[AgentWordEvent(s) for s in ("볼", "게", "요.")]],
+            [_audio_ticks(1), *[AgentWordEvent(s) for s in ("차", "액", "은")]],
+            [
+                _audio_ticks(1),
+                *[AgentWordEvent(s) for s in ("218,840", "원", "입", "니", "다.")],
+            ],
+        ]
+    )
+
+    assert shown == ["함께 확인해", " 볼게요.", " 차액은", " 218,840원입니다."]
+
+
+def test_chinese_digits_between_full_width_commas_advance_the_text():
+    """No space follows "，", so "1，1，6，" never ended as a whole word and
+    the line waited for its caption."""
+
+    shown = _transcripts(
+        [
+            [
+                TranscriptEvent("邮编是：1，1，6，0，7，8。如果不对，请再念一遍。"),
+                _audio_ticks(1),
+                *[AgentWordEvent(s) for s in ("邮", "编", "是")],
+            ],
+            [_audio_ticks(1), AgentWordEvent("1，1，6，"), AgentWordEvent("0，7，8。")],
+            [_audio_ticks(1), *[AgentWordEvent(s) for s in ("如", "果", "不", "对，")]],
+        ]
+    )
+
+    assert shown == ["邮编是", "：1，1，6，0，7，8。", "如果不对，"]
+
+
 def test_html_escaped_text_is_shown_unescaped():
     """Seen live: "I&amp;#x27;m" in bot-transcription and the caption."""
 
@@ -779,6 +824,73 @@ def test_cut_off_audio_arriving_after_the_cut_tick_stays_discarded():
     assert ticks[2].truncated_audio_bytes == 160
     assert ticks[3].agent_audio_bytes == 160
     assert ticks[3].proportional_transcript == "New."
+
+
+def _ticks(events_by_tick):
+    provider = FakeProvider(events_by_tick)
+    adapter = DiscreteTimeAvarthaPipecatAdapter(tick_duration_ms=20, provider=provider)
+    adapter.connect("policy", [])
+    try:
+        return [
+            adapter.run_tick(b"\xff" * 160, tick_number=tick)
+            for tick in range(1, len(events_by_tick) + 1)
+        ]
+    finally:
+        adapter.disconnect()
+
+
+def test_a_pause_inside_an_utterance_keeps_its_id_and_the_caption_ends_it():
+    """With one ID for every utterance, tau2 split a line at each silent tick,
+    so judges saw "I couldn't find a reservation under that" while its clip's
+    audio went on to say "code"."""
+
+    ticks = _ticks(
+        [
+            [TranscriptEvent("Let me check."), _audio_ticks(1), AgentWordEvent("Let")],
+            [],  # the TTS falls behind: a silent tick inside the line
+            [_audio_ticks(1), AgentWordEvent("check."), _played("Let me check.")],
+            [],
+            [
+                AgentStartedSpeakingEvent(),
+                TranscriptEvent("Found it."),
+                _audio_ticks(1),
+                _played("Found it."),
+            ],
+        ]
+    )
+
+    assert [t.item_ids for t in ticks] == [
+        ["avartha-1"],
+        ["avartha-1"],
+        ["avartha-1"],
+        ["avartha-1"],  # its last 1 ms, held for the caption
+        ["avartha-2"],
+    ]
+    assert [t.proportional_transcript for t in ticks] == [
+        "Let",
+        "",
+        " me check.",
+        "",
+        " Found it.",
+    ]
+
+
+def test_a_cut_starts_a_new_utterance():
+    ticks = _ticks(
+        [
+            [TranscriptEvent("Old line."), _audio_ticks(1)],
+            [SpeechEvent("speech_started")],
+            [
+                AgentLLMStartedEvent(),
+                TranscriptEvent("New."),
+                AgentStartedSpeakingEvent(),
+                _audio_ticks(1),
+                _played("New."),
+            ],
+        ]
+    )
+
+    assert [t.item_ids for t in ticks] == [["avartha-1"], [], ["avartha-2"]]
 
 
 def test_non_telephony_audio_format_is_rejected():
