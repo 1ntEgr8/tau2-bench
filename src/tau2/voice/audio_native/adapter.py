@@ -550,6 +550,7 @@ def create_adapter(
             reasoning_effort=reasoning_effort,
             audio_format=audio_format,
             avartha_config=avartha_config,
+            language=language,
         )
     elif provider == "phonic":
         from tau2.voice.audio_native.phonic.discrete_time_adapter import (

@@ -8,6 +8,7 @@ import pytest
 pytest.importorskip("aiortc")
 
 import tau2.voice.audio_native.avartha_pipecat.webrtc as webrtc_module  # noqa: E402
+from tau2.voice.audio_native.adapter import create_adapter  # noqa: E402
 from tau2.voice.audio_native.avartha_pipecat.config import (  # noqa: E402
     AvarthaPipecatConfig,
 )
@@ -56,6 +57,33 @@ def test_start_body_opts_into_caller_tools_and_carries_the_policy():
         "transport": "webrtc",
         "body": {"caller_tools": True},
     }
+
+
+def test_a_call_language_sets_the_agents_asr_and_leaves_the_greeting_to_tau2():
+    """tau2 gives the caller the language pack's greeting as the agent's
+    opening text, so the agent speaks no welcome of its own and listens in the
+    call's language, as tau2 does for ElevenLabs agents."""
+
+    assert webrtc_start_body("Retail policy", "zh-CN") == {
+        "transport": "webrtc",
+        "body": {
+            "caller_tools": True,
+            "conversation_config_override": {
+                "agent": {
+                    "prompt": {"prompt": "Retail policy"},
+                    "first_message": "",
+                },
+                "asr": {"language": "zh"},
+            },
+        },
+    }
+    adapter, _ = create_adapter(
+        "avartha_pipecat",
+        tick_duration_ms=200,
+        avartha_config=webrtc_config(),
+        language="ko",
+    )
+    assert adapter.provider.language == "ko"
 
 
 def test_only_digital_silence_is_dropped_from_agent_audio():

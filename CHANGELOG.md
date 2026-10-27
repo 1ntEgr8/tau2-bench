@@ -43,6 +43,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   loops until its output limit therefore fails sooner and costs less, and
   fewer clips fail. v7 is unvalidated, as v6 was. The new contract and catalog
   revisions make saved verdicts stale, so `tau2 judges suite` judges them again.
+- `tau2 judges suite` asks again, in the same run, for judge units whose reply
+  was incomplete (the output limit) or invalid, up to `--unit-retries` times
+  (default 2). Each attempt goes through the judge's own resume, which keeps
+  every successful unit and the same contract, so a single stuck unit no
+  longer leaves its whole call unjudged until the suite is rerun. Input errors
+  are not retried.
+- The speech-fidelity judge reads a finding marked severity 0 as the rubric's
+  "no clear issue" (an empty findings list) instead of failing the reply.
 - 2.0 scoring excludes infrastructure-errored calls from the denominator
   instead of blocking the cell. A cell is complete once every owed call is
   scored or errored and at least one is scored; its score averages the scored
