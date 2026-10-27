@@ -359,6 +359,7 @@ class DiscreteTimeAvarthaPipecatAdapter(DiscreteTimeAdapter):
         audio_format: Optional[AudioFormat] = None,
         avartha_config: Optional[AvarthaPipecatConfig] = None,
         provider: Optional[AvarthaPipecatProvider] = None,
+        language: Optional[str] = None,
     ):
         if reasoning_effort is not None:
             raise ValueError(
@@ -389,6 +390,9 @@ class DiscreteTimeAvarthaPipecatAdapter(DiscreteTimeAdapter):
         self.model = model or DEFAULT_AVARTHA_MODEL
         self.reasoning_effort = reasoning_effort
         self.avartha_config = config
+        # The call's language: the agent listens in it and leaves the greeting
+        # to tau2 (see webrtc_start_body).
+        self.language = language
         # The hosted call is live WebRTC: the agent speaks and listens on the
         # wall clock, so ticks must keep to it. Unpaced, every stall of the
         # user simulator left the caller track sending silence mid-word and
@@ -446,7 +450,9 @@ class DiscreteTimeAvarthaPipecatAdapter(DiscreteTimeAdapter):
                 AvarthaWebRTCProvider,
             )
 
-            self._provider = AvarthaWebRTCProvider(self.avartha_config)
+            self._provider = AvarthaWebRTCProvider(
+                self.avartha_config, language=self.language
+            )
         return self._provider
 
     @property
