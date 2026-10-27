@@ -103,14 +103,24 @@ class _CallerAudioTrack(AudioStreamTrack):
         return frame
 
 
-def webrtc_start_body(system_prompt: str) -> dict[str, Any]:
-    """The ``/start`` body: caller-executed tools and the domain policy."""
+def webrtc_start_body(
+    system_prompt: str, language: Optional[str] = None
+) -> dict[str, Any]:
+    """The ``/start`` body: caller-executed tools, the domain policy and, for a
+    call in a known language, the agent's speech recognition language."""
 
     body: dict[str, Any] = {"caller_tools": True}
+    override: dict[str, Any] = {}
     if system_prompt.strip():
-        body["conversation_config_override"] = {
-            "agent": {"prompt": {"prompt": system_prompt}}
-        }
+        override["agent"] = {"prompt": {"prompt": system_prompt}}
+    if language:
+        # tau2 gives the caller the language pack's greeting as the agent's
+        # opening text, so the agent speaks no welcome of its own (as tau2 does
+        # for ElevenLabs agents) and listens in the call's language.
+        override.setdefault("agent", {})["first_message"] = ""
+        override["asr"] = {"language": language.split("-")[0].lower()}
+    if override:
+        body["conversation_config_override"] = override
     return {"transport": "webrtc", "body": body}
 
 
@@ -140,9 +150,10 @@ def is_digital_silence(pcm: bytes) -> bool:
 class AvarthaWebRTCProvider(AvarthaPipecatProvider):
     """Exchange audio, transcripts and tool calls with a hosted agent."""
 
-    def __init__(self, config: AvarthaPipecatConfig):
+    def __init__(self, config: AvarthaPipecatConfig, language: Optional[str] = None):
         super().__init__(config)
         self.url = config.base_url.rstrip("/")
+        self.language = language
         self._peer: Optional[RTCPeerConnection] = None
         self._channel: Any = None
         self._track: Optional[_CallerAudioTrack] = None
@@ -177,7 +188,7 @@ class AvarthaWebRTCProvider(AvarthaPipecatProvider):
             response = await client.post(
                 f"{self.url}/start",
                 headers=headers,
-                json=webrtc_start_body(system_prompt),
+                json=webrtc_start_body(system_prompt, self.language),
             )
             _raise_for_status(response, "start")
             started = response.json()
