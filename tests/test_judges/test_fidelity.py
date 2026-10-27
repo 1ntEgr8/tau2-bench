@@ -77,6 +77,23 @@ def test_finding_category_is_required_and_closed():
         )
 
 
+def test_a_severity_zero_finding_is_the_rubrics_no_issue_answer():
+    """The rubric defines severity 0 as no clear issue, to be returned as an
+    empty list. A reply that still lists one failed validation, which left the
+    clip, and so its whole call, unjudged."""
+
+    clean = FidelityReply.model_validate({"findings": [finding(severity=0)]})
+    mixed = FidelityReply.model_validate(
+        {"findings": [finding(severity=0), finding(severity=2)]}
+    )
+
+    assert clean.findings == []
+    assert [f.severity for f in mixed.findings] == [2]
+    for severity in (-1, "0", None):
+        with pytest.raises(ValidationError):
+            FidelityReply.model_validate({"findings": [finding(severity=severity)]})
+
+
 @pytest.mark.parametrize("marker", ["###STOP###", "###TRANSFER###"])
 def test_control_marker_excludes_whole_audio_utterance(tmp_path, monkeypatch, marker):
     sim, _ = audio_fixture(tmp_path)
