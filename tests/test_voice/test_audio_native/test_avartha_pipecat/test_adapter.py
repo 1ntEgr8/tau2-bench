@@ -668,9 +668,9 @@ def test_a_short_word_does_not_match_inside_a_later_word():
 
 
 def test_korean_syllables_and_attached_particles_advance_the_text():
-    """Drama 3 times Korean a syllable at a time. Only two-syllable words
-    matched, and "218,840" never matched with "원" attached, so word evidence
-    covered 3% of each line and a barge-in discarded the rest although it had
+    """Korean words can arrive a syllable at a time. Only two-syllable words
+    matched, and "218,840" never matched with "원" attached, so a line's text
+    waited for its caption and a barge-in discarded the rest although it had
     played."""
 
     shown = _transcripts(
