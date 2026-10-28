@@ -28,7 +28,7 @@ const OPTIONAL_BY_FRAME = {
 }
 const OPTIONAL = new Set(['diagnostics', ...Object.values(OPTIONAL_BY_FRAME).flat()])
 
-const providerLogo = { gemini: 'Google__G__logo.svg.png', openai: 'openai.svg', openai_live: 'openai.svg', xai: 'xai-logo.svg' }
+const providerLogo = { gemini: 'Google__G__logo.svg.png', openai: 'openai.svg', openai_live: 'openai.svg', xai: 'xai-logo.svg', avartha_pipecat: 'avartha-logo.svg' }
 
 async function loadFile(dir, key) {
   const file = FILES[key]
