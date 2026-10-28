@@ -6669,14 +6669,754 @@
       "language": "hi",
       "domain": "airline",
       "interaction": {
-        "passed": 8,
-        "failed": 42,
+        "passed": 12,
+        "failed": 37,
+        "unscored": 1,
+        "excluded": 0
+      },
+      "experience": {
+        "passed": 3,
+        "failed": 47,
+        "unscored": 0,
+        "excluded": 0
+      },
+      "interaction_components": {
+        "nonresponse": {
+          "flagged": 43,
+          "known": 50
+        },
+        "interruption": {
+          "flagged": 25,
+          "known": 50
+        },
+        "selectivity": {
+          "flagged": 13,
+          "known": 49
+        },
+        "monologue": {
+          "flagged": 1,
+          "known": 50
+        },
+        "tool_misuse": {
+          "flagged": 36,
+          "known": 50
+        }
+      },
+      "calls": [
+        {
+          "simulation_id": "0a10198f-a492-42b9-b08d-b826c115270b",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 30,
+          "experience_issues": 15
+        },
+        {
+          "simulation_id": "0cbca244-d999-4e32-9c53-d7c7591d9543",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 23,
+          "experience_issues": 14
+        },
+        {
+          "simulation_id": "13522458-a39c-4857-82dc-f17e77ce6fe2",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 18,
+          "experience_issues": 5
+        },
+        {
+          "simulation_id": "1d927516-88bd-4e1a-a035-bf6cab31e339",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 48,
+          "experience_issues": 18
+        },
+        {
+          "simulation_id": "1f567c67-a3cf-4941-8993-08fb53a792a3",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 17,
+          "experience_issues": 8
+        },
+        {
+          "simulation_id": "1fddc103-38ad-40a5-aaa4-1aeb59fed62a",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 37,
+          "experience_issues": 13
+        },
+        {
+          "simulation_id": "249aaff4-2bfa-47f1-b45d-4ab68ccccc50",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 26,
+          "experience_issues": 8
+        },
+        {
+          "simulation_id": "28c5170e-5e0c-413d-baa2-c05cc56c1b55",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 22,
+          "experience_issues": 10
+        },
+        {
+          "simulation_id": "367b5341-7ae1-4a3d-b755-1b77cbf3409d",
+          "interaction": "unscored",
+          "flags": {
+            "nonresponse": 0,
+            "interruption": 0,
+            "selectivity": null,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "pass",
+          "experience_utterances": 1,
+          "experience_issues": 0
+        },
+        {
+          "simulation_id": "3c1fff63-f26e-4781-966e-b8b3f776a4ac",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 27,
+          "experience_issues": 14
+        },
+        {
+          "simulation_id": "402d8da8-7341-4583-bada-61a1b5608d4d",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 28,
+          "experience_issues": 19
+        },
+        {
+          "simulation_id": "4468fbfe-fb46-4dce-a6ea-d5967364c2eb",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 21,
+          "experience_issues": 12
+        },
+        {
+          "simulation_id": "47ab0467-1fd1-4878-a43a-648e6a15fb81",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 0,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 11,
+          "experience_issues": 6
+        },
+        {
+          "simulation_id": "4bc24fed-d5c6-40f2-b8ec-03fe3669b029",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 18,
+          "experience_issues": 7
+        },
+        {
+          "simulation_id": "51f27367-59f7-42fa-92e1-d49dce116a79",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 22,
+          "experience_issues": 14
+        },
+        {
+          "simulation_id": "54ff08f2-a001-4c97-8e76-42418ff162a3",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 29,
+          "experience_issues": 12
+        },
+        {
+          "simulation_id": "572f8ea6-5386-4e24-b273-f5a3740d5781",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 20,
+          "experience_issues": 15
+        },
+        {
+          "simulation_id": "5ab678b9-fd5a-472e-ad9c-35156a6bbe95",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 19,
+          "experience_issues": 9
+        },
+        {
+          "simulation_id": "659e2798-4e32-4445-b7de-828b7bf4186d",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 31,
+          "experience_issues": 14
+        },
+        {
+          "simulation_id": "66f5d8a1-5501-45d4-a25c-3f7be601548d",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 46,
+          "experience_issues": 30
+        },
+        {
+          "simulation_id": "6ad9c168-83b0-473e-8fb4-52bf51ba927d",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 16,
+          "experience_issues": 8
+        },
+        {
+          "simulation_id": "6def0b2d-38e4-46e2-b21d-ee27882c75ab",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 36,
+          "experience_issues": 18
+        },
+        {
+          "simulation_id": "6e4c5558-7f66-4899-84cb-38200a06cf03",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 16,
+          "experience_issues": 6
+        },
+        {
+          "simulation_id": "71cd4c59-4c10-4b8e-9d19-68b73574abd7",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 0,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 17,
+          "experience_issues": 10
+        },
+        {
+          "simulation_id": "74ddf511-0aca-4898-83ec-f0dcf17ec6d6",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 26,
+          "experience_issues": 11
+        },
+        {
+          "simulation_id": "7a7947e4-2256-44e1-9cb6-493ea611aa59",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 13,
+          "experience_issues": 4
+        },
+        {
+          "simulation_id": "837230f1-7068-4a81-a5f8-a841768c3de5",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 30,
+          "experience_issues": 11
+        },
+        {
+          "simulation_id": "86a2fc55-195c-4dc2-99aa-6faa1b4c5e39",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 0,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 18,
+          "experience_issues": 13
+        },
+        {
+          "simulation_id": "8b1c1ddb-6510-4e57-b142-afca15abba11",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 16,
+          "experience_issues": 7
+        },
+        {
+          "simulation_id": "a71ea929-13d5-4ed9-a75d-ff7a3424410a",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 31,
+          "experience_issues": 9
+        },
+        {
+          "simulation_id": "a961caab-7d05-426b-9581-5505ed7e6165",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "pass",
+          "experience_utterances": 22,
+          "experience_issues": 5
+        },
+        {
+          "simulation_id": "acb67abf-d8d0-4b77-a69f-dbeb4bac317e",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 0,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 21,
+          "experience_issues": 10
+        },
+        {
+          "simulation_id": "aedc38fe-b201-40aa-8397-3f5a7322d5f0",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 17,
+          "experience_issues": 8
+        },
+        {
+          "simulation_id": "bc1b8f57-397e-48e7-8a0d-005cd216a7e7",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 15,
+          "experience_issues": 5
+        },
+        {
+          "simulation_id": "bd0b2e01-2c33-4657-92d3-f9137b6301e4",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 1,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 36,
+          "experience_issues": 18
+        },
+        {
+          "simulation_id": "c062b196-0be8-4b65-9da7-48973474cdb2",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 12,
+          "experience_issues": 5
+        },
+        {
+          "simulation_id": "c3c97c43-5734-4280-810b-f66033d662d6",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 15,
+          "experience_issues": 5
+        },
+        {
+          "simulation_id": "c408698d-7f7d-4924-9f8c-1e1d56eea3ee",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 37,
+          "experience_issues": 15
+        },
+        {
+          "simulation_id": "c4dd6665-936a-4574-9dd3-840d4d2d34c1",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 23,
+          "experience_issues": 13
+        },
+        {
+          "simulation_id": "c85e8bf4-0a51-4dc6-9136-81456ba5cab6",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 18,
+          "experience_issues": 7
+        },
+        {
+          "simulation_id": "c9badf8d-9aa6-4706-88bc-78eb30356f0c",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 19,
+          "experience_issues": 8
+        },
+        {
+          "simulation_id": "cd42b5ab-8104-47eb-bcc5-5180874ad5f8",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 23,
+          "experience_issues": 11
+        },
+        {
+          "simulation_id": "d80122f2-3eb1-408c-acc5-1e99ada0537c",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "pass",
+          "experience_utterances": 41,
+          "experience_issues": 6
+        },
+        {
+          "simulation_id": "e2218bbf-419c-457f-bdf3-814f56dd5cc4",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 35,
+          "experience_issues": 23
+        },
+        {
+          "simulation_id": "e2c70027-a92b-4388-9ecc-162a498ffb25",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 19,
+          "experience_issues": 12
+        },
+        {
+          "simulation_id": "ea86f9aa-d88a-4ece-8caa-0c3a9fe32e88",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 24,
+          "experience_issues": 14
+        },
+        {
+          "simulation_id": "edb2a87d-ad37-47cf-a49d-200f9825434e",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 6,
+          "experience_issues": 4
+        },
+        {
+          "simulation_id": "f45e01a8-a847-42e0-9e49-5452c9949bac",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 0,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 11,
+          "experience_issues": 6
+        },
+        {
+          "simulation_id": "fe1f3559-bdb9-4efc-bfa8-f6ea3d416dd8",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 0,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 8,
+          "experience_issues": 5
+        },
+        {
+          "simulation_id": "ff5c1df2-e253-4fc8-95dc-12aa716fddf8",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 32,
+          "experience_issues": 22
+        }
+      ]
+    },
+    {
+      "language": "hi",
+      "domain": "retail",
+      "interaction": {
+        "passed": 2,
+        "failed": 48,
         "unscored": 0,
         "excluded": 0
       },
       "experience": {
-        "passed": 0,
-        "failed": 50,
+        "passed": 1,
+        "failed": 49,
         "unscored": 0,
         "excluded": 0
       },
@@ -6690,21 +7430,21 @@
           "known": 50
         },
         "selectivity": {
-          "flagged": 16,
-          "known": 50
+          "flagged": 15,
+          "known": 49
         },
         "monologue": {
-          "flagged": 4,
+          "flagged": 1,
           "known": 50
         },
         "tool_misuse": {
-          "flagged": 39,
-          "known": 50
+          "flagged": 48,
+          "known": 49
         }
       },
       "calls": [
         {
-          "simulation_id": "02ee61a6-08c3-419b-82ea-84f5cdb73ccb",
+          "simulation_id": "03ce847a-3ada-45bc-80e3-8af035a54cdf",
           "interaction": "fail",
           "flags": {
             "nonresponse": 1,
@@ -6714,165 +7454,53 @@
             "tool_misuse": 1
           },
           "experience": "fail",
-          "experience_utterances": 12,
+          "experience_utterances": 10,
           "experience_issues": 6
         },
         {
-          "simulation_id": "043dee15-bcab-4237-a961-824eda2bc08b",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 25,
-          "experience_issues": 10
-        },
-        {
-          "simulation_id": "0560452e-6fd0-4691-960f-e2d7b79bdc63",
+          "simulation_id": "04519138-22e0-459f-bc04-f2c0678696a9",
           "interaction": "fail",
           "flags": {
             "nonresponse": 1,
             "interruption": 0,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 28,
-          "experience_issues": 15
-        },
-        {
-          "simulation_id": "084bbd6c-3b44-44d7-a4d2-9d051d25bfec",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 26,
-          "experience_issues": 8
-        },
-        {
-          "simulation_id": "0a00491d-7765-4b3e-8199-eb4ec1b6463a",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
             "selectivity": 0,
             "monologue": 0,
             "tool_misuse": 1
           },
           "experience": "fail",
-          "experience_utterances": 39,
-          "experience_issues": 15
+          "experience_utterances": 11,
+          "experience_issues": 6
         },
         {
-          "simulation_id": "0a7089dc-9054-4995-a61a-6108573ad0ad",
-          "interaction": "pass",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 20,
-          "experience_issues": 13
-        },
-        {
-          "simulation_id": "2078165c-0f48-471b-ac39-c74257f5bad8",
+          "simulation_id": "06ef1996-3a37-4b5a-8a7f-f89d9196c76f",
           "interaction": "fail",
           "flags": {
             "nonresponse": 1,
             "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 23,
-          "experience_issues": 14
-        },
-        {
-          "simulation_id": "2b9f7862-f5a8-4cfb-bdb3-45a44233280e",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 24,
-          "experience_issues": 13
-        },
-        {
-          "simulation_id": "2cd439f0-c33d-4dde-a29d-62f742e7a2d4",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 27,
-          "experience_issues": 14
-        },
-        {
-          "simulation_id": "2f11dcc0-b593-4905-a31c-e96ea507222a",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
             "selectivity": 1,
             "monologue": 0,
             "tool_misuse": 1
           },
           "experience": "fail",
           "experience_utterances": 34,
-          "experience_issues": 17
+          "experience_issues": 18
         },
         {
-          "simulation_id": "301da39e-a958-4a53-b3ce-d10aa80583be",
+          "simulation_id": "0f475c7f-2468-4365-b778-640c3fc18dea",
           "interaction": "fail",
           "flags": {
             "nonresponse": 1,
             "interruption": 1,
             "selectivity": 0,
-            "monologue": 1,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 43,
-          "experience_issues": 21
-        },
-        {
-          "simulation_id": "32cac23f-300a-4fcc-9a65-bd31f3eecb90",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
             "monologue": 0,
             "tool_misuse": 1
           },
           "experience": "fail",
-          "experience_utterances": 44,
-          "experience_issues": 16
+          "experience_utterances": 26,
+          "experience_issues": 11
         },
         {
-          "simulation_id": "3d22cf14-c955-42ce-a9e0-8e03dc0cd642",
+          "simulation_id": "11c3d9de-90c3-4ec7-bd21-09cd13fb8b21",
           "interaction": "fail",
           "flags": {
             "nonresponse": 1,
@@ -6886,315 +7514,7 @@
           "experience_issues": 13
         },
         {
-          "simulation_id": "3fa1338f-312c-4f94-95a1-5aace43565ab",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 36,
-          "experience_issues": 16
-        },
-        {
-          "simulation_id": "46d3e619-543a-4df8-acd0-40661543dac6",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 25,
-          "experience_issues": 10
-        },
-        {
-          "simulation_id": "534eb324-1c81-406d-9203-60cb4911c1ad",
-          "interaction": "pass",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 13,
-          "experience_issues": 9
-        },
-        {
-          "simulation_id": "5b8b6196-cb09-4306-8a89-f5dd33681785",
-          "interaction": "pass",
-          "flags": {
-            "nonresponse": 0,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 1,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 14,
-          "experience_issues": 10
-        },
-        {
-          "simulation_id": "65979d14-0d8d-4507-a752-ef213c5852e9",
-          "interaction": "pass",
-          "flags": {
-            "nonresponse": 0,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 16,
-          "experience_issues": 8
-        },
-        {
-          "simulation_id": "6847bfbe-ba15-411f-870d-615886578634",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 27,
-          "experience_issues": 15
-        },
-        {
-          "simulation_id": "6b173a59-c458-45ac-97ff-4aaf530f175a",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 33,
-          "experience_issues": 15
-        },
-        {
-          "simulation_id": "725c6c34-06da-471f-a3a7-f98bfa2dd1cb",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 11,
-          "experience_issues": 7
-        },
-        {
-          "simulation_id": "76b70a3e-2921-4bbf-90a5-fbba73da00f4",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 26,
-          "experience_issues": 11
-        },
-        {
-          "simulation_id": "7d70d154-e457-43fb-82a7-d137d3950320",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 29,
-          "experience_issues": 19
-        },
-        {
-          "simulation_id": "80299f5c-a199-4fd3-b913-21af09161dcd",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 30,
-          "experience_issues": 17
-        },
-        {
-          "simulation_id": "87409d68-c6a6-4baf-b4b5-9b764e91ed01",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 25,
-          "experience_issues": 15
-        },
-        {
-          "simulation_id": "87699d36-410d-4149-ac66-161dc67173a2",
-          "interaction": "pass",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 18,
-          "experience_issues": 10
-        },
-        {
-          "simulation_id": "88459744-3b5e-4747-93bb-ae7d8f9ef29b",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 15,
-          "experience_issues": 12
-        },
-        {
-          "simulation_id": "88d7228b-59ae-4bed-bbd5-0b9e5fe52bc5",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 24,
-          "experience_issues": 17
-        },
-        {
-          "simulation_id": "8bd8308d-1267-49d6-8cc6-9128cde8b988",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 28,
-          "experience_issues": 17
-        },
-        {
-          "simulation_id": "91482486-31b8-47fe-a7e0-f390aca8c596",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 0,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 7,
-          "experience_issues": 2
-        },
-        {
-          "simulation_id": "9418fbc5-0e91-4168-8a99-e67461068e35",
-          "interaction": "pass",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 12,
-          "experience_issues": 10
-        },
-        {
-          "simulation_id": "9dc79b83-3e3c-427b-8288-db28a76f4111",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 1,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 29,
-          "experience_issues": 17
-        },
-        {
-          "simulation_id": "a5450968-eae3-4991-9ef7-62937e7263ed",
-          "interaction": "pass",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 11,
-          "experience_issues": 6
-        },
-        {
-          "simulation_id": "ae31d2b3-9413-482a-98c9-5a6e0199cba4",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 39,
-          "experience_issues": 22
-        },
-        {
-          "simulation_id": "b399ec0c-1e8a-4e60-a0c7-5dc1afe7cbe6",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 0,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 48,
-          "experience_issues": 28
-        },
-        {
-          "simulation_id": "b3e54c36-2c6f-4a11-9326-6fbb679410a1",
+          "simulation_id": "21f1595e-c943-4b93-bc0d-864b471d30d1",
           "interaction": "fail",
           "flags": {
             "nonresponse": 1,
@@ -7208,49 +7528,91 @@
           "experience_issues": 5
         },
         {
-          "simulation_id": "b82e986a-ba37-4269-91b3-01c4f693aeb6",
+          "simulation_id": "27b8b2b9-f4c7-4300-b3ee-8253cded80ea",
           "interaction": "fail",
           "flags": {
             "nonresponse": 1,
-            "interruption": 0,
+            "interruption": 1,
             "selectivity": 0,
-            "monologue": 0,
+            "monologue": 1,
             "tool_misuse": 1
           },
           "experience": "fail",
-          "experience_utterances": 42,
-          "experience_issues": 24
+          "experience_utterances": 24,
+          "experience_issues": 14
         },
         {
-          "simulation_id": "c2b72f06-7b3d-4f24-9be0-3327c836a49d",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 11,
-          "experience_issues": 10
-        },
-        {
-          "simulation_id": "c694a8d1-416d-411b-bea2-522cac680c63",
+          "simulation_id": "283d1f91-aa2e-45d6-b581-94e8d1db809d",
           "interaction": "fail",
           "flags": {
             "nonresponse": 1,
             "interruption": 1,
             "selectivity": 1,
-            "monologue": 1,
+            "monologue": 0,
             "tool_misuse": 1
           },
           "experience": "fail",
-          "experience_utterances": 25,
+          "experience_utterances": 36,
           "experience_issues": 15
         },
         {
-          "simulation_id": "c7a8e5df-71e3-4ebb-8a00-0bc9cc9d4f85",
+          "simulation_id": "2cdc5556-30a3-4c7f-aed1-88faa617297a",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 16,
+          "experience_issues": 8
+        },
+        {
+          "simulation_id": "2cf753fd-42ae-4e4d-9fd5-0646c5626198",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": null,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 13,
+          "experience_issues": 7
+        },
+        {
+          "simulation_id": "3041506c-f8a1-4d3b-83a6-0ffdb24f6cb2",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 29,
+          "experience_issues": 12
+        },
+        {
+          "simulation_id": "323019fa-305a-4ed6-a18a-e3f71240c20d",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 64,
+          "experience_issues": 31
+        },
+        {
+          "simulation_id": "426b5469-fae6-46ab-9490-e3079523c3a3",
           "interaction": "fail",
           "flags": {
             "nonresponse": 1,
@@ -7261,24 +7623,122 @@
           },
           "experience": "fail",
           "experience_utterances": 17,
-          "experience_issues": 9
+          "experience_issues": 10
         },
         {
-          "simulation_id": "d6135a44-282f-41e7-89b0-8180f2a71023",
+          "simulation_id": "6e72bd23-95ff-48c9-8411-e35c9b39bd62",
           "interaction": "fail",
           "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
+            "nonresponse": 0,
+            "interruption": 1,
             "selectivity": 1,
             "monologue": 0,
             "tool_misuse": 1
           },
           "experience": "fail",
-          "experience_utterances": 28,
+          "experience_utterances": 31,
           "experience_issues": 14
         },
         {
-          "simulation_id": "d96fffe4-69c3-47cc-832b-a52ce4579b5f",
+          "simulation_id": "73e5b4ab-d7e5-45a0-9692-f76abb2d3072",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 25,
+          "experience_issues": 12
+        },
+        {
+          "simulation_id": "772c28a2-db2a-40cb-8158-b345fda03490",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 35,
+          "experience_issues": 13
+        },
+        {
+          "simulation_id": "786e2bf8-abbd-48d1-834e-3b0d69935ff0",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 17,
+          "experience_issues": 11
+        },
+        {
+          "simulation_id": "79a4b36c-558c-4ff1-8a6f-a0c569dbcf63",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 13,
+          "experience_issues": 8
+        },
+        {
+          "simulation_id": "7a7d8a1a-e99a-4d76-81e0-ab18a34180a2",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 0,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 16,
+          "experience_issues": 5
+        },
+        {
+          "simulation_id": "7bc61837-8d86-456f-90ef-3f75e1573921",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 27,
+          "experience_issues": 14
+        },
+        {
+          "simulation_id": "858c097d-435a-4c23-9b3d-9baa2867da3f",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "pass",
+          "experience_utterances": 30,
+          "experience_issues": 7
+        },
+        {
+          "simulation_id": "86796060-c5b3-45bd-b01a-5b6b3238b71f",
           "interaction": "fail",
           "flags": {
             "nonresponse": 1,
@@ -7289,10 +7749,262 @@
           },
           "experience": "fail",
           "experience_utterances": 19,
+          "experience_issues": 11
+        },
+        {
+          "simulation_id": "8775cb2d-6e30-49e1-ae87-cd35a81ae7b5",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 33,
+          "experience_issues": 16
+        },
+        {
+          "simulation_id": "878da4b3-54b9-4585-a51d-6c968944fe07",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 27,
+          "experience_issues": 20
+        },
+        {
+          "simulation_id": "87a12167-af05-4185-a4d8-a249b770e83f",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 44,
+          "experience_issues": 13
+        },
+        {
+          "simulation_id": "88beb6cc-6f9c-4103-9e7e-e54aef802566",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 31,
+          "experience_issues": 12
+        },
+        {
+          "simulation_id": "a3688307-fcf2-4184-9d4b-468eb360f077",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 28,
+          "experience_issues": 13
+        },
+        {
+          "simulation_id": "a5deb014-6ca1-434e-8616-4bd03161a5dc",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 45,
+          "experience_issues": 18
+        },
+        {
+          "simulation_id": "bc0c8e6b-88c0-4aab-beb7-3a44e5553eb1",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 25,
+          "experience_issues": 16
+        },
+        {
+          "simulation_id": "bc9e0407-61d1-4532-989e-994a7c42bd58",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 24,
+          "experience_issues": 9
+        },
+        {
+          "simulation_id": "c4822e88-c0fc-4583-998a-e8251d9204eb",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 11,
+          "experience_issues": 7
+        },
+        {
+          "simulation_id": "cb7de5ec-2a5d-47f1-b30e-3e2e0c54e2de",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 25,
+          "experience_issues": 13
+        },
+        {
+          "simulation_id": "cdcda804-6df1-4f71-a880-2c7182e4573c",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 41,
+          "experience_issues": 23
+        },
+        {
+          "simulation_id": "d047e3dc-3de5-4c83-ad35-b0ecf30d681d",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 20,
           "experience_issues": 10
         },
         {
-          "simulation_id": "e27f5978-e029-4221-a6ac-a380821cd1f6",
+          "simulation_id": "d3a8d39d-cccd-4db0-81a1-b00d9b5aae30",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 18,
+          "experience_issues": 9
+        },
+        {
+          "simulation_id": "dcc3e62d-eaf3-499a-a310-22e1093be7bd",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 30,
+          "experience_issues": 18
+        },
+        {
+          "simulation_id": "de128e74-e36b-4fd8-8c69-5d761e1de9ac",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 18,
+          "experience_issues": 9
+        },
+        {
+          "simulation_id": "e1598aad-2fbc-4d14-8ad4-0f90c0c168a8",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 23,
+          "experience_issues": 13
+        },
+        {
+          "simulation_id": "e3b6aa9f-df77-4d67-ab6c-357a9e730887",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 0,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 35,
+          "experience_issues": 14
+        },
+        {
+          "simulation_id": "e3c756f6-2dd9-4461-b5c3-85949e2b1000",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 0,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 23,
+          "experience_issues": 7
+        },
+        {
+          "simulation_id": "e6100085-8f00-470a-9d85-485dc67fee5d",
           "interaction": "pass",
           "flags": {
             "nonresponse": 1,
@@ -7302,11 +8014,53 @@
             "tool_misuse": 0
           },
           "experience": "fail",
-          "experience_utterances": 18,
+          "experience_utterances": 12,
+          "experience_issues": 4
+        },
+        {
+          "simulation_id": "e8165e42-ae87-4a6d-8b34-d29976a536de",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": null
+          },
+          "experience": "fail",
+          "experience_utterances": 49,
+          "experience_issues": 26
+        },
+        {
+          "simulation_id": "eb4e21e8-3e29-4ccf-8227-a0ee4b28738d",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 12,
           "experience_issues": 8
         },
         {
-          "simulation_id": "eb7c6ac1-6a48-443c-a9ba-701e13f57148",
+          "simulation_id": "ed1fb0f2-6a7a-44af-b29b-3d04201cdde1",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 32,
+          "experience_issues": 17
+        },
+        {
+          "simulation_id": "ef139382-8e8e-4c50-96ee-9b730dcd2829",
           "interaction": "fail",
           "flags": {
             "nonresponse": 1,
@@ -7316,11 +8070,25 @@
             "tool_misuse": 1
           },
           "experience": "fail",
-          "experience_utterances": 18,
-          "experience_issues": 6
+          "experience_utterances": 29,
+          "experience_issues": 10
         },
         {
-          "simulation_id": "eb966ef4-2ab3-437a-8ca2-45af034fa5c2",
+          "simulation_id": "f28f7cd7-2192-4f00-857a-64b0080e1c1b",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 26,
+          "experience_issues": 15
+        },
+        {
+          "simulation_id": "f4f2b8d2-0809-4c15-8189-fbc957dc562d",
           "interaction": "fail",
           "flags": {
             "nonresponse": 1,
@@ -7330,11 +8098,25 @@
             "tool_misuse": 1
           },
           "experience": "fail",
-          "experience_utterances": 15,
-          "experience_issues": 6
+          "experience_utterances": 20,
+          "experience_issues": 10
         },
         {
-          "simulation_id": "f26a5a11-e938-404d-be2b-ace393d9719e",
+          "simulation_id": "f863aa0e-99cc-4b5e-a528-2f60e849111b",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 32,
+          "experience_issues": 18
+        },
+        {
+          "simulation_id": "faf07a36-6e89-49cf-8bb9-0d8cda24aebb",
           "interaction": "fail",
           "flags": {
             "nonresponse": 1,
@@ -7348,21 +8130,7 @@
           "experience_issues": 15
         },
         {
-          "simulation_id": "f92a3b01-61d1-4825-8a73-b2efae1c93b3",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 22,
-          "experience_issues": 13
-        },
-        {
-          "simulation_id": "fac27044-0edc-471d-86be-f104e58864d0",
+          "simulation_id": "fc0878d1-e72f-41d0-955b-c4a565103b9f",
           "interaction": "fail",
           "flags": {
             "nonresponse": 1,
@@ -7372,51 +8140,23 @@
             "tool_misuse": 1
           },
           "experience": "fail",
-          "experience_utterances": 12,
-          "experience_issues": 7
-        },
-        {
-          "simulation_id": "fb7ba4d0-ed72-4f48-8a53-5ac62e3aec61",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
           "experience_utterances": 20,
-          "experience_issues": 10
-        },
-        {
-          "simulation_id": "fe75b4b6-ee3c-44dc-bef9-d12047df63c1",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 34,
-          "experience_issues": 16
+          "experience_issues": 13
         }
       ]
     },
     {
       "language": "hi",
-      "domain": "retail",
+      "domain": "telecom",
       "interaction": {
-        "passed": 4,
-        "failed": 46,
+        "passed": 16,
+        "failed": 34,
         "unscored": 0,
         "excluded": 0
       },
       "experience": {
-        "passed": 0,
-        "failed": 50,
+        "passed": 8,
+        "failed": 42,
         "unscored": 0,
         "excluded": 0
       },
@@ -7426,751 +8166,11 @@
           "known": 50
         },
         "interruption": {
+          "flagged": 24,
+          "known": 50
+        },
+        "selectivity": {
           "flagged": 22,
-          "known": 50
-        },
-        "selectivity": {
-          "flagged": 21,
-          "known": 50
-        },
-        "monologue": {
-          "flagged": 4,
-          "known": 50
-        },
-        "tool_misuse": {
-          "flagged": 42,
-          "known": 50
-        }
-      },
-      "calls": [
-        {
-          "simulation_id": "0857d4d3-c2c4-4f45-980f-bed75e59e81d",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 24,
-          "experience_issues": 11
-        },
-        {
-          "simulation_id": "099393f6-5055-460f-bf54-91a524f53719",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 41,
-          "experience_issues": 18
-        },
-        {
-          "simulation_id": "0c70a54d-0dd5-42d8-bb9e-ad184b52153e",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 1,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 56,
-          "experience_issues": 29
-        },
-        {
-          "simulation_id": "0d8516f7-7539-4b9f-8813-891521f4125e",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 41,
-          "experience_issues": 19
-        },
-        {
-          "simulation_id": "1bb7588d-f6a8-4c90-a05c-5597c78481bf",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 30,
-          "experience_issues": 16
-        },
-        {
-          "simulation_id": "2b791eb9-9142-4ae6-a035-03c9b0abedd8",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 22,
-          "experience_issues": 13
-        },
-        {
-          "simulation_id": "2febb569-f9fc-4c95-88fa-033cb0245afd",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 13,
-          "experience_issues": 9
-        },
-        {
-          "simulation_id": "314a39af-f1b1-4421-be84-239571753fe4",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 25,
-          "experience_issues": 15
-        },
-        {
-          "simulation_id": "3a2ce4b1-fae2-4e1d-8b3c-1f12673c8bc6",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 23,
-          "experience_issues": 13
-        },
-        {
-          "simulation_id": "3eed046c-c918-4389-bb70-29cfd492c0c1",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 32,
-          "experience_issues": 16
-        },
-        {
-          "simulation_id": "472e9e1c-4140-4bee-9485-474c9f30d25a",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 1,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 30,
-          "experience_issues": 11
-        },
-        {
-          "simulation_id": "4ca8e1dd-86da-4a8b-b88a-b19b5bf8e4e1",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 14,
-          "experience_issues": 8
-        },
-        {
-          "simulation_id": "63033ee9-170d-4e0c-8bfb-9981449adec6",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 29,
-          "experience_issues": 12
-        },
-        {
-          "simulation_id": "66dd796e-41fa-4b94-8a40-acb1a098af75",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 20,
-          "experience_issues": 10
-        },
-        {
-          "simulation_id": "70e35cd0-e089-45ce-9f88-76f85972322e",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 27,
-          "experience_issues": 13
-        },
-        {
-          "simulation_id": "748879d1-9e8a-4cd5-98f9-5c5fbe69a516",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 47,
-          "experience_issues": 18
-        },
-        {
-          "simulation_id": "75e076cc-b9a1-47e0-aee4-9d1c490e99f9",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 16,
-          "experience_issues": 8
-        },
-        {
-          "simulation_id": "7658361e-eeec-450e-9d92-79c2ebe50d8c",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 30,
-          "experience_issues": 20
-        },
-        {
-          "simulation_id": "79c7d783-7e3b-41e1-9353-71ac15ab3152",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 19,
-          "experience_issues": 9
-        },
-        {
-          "simulation_id": "7d4420be-adf9-4cde-8484-58c47edf9347",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 38,
-          "experience_issues": 25
-        },
-        {
-          "simulation_id": "91e2f21c-3b17-4dc2-83a2-226763dc1ec9",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 19,
-          "experience_issues": 14
-        },
-        {
-          "simulation_id": "99299186-bc31-4eff-821c-971084cb3e44",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 37,
-          "experience_issues": 20
-        },
-        {
-          "simulation_id": "9bc6661e-6f3b-4fb6-b3ee-d2ca741d567d",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 20,
-          "experience_issues": 8
-        },
-        {
-          "simulation_id": "9d4f137c-4b7b-4e99-a231-7608d6732f7b",
-          "interaction": "pass",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 18,
-          "experience_issues": 8
-        },
-        {
-          "simulation_id": "9fff6c36-d267-47ea-a9f5-205d86e0a400",
-          "interaction": "pass",
-          "flags": {
-            "nonresponse": 0,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 10,
-          "experience_issues": 4
-        },
-        {
-          "simulation_id": "a5e50699-76e5-4bda-a696-ad361b89b4a3",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 1,
-            "monologue": 1,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 26,
-          "experience_issues": 7
-        },
-        {
-          "simulation_id": "a9e378c0-95e8-4431-b1da-b57649d59d3b",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 19,
-          "experience_issues": 9
-        },
-        {
-          "simulation_id": "ab21698e-413a-4e5a-a595-9a5ab7f8602b",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 21,
-          "experience_issues": 13
-        },
-        {
-          "simulation_id": "ab6793f0-a4fc-47f8-91e6-0806baa914ec",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 40,
-          "experience_issues": 23
-        },
-        {
-          "simulation_id": "b33ec42a-df04-42f9-a49f-6bd0a75bce28",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 12,
-          "experience_issues": 8
-        },
-        {
-          "simulation_id": "b36af26d-3bfd-4f07-b044-5914aa3fcd25",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 26,
-          "experience_issues": 11
-        },
-        {
-          "simulation_id": "ba756586-3c48-45fd-9917-cd0a5bd0a5d4",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 24,
-          "experience_issues": 12
-        },
-        {
-          "simulation_id": "c37c5aa7-6aa1-45b2-b970-889931fc17c6",
-          "interaction": "pass",
-          "flags": {
-            "nonresponse": 0,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 29,
-          "experience_issues": 10
-        },
-        {
-          "simulation_id": "c4b79c85-bb27-49fe-ac91-2b00dc2d9caa",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 26,
-          "experience_issues": 19
-        },
-        {
-          "simulation_id": "c8b5f113-de94-4547-86c9-d12bc6a89805",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 11,
-          "experience_issues": 7
-        },
-        {
-          "simulation_id": "cb73aa44-844e-4179-8fb1-3598c0153237",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 35,
-          "experience_issues": 18
-        },
-        {
-          "simulation_id": "cd747dc2-35fd-4ab6-9df2-b169a91e7252",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 26,
-          "experience_issues": 15
-        },
-        {
-          "simulation_id": "d02151c8-f969-4de2-be78-5c12622bac78",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 9,
-          "experience_issues": 6
-        },
-        {
-          "simulation_id": "d16d0b0a-83ee-4505-b666-3f91266fa608",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 29,
-          "experience_issues": 16
-        },
-        {
-          "simulation_id": "d1d91355-a94a-4cb6-a99b-9a26f5bb3886",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 21,
-          "experience_issues": 11
-        },
-        {
-          "simulation_id": "d6b6ff70-f380-4e4f-9280-2ea7f52e3c0c",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 26,
-          "experience_issues": 13
-        },
-        {
-          "simulation_id": "d88a17ff-5640-44fb-9b54-e115639fada9",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 1,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 25,
-          "experience_issues": 12
-        },
-        {
-          "simulation_id": "da1427cc-be64-4b53-90cf-4b1230e05a8a",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 33,
-          "experience_issues": 18
-        },
-        {
-          "simulation_id": "da9ef50c-d69a-431c-a492-5dbd819a86b3",
-          "interaction": "pass",
-          "flags": {
-            "nonresponse": 0,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 16,
-          "experience_issues": 12
-        },
-        {
-          "simulation_id": "dc43ffdd-e320-4c02-851f-411672c21e4c",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 23,
-          "experience_issues": 12
-        },
-        {
-          "simulation_id": "e6e5f26a-a01a-4d02-acbe-8c3f6aab7f18",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 39,
-          "experience_issues": 17
-        },
-        {
-          "simulation_id": "f0f1edbf-7585-40c5-91a7-32efd072045d",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 25,
-          "experience_issues": 15
-        },
-        {
-          "simulation_id": "f4d2c944-d8f1-4017-8da7-87a6a394f633",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 13,
-          "experience_issues": 9
-        },
-        {
-          "simulation_id": "f53e424a-acb0-424b-a691-ba71d28f9640",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 32,
-          "experience_issues": 10
-        },
-        {
-          "simulation_id": "fb552a84-140a-44fa-a1b5-80827567c171",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 29,
-          "experience_issues": 18
-        }
-      ]
-    },
-    {
-      "language": "hi",
-      "domain": "telecom",
-      "interaction": {
-        "passed": 15,
-        "failed": 35,
-        "unscored": 0,
-        "excluded": 0
-      },
-      "experience": {
-        "passed": 4,
-        "failed": 46,
-        "unscored": 0,
-        "excluded": 0
-      },
-      "interaction_components": {
-        "nonresponse": {
-          "flagged": 46,
-          "known": 50
-        },
-        "interruption": {
-          "flagged": 23,
-          "known": 50
-        },
-        "selectivity": {
-          "flagged": 23,
           "known": 50
         },
         "monologue": {
@@ -8178,13 +8178,41 @@
           "known": 50
         },
         "tool_misuse": {
-          "flagged": 18,
+          "flagged": 12,
           "known": 50
         }
       },
       "calls": [
         {
-          "simulation_id": "00439c7b-1cef-4892-b1c5-27e45c0aebe9",
+          "simulation_id": "07e772a3-557e-44ac-9144-20b2449cccc8",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 31,
+          "experience_issues": 12
+        },
+        {
+          "simulation_id": "09eb3838-b16b-488d-918b-164abe4f0e96",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 49,
+          "experience_issues": 17
+        },
+        {
+          "simulation_id": "0f3540ed-ec9f-4c94-b935-084a3dc95d79",
           "interaction": "fail",
           "flags": {
             "nonresponse": 1,
@@ -8193,82 +8221,12 @@
             "monologue": 0,
             "tool_misuse": 1
           },
-          "experience": "pass",
-          "experience_utterances": 29,
-          "experience_issues": 7
-        },
-        {
-          "simulation_id": "04319c4c-3f71-4e44-ac8a-0097d23fc26c",
-          "interaction": "pass",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
           "experience": "fail",
-          "experience_utterances": 34,
-          "experience_issues": 17
+          "experience_utterances": 55,
+          "experience_issues": 18
         },
         {
-          "simulation_id": "0537b8a9-64e6-425e-8748-20b0a96c2e13",
-          "interaction": "pass",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 26,
-          "experience_issues": 7
-        },
-        {
-          "simulation_id": "07d5d572-8493-4f4d-8d5e-da6bd63e0112",
-          "interaction": "pass",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "pass",
-          "experience_utterances": 22,
-          "experience_issues": 4
-        },
-        {
-          "simulation_id": "08976b39-0e8f-4795-a117-b59a7aa7543a",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 50,
-          "experience_issues": 22
-        },
-        {
-          "simulation_id": "13c909f7-b5d7-4b74-a9d9-37263b9e7ddc",
-          "interaction": "pass",
-          "flags": {
-            "nonresponse": 0,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 5,
-          "experience_issues": 2
-        },
-        {
-          "simulation_id": "14526503-f21b-46b2-ba68-64caf280a414",
+          "simulation_id": "141e2771-bd56-4a82-819f-a1ad6419b141",
           "interaction": "fail",
           "flags": {
             "nonresponse": 1,
@@ -8278,543 +8236,39 @@
             "tool_misuse": 0
           },
           "experience": "fail",
-          "experience_utterances": 53,
-          "experience_issues": 17
+          "experience_utterances": 43,
+          "experience_issues": 19
         },
         {
-          "simulation_id": "15cf73ea-7490-4094-97e7-fc533499c5e1",
-          "interaction": "fail",
+          "simulation_id": "14259c93-a8e4-4c2a-b3c9-76300fdc2db7",
+          "interaction": "pass",
           "flags": {
             "nonresponse": 1,
             "interruption": 0,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 36,
-          "experience_issues": 11
-        },
-        {
-          "simulation_id": "19bc6da4-79ce-412b-bcdd-01882888715c",
-          "interaction": "pass",
-          "flags": {
-            "nonresponse": 0,
-            "interruption": 1,
             "selectivity": 0,
             "monologue": 0,
             "tool_misuse": 0
           },
           "experience": "fail",
           "experience_utterances": 28,
-          "experience_issues": 13
-        },
-        {
-          "simulation_id": "24893174-7f94-49ab-b3f3-949436b3a51b",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 34,
-          "experience_issues": 17
-        },
-        {
-          "simulation_id": "270ae30e-f3e6-47ab-9a0a-29c25a51973b",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 54,
-          "experience_issues": 28
-        },
-        {
-          "simulation_id": "3153bb90-a290-4380-b81c-c7861b09e9e2",
-          "interaction": "pass",
-          "flags": {
-            "nonresponse": 0,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 13,
-          "experience_issues": 5
-        },
-        {
-          "simulation_id": "383cc514-c72e-4d77-98fe-1d8ff3bfea65",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 37,
-          "experience_issues": 17
-        },
-        {
-          "simulation_id": "40b57485-c832-410a-a32e-9e785f285801",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 33,
-          "experience_issues": 18
-        },
-        {
-          "simulation_id": "42c48efd-d5e9-443e-8746-fe33291281a5",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 34,
-          "experience_issues": 17
-        },
-        {
-          "simulation_id": "43915fad-01d1-41ce-a80f-50d630d4d9f3",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 31,
-          "experience_issues": 12
-        },
-        {
-          "simulation_id": "47a7f1df-a742-40e8-a587-edaa918eae61",
-          "interaction": "pass",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 4,
-          "experience_issues": 2
-        },
-        {
-          "simulation_id": "4a958a54-a723-44ad-ba67-06fc9568b7a5",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 70,
-          "experience_issues": 20
-        },
-        {
-          "simulation_id": "4ba33e57-db7a-46e2-82b8-36785dc0b994",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "pass",
-          "experience_utterances": 31,
-          "experience_issues": 7
-        },
-        {
-          "simulation_id": "4e64a15f-3821-422e-b3fd-49f5db7a5c72",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 30,
           "experience_issues": 9
         },
         {
-          "simulation_id": "5282cd5f-1383-41b4-a1ce-442ec3087765",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 71,
-          "experience_issues": 30
-        },
-        {
-          "simulation_id": "53cdede3-0d8a-4555-8c78-8c7dcc6fb597",
+          "simulation_id": "2089412c-a187-417f-9260-aa0777015213",
           "interaction": "pass",
           "flags": {
             "nonresponse": 1,
             "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 23,
-          "experience_issues": 7
-        },
-        {
-          "simulation_id": "56775cc1-dba3-420c-a1dc-280283d3764e",
-          "interaction": "pass",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 29,
-          "experience_issues": 13
-        },
-        {
-          "simulation_id": "5b1172af-59c4-4ec2-becf-d858f5a97d62",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "pass",
-          "experience_utterances": 20,
-          "experience_issues": 4
-        },
-        {
-          "simulation_id": "5b3ef43a-2c6a-4e1b-a23b-c9fb23ae0f9b",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 72,
-          "experience_issues": 23
-        },
-        {
-          "simulation_id": "5f0091c3-d2fb-4dcd-b0e9-529fb36425cf",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 53,
-          "experience_issues": 22
-        },
-        {
-          "simulation_id": "5f35199f-05d5-4b3e-9776-d5cae22bc620",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 49,
-          "experience_issues": 24
-        },
-        {
-          "simulation_id": "632e2f5b-1cb0-4e80-abd4-b04bf9633086",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 32,
-          "experience_issues": 11
-        },
-        {
-          "simulation_id": "63e114bb-77e8-4805-8f51-e8c6bf62ac4b",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 49,
-          "experience_issues": 17
-        },
-        {
-          "simulation_id": "6e5a469e-69e8-4951-9ce9-a5d76c3f144f",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 50,
-          "experience_issues": 25
-        },
-        {
-          "simulation_id": "76ace7ad-585d-41a4-8400-02cfe9386351",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 34,
-          "experience_issues": 10
-        },
-        {
-          "simulation_id": "7a94281e-23f4-4d2c-96a4-35b82cb9d951",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 23,
-          "experience_issues": 14
-        },
-        {
-          "simulation_id": "7e71d5ba-4d85-4d28-8cd2-2323f12ae43f",
-          "interaction": "pass",
-          "flags": {
-            "nonresponse": 0,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 19,
-          "experience_issues": 9
-        },
-        {
-          "simulation_id": "9a03e290-c540-4e52-8a6f-f4abab7d78a9",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 24,
-          "experience_issues": 11
-        },
-        {
-          "simulation_id": "9d9fba24-021b-4b48-a111-c74be039444f",
-          "interaction": "pass",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 17,
-          "experience_issues": 5
-        },
-        {
-          "simulation_id": "a1c26cc0-c39f-4b36-b11c-f28e655a94d6",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 27,
-          "experience_issues": 9
-        },
-        {
-          "simulation_id": "a5bd1456-ccd8-4970-b18a-add521582d73",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 49,
-          "experience_issues": 24
-        },
-        {
-          "simulation_id": "b63ce4cf-be22-43d3-929b-cb0210ecba1a",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 24,
-          "experience_issues": 13
-        },
-        {
-          "simulation_id": "b991e10e-5527-4d36-960e-95cf9fa26a18",
-          "interaction": "pass",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 24,
-          "experience_issues": 12
-        },
-        {
-          "simulation_id": "c4f277ba-79fa-48da-a4f8-d544b8a753ae",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 69,
-          "experience_issues": 35
-        },
-        {
-          "simulation_id": "c72987b6-49d7-40be-bd15-35ae6db0dbb6",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 50,
-          "experience_issues": 20
-        },
-        {
-          "simulation_id": "caf1e427-445f-44a9-bd50-972631a38edb",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 1,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 38,
-          "experience_issues": 14
-        },
-        {
-          "simulation_id": "cc0d3420-3bba-413e-82ea-bb37228db762",
-          "interaction": "pass",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 0
-          },
-          "experience": "fail",
-          "experience_utterances": 16,
-          "experience_issues": 7
-        },
-        {
-          "simulation_id": "cefc9e12-6942-409b-b0ab-f20c4ce2b564",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 1,
             "selectivity": 0,
             "monologue": 0,
             "tool_misuse": 0
           },
           "experience": "fail",
           "experience_utterances": 41,
-          "experience_issues": 15
-        },
-        {
-          "simulation_id": "d30f216d-3918-49ab-b28a-fa394554cfaa",
-          "interaction": "fail",
-          "flags": {
-            "nonresponse": 1,
-            "interruption": 0,
-            "selectivity": 0,
-            "monologue": 0,
-            "tool_misuse": 1
-          },
-          "experience": "fail",
-          "experience_utterances": 26,
           "experience_issues": 11
         },
         {
-          "simulation_id": "e9e5e3e3-af5f-4f8d-b796-14bf961d19dd",
+          "simulation_id": "27631241-ffc9-4451-b18a-16cb06c08fc2",
           "interaction": "pass",
           "flags": {
             "nonresponse": 1,
@@ -8824,11 +8278,39 @@
             "tool_misuse": 0
           },
           "experience": "fail",
-          "experience_utterances": 33,
-          "experience_issues": 14
+          "experience_utterances": 28,
+          "experience_issues": 15
         },
         {
-          "simulation_id": "ea559d9f-8fbb-4e96-9fb0-b5270d717718",
+          "simulation_id": "2c6ffd2e-a6a1-4df0-977e-c00e37151842",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "pass",
+          "experience_utterances": 6,
+          "experience_issues": 1
+        },
+        {
+          "simulation_id": "36d9d1a4-07ce-4a66-96cc-334da90963e2",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 0,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 34,
+          "experience_issues": 17
+        },
+        {
+          "simulation_id": "3d5c303c-9ac9-4fb2-b74a-eee682bb2f33",
           "interaction": "fail",
           "flags": {
             "nonresponse": 1,
@@ -8838,11 +8320,39 @@
             "tool_misuse": 0
           },
           "experience": "fail",
-          "experience_utterances": 35,
-          "experience_issues": 15
+          "experience_utterances": 50,
+          "experience_issues": 26
         },
         {
-          "simulation_id": "ea69a4f9-3e69-4fc0-9025-b7b3100dcd28",
+          "simulation_id": "3db06297-d259-4df9-bec0-4976a295c8b5",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 88,
+          "experience_issues": 36
+        },
+        {
+          "simulation_id": "4b0ab4b5-43d2-4860-b0ee-932e5b735873",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 29,
+          "experience_issues": 13
+        },
+        {
+          "simulation_id": "5022cd09-5e66-4f4c-ae7d-ca00a8197460",
           "interaction": "fail",
           "flags": {
             "nonresponse": 1,
@@ -8852,11 +8362,263 @@
             "tool_misuse": 0
           },
           "experience": "fail",
-          "experience_utterances": 48,
-          "experience_issues": 19
+          "experience_utterances": 36,
+          "experience_issues": 16
         },
         {
-          "simulation_id": "f140678c-4dfa-43ad-8830-5f4869281515",
+          "simulation_id": "51d1df19-a0b4-41b6-9bb1-9346cdb71300",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 31,
+          "experience_issues": 9
+        },
+        {
+          "simulation_id": "5249ee97-2e31-4239-a07b-fbe259abb1ce",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 30,
+          "experience_issues": 17
+        },
+        {
+          "simulation_id": "57a9d66e-f396-4d8d-b18a-0eb12efa7900",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 30,
+          "experience_issues": 12
+        },
+        {
+          "simulation_id": "60cfc026-01d6-4c51-a46d-476e01bbf407",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 0,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 24,
+          "experience_issues": 8
+        },
+        {
+          "simulation_id": "64871ba2-6ca8-4030-9919-5a014592a3f6",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "pass",
+          "experience_utterances": 14,
+          "experience_issues": 3
+        },
+        {
+          "simulation_id": "7126fa42-2622-4256-9a61-5a76cf8a2ff3",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 23,
+          "experience_issues": 9
+        },
+        {
+          "simulation_id": "7627810f-691c-45b7-85fb-77d1c4a74272",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "pass",
+          "experience_utterances": 60,
+          "experience_issues": 15
+        },
+        {
+          "simulation_id": "7e8f11bf-deff-448d-8946-17ca72646da9",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 38,
+          "experience_issues": 14
+        },
+        {
+          "simulation_id": "848f3390-0def-46ff-a006-0dbad4183ce5",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 59,
+          "experience_issues": 21
+        },
+        {
+          "simulation_id": "86a335e3-546d-40a1-8dc6-39e85ae4c6f6",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 56,
+          "experience_issues": 17
+        },
+        {
+          "simulation_id": "8d5c09fe-4f38-434c-8432-a460554b3435",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 31,
+          "experience_issues": 8
+        },
+        {
+          "simulation_id": "90a80747-51c4-411f-9361-c4f2e1f78219",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 76,
+          "experience_issues": 26
+        },
+        {
+          "simulation_id": "946f1242-985f-47f9-9ba0-d445552fa8e8",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 33,
+          "experience_issues": 10
+        },
+        {
+          "simulation_id": "9515a651-3797-4518-ab11-39281341a1d6",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 54,
+          "experience_issues": 16
+        },
+        {
+          "simulation_id": "9cc9a263-3417-4c13-80f9-0d594f1b169d",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 22,
+          "experience_issues": 8
+        },
+        {
+          "simulation_id": "9e483013-990d-4215-9952-5c6f914ec22f",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 42,
+          "experience_issues": 12
+        },
+        {
+          "simulation_id": "9fa151de-bb9f-4842-a379-c163e63c931e",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "fail",
+          "experience_utterances": 31,
+          "experience_issues": 16
+        },
+        {
+          "simulation_id": "a3b46bef-5369-499d-ac3a-5d85e598785b",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 58,
+          "experience_issues": 18
+        },
+        {
+          "simulation_id": "a3baef34-3b01-450b-9080-a0fbeaac5570",
           "interaction": "pass",
           "flags": {
             "nonresponse": 1,
@@ -8870,7 +8632,231 @@
           "experience_issues": 8
         },
         {
-          "simulation_id": "fe3759ed-1d07-4319-90a8-d67a167cfb25",
+          "simulation_id": "aadd618c-3920-4d38-b6ac-ae84f402e8df",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 30,
+          "experience_issues": 8
+        },
+        {
+          "simulation_id": "b032131f-24ef-4e33-98f6-2015a8d394a3",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 53,
+          "experience_issues": 26
+        },
+        {
+          "simulation_id": "b408e296-e0b7-465e-af7f-f15a17eb8e98",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 38,
+          "experience_issues": 16
+        },
+        {
+          "simulation_id": "bd597550-ac20-4c5d-9d30-290e7234fc2a",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "pass",
+          "experience_utterances": 46,
+          "experience_issues": 9
+        },
+        {
+          "simulation_id": "bf70e9c8-a3c5-4075-b8f1-2b65369bc7e0",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 1
+          },
+          "experience": "pass",
+          "experience_utterances": 14,
+          "experience_issues": 2
+        },
+        {
+          "simulation_id": "c066643a-536c-49b3-a9d2-a742e602fbd1",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 47,
+          "experience_issues": 17
+        },
+        {
+          "simulation_id": "ce2cdb97-8854-4b81-a051-956e229e71ca",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "pass",
+          "experience_utterances": 58,
+          "experience_issues": 14
+        },
+        {
+          "simulation_id": "cf88577e-68bc-4ca3-8ea4-cf8daca9c776",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 49,
+          "experience_issues": 20
+        },
+        {
+          "simulation_id": "d3d324c0-9532-49f8-9d8a-2cbb9b7f0cb1",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 31,
+          "experience_issues": 8
+        },
+        {
+          "simulation_id": "daabc531-9efb-4eaa-9e43-fd9b1abecf9e",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 21,
+          "experience_issues": 10
+        },
+        {
+          "simulation_id": "e19b814d-51f2-4b86-9cb9-918f47526c70",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 19,
+          "experience_issues": 8
+        },
+        {
+          "simulation_id": "e1f39985-8002-462a-a479-cef5f619d69f",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 38,
+          "experience_issues": 17
+        },
+        {
+          "simulation_id": "e2b6a587-71ec-4e65-aacc-21fb7bd54557",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 38,
+          "experience_issues": 12
+        },
+        {
+          "simulation_id": "e48c36d1-a276-4d12-9f37-83367ddbd9ed",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "pass",
+          "experience_utterances": 60,
+          "experience_issues": 11
+        },
+        {
+          "simulation_id": "eadcfa77-d6f6-461b-9bd0-ed83ef74406e",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 56,
+          "experience_issues": 17
+        },
+        {
+          "simulation_id": "ebe1e5e6-14e4-4be5-9226-b85af039d853",
+          "interaction": "pass",
+          "flags": {
+            "nonresponse": 0,
+            "interruption": 0,
+            "selectivity": 0,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "pass",
+          "experience_utterances": 5,
+          "experience_issues": 1
+        },
+        {
+          "simulation_id": "fa710f0c-7daa-4b96-8afc-fbc6f03735d3",
           "interaction": "fail",
           "flags": {
             "nonresponse": 1,
@@ -8881,6 +8867,20 @@
           },
           "experience": "fail",
           "experience_utterances": 57,
+          "experience_issues": 19
+        },
+        {
+          "simulation_id": "fbf04390-9531-4c44-bffe-0db41316c5db",
+          "interaction": "fail",
+          "flags": {
+            "nonresponse": 1,
+            "interruption": 1,
+            "selectivity": 1,
+            "monologue": 0,
+            "tool_misuse": 0
+          },
+          "experience": "fail",
+          "experience_utterances": 51,
           "experience_issues": 17
         }
       ]
